@@ -1045,7 +1045,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     |> deliverOnMainQueue
     |> map { menuData, historyAvailable -> ContextController.Items in
         // MARK: NAGRAM
-        let (data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, messageViewsPrivacyTips, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer) = menuData
+        let (data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, _, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer) = menuData
         let isPremium = accountPeer?.isPremium ?? false
 
         var actions: [NagramManagedMessageMenuItem] = []
