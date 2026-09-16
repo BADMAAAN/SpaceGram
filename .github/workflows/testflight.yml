@@ -37,7 +37,7 @@ jobs:
       ASC_KEY_ID:        ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID:     ${{ secrets.ASC_ISSUER_ID }}
       # --- app identity (not secret) ---
-      BUNDLE_ID:   xyz.nextalone.nagram
+      BUNDLE_ID:   com.badmaaan.qwengram
       APPSTORE_ID: "6781000861"
 
     steps:
