@@ -1,18 +1,16 @@
 # Qwengram
 
-`Qwengram/` contains Qwengram-only features.
-
-The existing `Nagram/` directory remains the upstream enhancement layer. Do
-not mass-edit or rename Nagram code.
+`Qwengram/` contains Qwengram-only features. Qwengram is a standalone Telegram
+iOS client; the `Nagram/` directory is legacy code currently retained only
+where existing Telegram integration still requires it. New Qwengram work must
+not depend on that layer.
 
 Keep the architecture layered:
 
 ```text
-Telegram upstream
+Official Telegram iOS modules
 ↓
-Nagram enhancement layer
-↓
-Qwengram custom layer
+Qwengram custom modules
 ```
 
 If a future upstream modification is unavoidable, mark it with:

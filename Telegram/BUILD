@@ -285,7 +285,7 @@ filegroup(
     ] + [
         "{}.lproj/Localizable.strings".format(language) for language in empty_languages
     ] + [
-        # MARK: NAGRAM — Nagram 本地化字符串打进 app bundle
+        # MARK: QWENGRAM — Qwengram localizable strings are bundled with the app.
         "//Nagram/Strings:NagramLocalizableStrings",
     ],
 )
@@ -1702,11 +1702,11 @@ plist_fragment(
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Nagram</string>
+    <string>Qwengram</string>
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}</string>
     <key>CFBundleName</key>
-    <string>Nagram</string>
+    <string>Qwengram</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -1765,19 +1765,19 @@ plist_fragment(
     <string>We need this so that you can take and share photos and videos.</string>
     <!-- MARK: NAGRAM -->
     <key>NSContactsUsageDescription</key>
-    <string>Nagram can sync your contacts so you can find people you know across your devices.</string>
+    <string>Qwengram can sync your contacts so you can find people you know across your devices.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>You can use Face ID to unlock the app.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>When you choose to share your live location, Nagram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
+    <string>When you choose to share your live location, Qwengram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>When you choose to share your live location, Nagram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
+    <string>When you choose to share your live location, Qwengram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>When you choose to send your location, Nagram needs access to show and share it on a map.</string>
+    <string>When you choose to send your location, Qwengram needs access to show and share it on a map.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>We need this so that you can record and share voice messages and videos with sound.</string>
     <key>NSMotionUsageDescription</key>
-    <string>Nagram uses motion access only when needed to improve location sharing.</string>
+    <string>Qwengram uses motion access only when needed to improve location sharing.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>We need this so that you can share photos and videos from your photo library.</string>
     <key>NSPhotoLibraryUsageDescription</key>

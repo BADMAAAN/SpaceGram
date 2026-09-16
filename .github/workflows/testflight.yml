@@ -1,4 +1,4 @@
-name: TestFlight (Nagram)
+name: TestFlight (Qwengram)
 
 # Signed release_arm64 build -> upload to TestFlight via altool.
 # Runs on GitHub-hosted macos-26 (Apple Silicon, Xcode 26.x, iOS 26 SDK).

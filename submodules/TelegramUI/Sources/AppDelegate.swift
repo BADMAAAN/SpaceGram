@@ -969,7 +969,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             self.window?.rootViewController?.dismiss(animated: true, completion: nil)
         }, getAvailableAlternateIcons: {
             if #available(iOS 10.3, *) {
-                // MARK: NAGRAM — only offer Nagram app icons.
+                // MARK: QWENGRAM — keep existing icon identifiers for update compatibility.
                 return [
                     PresentationAppIcon(name: "Nagram", imageName: "Nagram", isDefault: true),
                     PresentationAppIcon(name: "NagramBlock", imageName: "NagramBlock"),
