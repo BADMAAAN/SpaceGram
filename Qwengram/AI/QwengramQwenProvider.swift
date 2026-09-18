@@ -1,4 +1,5 @@
 import Foundation
+import QwengramSettings
 
 public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramAIStreamingProvider {
     // Alibaba Cloud Model Studio's documented OpenAI-compatible endpoint.
@@ -16,6 +17,10 @@ public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramA
     }
 
     public func generateText(model: String, messages: [QwengramAIMessage], completion: @escaping (Result<String, QwengramAIError>) -> Void) {
+        guard QwengramSettings.shared.qwengramEnabled else {
+            completion(.failure(.disabled))
+            return
+        }
         guard !apiKey.isEmpty, !model.isEmpty, !messages.isEmpty else {
             completion(.failure(.invalidRequest))
             return
@@ -31,7 +36,13 @@ public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramA
             completion(.failure(.invalidRequest))
             return
         }
-        session.dataTask(with: request) { data, response, error in
+        let gate = QwengramAIRequestGate()
+        let task = session.dataTask(with: request) { data, response, error in
+            defer { gate.finish() }
+            guard !gate.wasDisabled else {
+                completion(.failure(.disabled))
+                return
+            }
             if let error {
                 completion(.failure(.network(error.localizedDescription)))
                 return
@@ -58,11 +69,16 @@ public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramA
             } catch {
                 completion(.failure(.decoding))
             }
-        }.resume()
+        }
+        gate.start(task)
     }
 
     @discardableResult
     public func streamText(model: String, messages: [QwengramAIMessage], onUpdate: @escaping (String) -> Void, completion: @escaping (Result<Void, QwengramAIError>) -> Void) -> QwengramAIStreamingTask? {
+        guard QwengramSettings.shared.qwengramEnabled else {
+            completion(.failure(.disabled))
+            return nil
+        }
         guard !apiKey.isEmpty, !model.isEmpty, !messages.isEmpty else {
             completion(.failure(.invalidRequest))
             return nil
@@ -84,7 +100,6 @@ public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramA
         let streamSession = URLSession(configuration: session.configuration, delegate: delegate, delegateQueue: nil)
         let task = streamSession.dataTask(with: request)
         delegate.setUp(task: task, session: streamSession)
-        task.resume()
         return delegate
     }
 
@@ -120,6 +135,7 @@ private final class StreamDelegate: NSObject, URLSessionDataDelegate, QwengramAI
     private var completed = false
     private var task: URLSessionDataTask?
     private var session: URLSession?
+    private var gate: QwengramAIRequestGate?
 
     init(onUpdate: @escaping (String) -> Void, completion: @escaping (Result<Void, QwengramAIError>) -> Void) {
         self.onUpdate = onUpdate
@@ -132,6 +148,9 @@ private final class StreamDelegate: NSObject, URLSessionDataDelegate, QwengramAI
         self.stateQueue.sync {
             self.task = task
             self.session = session
+            let gate = QwengramAIRequestGate()
+            self.gate = gate
+            gate.start(task)
         }
     }
 
@@ -164,6 +183,10 @@ private final class StreamDelegate: NSObject, URLSessionDataDelegate, QwengramAI
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         self.stateQueue.async {
             guard !self.completed else {
+                return
+            }
+            guard self.gate?.wasDisabled != true else {
+                self.finish(.failure(.disabled))
                 return
             }
             self.pendingData.append(data)
@@ -235,6 +258,9 @@ private final class StreamDelegate: NSObject, URLSessionDataDelegate, QwengramAI
         completed = true
         let task = self.task
         let session = self.session
+        let result: Result<Void, QwengramAIError> = self.gate?.wasDisabled == true ? .failure(.disabled) : result
+        self.gate?.finish()
+        self.gate = nil
         self.task = nil
         self.session = nil
         self.pendingData.removeAll(keepingCapacity: false)

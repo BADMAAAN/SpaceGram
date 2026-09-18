@@ -99,7 +99,7 @@ swift_library(
         "//submodules/TelegramUI/Components/PremiumAlertController",
         "//submodules/TelegramUI/Components/Chat/ChatMessageRichDataBubbleContentNode",
         # MARK: NAGRAM
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

@@ -2,11 +2,11 @@ You are an experienced, pragmatic software engineering AI agent. Do not over-eng
 
 # AGENTS.md
 
-This file guides AI agents working in this repository. It is specific to Nagram-iOS and should be kept in sync with the repo, not with generic Telegram-iOS assumptions.
+This file guides AI agents working in this repository. It is specific to Qwengram and should be kept in sync with the repo, not with generic Telegram-iOS assumptions.
 
 ## Project Overview
 
-Nagram-iOS is a third-party enhancement fork of [Telegram-iOS](https://github.com/TelegramMessenger/Telegram-iOS), targeting Chinese users and aligning selected features with Android [Nagram](https://github.com/NextAlone/Nagram). The goal is to keep the fork easy to rebase onto upstream Telegram while adding Nagram-specific settings, UI, translation, privacy, and interaction features.
+Qwengram is an independent Telegram-iOS client. Its architecture is Telegram-iOS upstream plus Qwengram modules and minimal integration hooks. Retained Nagram-derived implementations live in `Qwengram/Enhancements/` with attribution and compatibility names preserved.
 
 Technology stack:
 
@@ -19,7 +19,7 @@ Technology stack:
 
 Important directories:
 
-- `Nagram/` — all new Nagram feature code. Main modules are `Settings/`, `SettingsSignal/`, `SettingsUI/`, `Strings/`, and `Translate/`.
+- `Qwengram/` — product-specific feature code and retained enhancements. Main modules are `Settings/`, `SettingsSignal/`, `SettingsUI/`, `Strings/`, and `Translate/`.
 - `Telegram/` — main app target, app extensions, app plist fragments, icons, and app-level Bazel rules.
 - `submodules/` — upstream Telegram libraries. Modify only when a feature must integrate with upstream code, and mark the edit.
 - `third-party/` — vendored dependencies. Avoid style-only or opportunistic changes here.
@@ -32,10 +32,10 @@ Important files:
 - `README.md` and `docs/build.md` — signing modes, build commands, and current local toolchain pitfalls.
 - `.bazelrc` — imports gitignored `local.bazelrc`; local signing/provisioning flags belong there.
 - `build-system/Make/Make.py` — supported build/test/clean/query entry point.
-- `Telegram/BUILD` — app target, plist fragments, Nagram app name, strings, and icon integration.
-- `Nagram/Settings/NagramSettings.swift` — central Nagram settings store.
-- `Nagram/SettingsSignal/Sources/NagramSettingsSignal.swift` — reactive settings bridge.
-- `Nagram/SettingsUI/NagramSettingsController.swift` — Nagram settings UI entry controller.
+- `Telegram/BUILD` — app target, plist fragments, Qwengram app name, strings, and icon integration.
+- `Qwengram/Enhancements/Settings/NagramSettings.swift` — central Nagram settings store.
+- `Qwengram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift` — reactive settings bridge.
+- `Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift` — Nagram settings UI entry controller.
 - `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoSettingsItems.swift` — Settings screen Nagram entry point (`SettingsSection.nagram`, item id `50`).
 - `docs/superpowers/postbox-refactor-log.md` — source of truth for the Postbox migration waves.
 
@@ -153,13 +153,13 @@ find . -path './.jj' -prune -o -type f -name '*.sh' -print | sort
 
 Prefer `build-system/Make/Make.py` for app build/test/clean. Use `build-system/generate-xcode-project.sh`, `build-system/verify.sh`, `Telegram/*Icon*.sh`, and `third-party/*/build-*-bazel.sh` only when the task specifically calls for them.
 
-## Nagram Fork Patterns
+## Qwengram integration patterns
 
-- Put new Nagram-only code under `Nagram/`. Keep `Nagram/Settings` as the low-level data layer and `Nagram/SettingsUI` as the UI layer.
+- Put new Qwengram code under `Qwengram/`. Keep `Qwengram/Enhancements/Settings` as the low-level data layer and `Qwengram/Enhancements/SettingsUI` as the UI layer.
 - When upstream files must change, annotate the modification site with `// MARK: NAGRAM`. This is required for upstream rebases.
-- The Nagram settings entry appears below “我的资料” (My Profile) in `PeerInfoSettingsItems.swift`; long press opens Nagram debug settings.
-- Main app display name is `Nagram` in `Telegram/BUILD` (`CFBundleDisplayName` / `CFBundleName`). Extension plist targets remain `Telegram` unless a task explicitly changes that behavior.
-- App icon integration is in `Telegram/BUILD`: `alternate_icon_folders` includes `Nagram`, and Composer source icons include `Nagram`, `NagramBlock`, and `NagramColorful`.
+- The retained enhancement settings entry appears below “我的资料” (My Profile) in `PeerInfoSettingsItems.swift`; long press opens inherited debug settings.
+- Main app display name is `Qwengram` in `Telegram/BUILD` (`CFBundleDisplayName` / `CFBundleName`). Extension plist targets remain `Telegram` unless a task explicitly changes that behavior.
+- App icon integration is in `Telegram/BUILD`: the existing `DefaultAppIcon` catalog is used temporarily; Nagram brand artwork and its Composer post-processor have been removed.
 - Settings defaults should preserve native Telegram behavior unless the feature explicitly requires a different default. Existing settings use `@NagramDefault` and sync through local `UserDefaults` plus iCloud KVS.
 - Use `NagramSettingsSignal` helpers when UI must react live to setting changes. Do not add ad-hoc polling.
 
@@ -194,7 +194,7 @@ FetchResourceError  → EngineFetchResourceError
 
 ## Anti-Patterns
 
-- Do not put Nagram-only feature code into upstream `submodules/` when it can live in `Nagram/`.
+- Do not put Qwengram feature code into upstream `submodules/` when it can live in `Qwengram/`.
 - Do not edit upstream files without a nearby `// MARK: NAGRAM` marker.
 - Do not pass `--disableExtensions` or `--disableProvisioningProfiles` to `Make.py build`; those are Bazel flags for `local.bazelrc`, not Make.py build arguments.
 - Do not use `disableProvisioningProfiles` for device builds.
@@ -207,7 +207,7 @@ FetchResourceError  → EngineFetchResourceError
 
 - Follow existing Swift conventions: PascalCase types, camelCase members, sorted imports, clear names over abbreviations.
 - Keep changes localized and boring. Prefer existing Telegram/Nagram helpers over new abstractions.
-- New Nagram Bazel modules should use `swift_library`, public visibility only when needed, and `copts = ["-warnings-as-errors"]` like the existing Nagram targets.
+- New Qwengram Bazel modules should use `swift_library`, public visibility only when needed, and `copts = ["-warnings-as-errors"]` like the existing Nagram targets.
 - Boundary code should fail loudly with actionable errors; avoid silent fallback paths unless the product behavior explicitly requires one.
 - Do not commit debug prints, `debugger`, temporary TODOs, or commented-out old implementations.
 

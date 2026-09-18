@@ -19,7 +19,8 @@ import PresentationDataUtils
 import FetchManagerImpl
 import InAppPurchaseManager
 import NagramSettings
-import NagramStrings
+// MARK: NAGRAM - shared Qwengram localization.
+import QwengramStrings
 import AnimationCache
 import MultiAnimationRenderer
 import DCTAnimationCacheImpl

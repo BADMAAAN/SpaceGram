@@ -5,5 +5,6 @@ swift_library(
     module_name = "QwengramAI",
     srcs = glob(["**/*.swift"]),
     copts = ["-warnings-as-errors"],
+    deps = ["//Qwengram/Settings:QwengramSettings"],
     visibility = ["//visibility:public"],
 )

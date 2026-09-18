@@ -13,14 +13,14 @@ The feature should affect Nagram-visible liquid/glass surfaces without introduci
 
 - Do not redesign Telegram themes or change normal opaque list/chat backgrounds.
 - Do not replace Apple's `UIGlassEffect` on supported iOS versions.
-- Do not add new settings storage outside `Nagram/Settings`.
+- Do not add new settings storage outside `Qwengram/Enhancements/Settings`.
 - Do not change existing `Control Highlight` semantics; it remains only an interaction highlight toggle.
 
 ## Current Context
 
-Nagram settings are stored in `Nagram/Settings/NagramSettings.swift` using `@NagramDefault`.
+Nagram settings are stored in `Qwengram/Enhancements/Settings/NagramSettings.swift` using `@NagramDefault`.
 
-The main settings UI is data-driven in `Nagram/SettingsUI/NagramSettingsController.swift`. It already supports `choice` rows and percent-style slider rows through `NagramSliderItem`.
+The main settings UI is data-driven in `Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift`. It already supports `choice` rows and percent-style slider rows through `NagramSliderItem`.
 
 Glass rendering is concentrated in:
 
@@ -57,7 +57,7 @@ Add helpers:
 
 `glassTransparencyFactor` clamps custom values to `0...100` and returns `percent / 100`. In follow-system mode it returns `1.0`; platform accessibility and future platform glass defaults still handle transparency separately.
 
-Keep `Nagram/Settings` pure Foundation. It must not import UIKit or expose `UIColor` / `CGFloat` helpers. UI modules can convert the returned numeric factor into `CGFloat` locally.
+Keep `Qwengram/Enhancements/Settings` pure Foundation. It must not import UIKit or expose `UIColor` / `CGFloat` helpers. UI modules can convert the returned numeric factor into `CGFloat` locally.
 
 ## Settings UI
 

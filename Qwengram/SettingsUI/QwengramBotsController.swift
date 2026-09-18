@@ -1,8 +1,11 @@
 import AccountContext
 import Display
 import ItemListUI
+import QwengramStrings
 import PresentationDataUtils
 import QwengramBots
+import QwengramSettings
+import QwengramSettingsSignal
 import SwiftSignalKit
 import TelegramPresentationData
 
@@ -16,22 +19,22 @@ private final class QwengramBotsArguments {
 
 private enum QwengramBotsEntry: ItemListNodeEntry {
     case header(Int32, Int32, String)
-    case bot(Int32, Int32, QwengramBotDescriptor)
+    case bot(Int32, Int32, QwengramBotDescriptor, Bool)
 
     var section: ItemListSectionId {
-        switch self { case let .header(_, section, _), let .bot(_, section, _): return section }
+        switch self { case let .header(_, section, _), let .bot(_, section, _, _): return section }
     }
 
     var stableId: Int32 {
-        switch self { case let .header(id, _, _), let .bot(id, _, _): return id }
+        switch self { case let .header(id, _, _), let .bot(id, _, _, _): return id }
     }
 
     static func == (lhs: QwengramBotsEntry, rhs: QwengramBotsEntry) -> Bool {
         switch (lhs, rhs) {
         case let (.header(lId, lSection, lText), .header(rId, rSection, rText)):
             return lId == rId && lSection == rSection && lText == rText
-        case let (.bot(lId, lSection, lBot), .bot(rId, rSection, rBot)):
-            return lId == rId && lSection == rSection && lBot.id == rBot.id && lBot.title == rBot.title && lBot.subtitle == rBot.subtitle
+        case let (.bot(lId, lSection, lBot, lEnabled), .bot(rId, rSection, rBot, rEnabled)):
+            return lId == rId && lSection == rSection && lBot.id == rBot.id && lBot.title == rBot.title && lBot.subtitle == rBot.subtitle && lBot.isEnabled == rBot.isEnabled && lEnabled == rEnabled
         default: return false
         }
     }
@@ -43,8 +46,9 @@ private enum QwengramBotsEntry: ItemListNodeEntry {
         switch self {
         case let .header(_, section, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
-        case let .bot(_, section, bot):
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: bot.title, enabled: bot.isEnabled, label: bot.subtitle, sectionId: section, style: .blocks, disclosureStyle: bot.isEnabled ? .arrow : .none, action: bot.isEnabled ? {
+        case let .bot(_, section, bot, toolsEnabled):
+            let enabled = toolsEnabled && bot.isEnabled
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: bot.title, enabled: enabled, label: bot.subtitle, sectionId: section, style: .blocks, disclosureStyle: enabled ? .arrow : .none, action: enabled ? {
                 arguments.openBot(bot)
             } : nil)
         }
@@ -54,6 +58,7 @@ private enum QwengramBotsEntry: ItemListNodeEntry {
 public func qwengramBotsController(context: AccountContext) -> ViewController {
     var pushControllerImpl: ((ViewController) -> Void)?
     let arguments = QwengramBotsArguments(openBot: { bot in
+        guard QwengramSettings.shared.toolsEnabled else { return }
         if bot.id == "qwen-assistant" {
             pushControllerImpl?(qwengramQwenAssistantController(context: context))
         } else if bot.id == "summarizer" {
@@ -64,21 +69,24 @@ public func qwengramBotsController(context: AccountContext) -> ViewController {
             pushControllerImpl?(qwengramQRToolsController(context: context))
         }
     })
-    let signal = context.sharedContext.presentationData |> map { presentationData -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    let signal = combineLatest(context.sharedContext.presentationData, qwengramToolsEnabledSignal())
+    |> deliverOnMainQueue
+    |> map { presentationData, enabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let lang = presentationData.strings.baseLanguageCode
         var entries: [QwengramBotsEntry] = []
         var stableId: Int32 = 0
         for (section, category) in QwengramBotCategory.allCases.enumerated() {
             let title: String
-            switch category { case .ai: title = "AI"; case .media: title = "Media"; case .utilities: title = "Utilities"; case .custom: title = "My Bots" }
+            switch category { case .ai: title = ngI18n("Qwengram.AI", lang); case .media: title = ngI18n("Qwengram.Media", lang); case .utilities: title = ngI18n("Qwengram.Utilities", lang); case .custom: title = ngI18n("Qwengram.Custom", lang) }
             entries.append(.header(stableId, Int32(section), title))
             stableId += 1
             for bot in QwengramBotCatalog.defaultBots where bot.category == category {
-                entries.append(.bot(stableId, Int32(section), bot))
+                entries.append(.bot(stableId, Int32(section), bot, enabled))
                 stableId += 1
             }
         }
         let listPresentationData = ItemListPresentationData(presentationData)
-        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("Bots"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text(ngI18n("Qwengram.Tools", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (controllerState, (ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: true), arguments))
     }
     let controller = ItemListController(context: context, state: signal)

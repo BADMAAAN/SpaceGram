@@ -40,7 +40,7 @@ swift_library(
         "//submodules/TelegramUI/Components/ShimmeringMask",
         "//submodules/TelegramUI/Components/StreamingTextReveal:StreamingTextReveal",
         # MARK: NAGRAM — 接收展示时盘古之白
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

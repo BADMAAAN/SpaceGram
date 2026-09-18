@@ -2,9 +2,11 @@ import AccountContext
 import Display
 import Foundation
 import ItemListUI
+import QwengramStrings
 import PresentationDataUtils
 import QwengramAI
 import QwengramSettings
+import QwengramSettingsSignal
 import SwiftSignalKit
 import TelegramPresentationData
 
@@ -68,7 +70,7 @@ private enum QwengramSummarizerEntry: ItemListNodeEntry {
         case let .input(_, section, text, enabled):
             return ItemListMultilineInputItem(presentationData: presentationData, text: text, placeholder: "Paste or type text to summarize", maxLength: nil, sectionId: section, style: .blocks, textUpdated: enabled ? arguments.updateInput : { _ in })
         case let .summarize(_, section, enabled):
-            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Summarize", kind: .generic, alignment: .natural, sectionId: section, style: .blocks, action: enabled ? arguments.summarize : {})
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Summarize", kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: enabled ? arguments.summarize : {})
         case let .loading(_, section):
             return ItemListTextItem(presentationData: presentationData, text: .plain("Summarizing…"), sectionId: section)
         case let .result(_, section, text):
@@ -95,6 +97,10 @@ public func qwengramSummarizerController(context: AccountContext, initialText: S
     let arguments = QwengramSummarizerArguments(updateInput: { value in
         input = value
     }, summarize: {
+        guard QwengramSettings.shared.qwengramEnabled else {
+            showError(ngI18n("Qwengram.Disabled", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode))
+            return
+        }
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
             showError("Enter text to summarize.")
@@ -141,6 +147,8 @@ public func qwengramSummarizerController(context: AccountContext, initialText: S
                 case let .failure(error):
                     let message: String
                     switch error {
+                    case .disabled:
+                        message = ngI18n("Qwengram.Disabled", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode)
                     case .invalidRequest:
                         message = "The Qwen request could not be created. Check the Qwen Provider settings."
                     case .network:
@@ -160,13 +168,13 @@ public func qwengramSummarizerController(context: AccountContext, initialText: S
             }
         }
     })
-    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get())
-    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get(), qwengramEnabledSignal())
+    |> map { presentationData, _, enabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let listPresentationData = ItemListPresentationData(presentationData)
         var entries: [QwengramSummarizerEntry] = [
             .header(0, 0, "Text"),
             .input(1, 0, input, !isSummarizing),
-            .summarize(2, 1, !isSummarizing),
+            .summarize(2, 1, enabled && !isSummarizing),
         ]
         if isSummarizing {
             entries.append(.loading(3, 1))

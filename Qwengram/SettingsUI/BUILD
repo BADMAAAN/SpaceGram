@@ -10,6 +10,7 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
+        "//Qwengram/Strings:QwengramStrings",
         "//Qwengram/AI:QwengramAI",
         "//Qwengram/Bots:QwengramBots",
         "//Qwengram/HistoryUI:QwengramHistoryUI",

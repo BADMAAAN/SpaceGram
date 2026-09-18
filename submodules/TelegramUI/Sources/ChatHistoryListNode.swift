@@ -1,4 +1,7 @@
 import Foundation
+// MARK: NAGRAM — Qwengram automatic read policy.
+import QwengramSettings
+import QwengramSettingsSignal
 import UIKit
 import SwiftSignalKit
 import Display
@@ -2543,13 +2546,22 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
     
     private func beginReadHistoryManagement() {
         let previousMaxIncomingMessageIndexByNamespace = Atomic<[MessageId.Namespace: MessageIndex]>(value: [:])
-        let readHistory = combineLatest(self.maxVisibleIncomingMessageIndex.get(), self.canReadHistory.get())
+        // MARK: NAGRAM — prevent read work from being queued, without marking local
+        // state as synchronized. Explicit mark-as-read actions keep their native path.
+        let effectiveCanReadHistory = combineLatest(self.canReadHistory.get(), qwengramSuppressAutomaticReadsSignal())
+        |> map { canRead, suppressed in canRead && !suppressed }
+        |> distinctUntilChanged
+        let readHistory = combineLatest(self.maxVisibleIncomingMessageIndex.get(), effectiveCanReadHistory)
         
         self.readHistoryDisposable.set((readHistory |> deliverOnMainQueue).startStrict(next: { [weak self] messageIndex, canRead in
             guard let strongSelf = self else {
                 return
             }
             if !canRead {
+                return
+            }
+            // MARK: NAGRAM — recheck if a policy notification is still queued.
+            guard !QwengramGhostPolicy.suppressAutomaticReads else {
                 return
             }
             
@@ -2577,7 +2589,8 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
         }).strict())
         
         self.canReadHistoryDisposable?.dispose()
-        self.canReadHistoryDisposable = (self.canReadHistory.get() |> deliverOnMainQueue).startStrict(next: { [weak self, weak context] value in
+        // MARK: NAGRAM — also gates mentions/reactions and the live incoming-read action.
+        self.canReadHistoryDisposable = (effectiveCanReadHistory |> deliverOnMainQueue).startStrict(next: { [weak self, weak context] value in
             if let strongSelf = self {
                 if strongSelf.canReadHistoryValue != value {
                     strongSelf.canReadHistoryValue = value

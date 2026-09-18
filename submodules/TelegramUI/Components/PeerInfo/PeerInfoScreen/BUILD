@@ -98,12 +98,12 @@ swift_library(
         "//submodules/TelegramUI/Components/SendInviteLinkScreen",
         "//submodules/SettingsUI",
         # MARK: NAGRAM — 增强设置页 UI 模块
-        "//Nagram/SettingsUI:NagramSettingsUI",
+        "//Qwengram/Enhancements/SettingsUI:NagramSettingsUI",
         # MARK: QWENGRAM — Qwengram settings UI module.
         "//Qwengram/SettingsUI:QwengramSettingsUI",
-        "//Nagram/Settings:NagramSettings",
-        "//Nagram/SettingsSignal:NagramSettingsSignal",
-        "//Nagram/Strings:NagramStrings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//Qwengram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//Qwengram/Strings:QwengramStrings",
         "//submodules/ShareController",
         "//submodules/TelegramUI/Components/ShareWithPeersScreen",
         "//submodules/StatisticsUI",

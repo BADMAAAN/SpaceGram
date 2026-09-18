@@ -1,0 +1,39 @@
+load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
+
+# MARK: NAGRAM — Nagram 增强设置页 UI 层（ItemListController toggle）。
+# 依赖数据层 Qwengram/Enhancements/Settings + 上游 UI 模块；rebase 时上游碰不到 Qwengram/Enhancements/。
+swift_library(
+    name = "NagramSettingsUI",
+    module_name = "NagramSettingsUI",
+    srcs = glob([
+        "**/*.swift",
+    ]),
+    copts = [
+        "-warnings-as-errors",
+    ],
+    deps = [
+        "//submodules/Display:Display",
+        "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
+        "//submodules/TelegramPresentationData:TelegramPresentationData",
+        "//submodules/ItemListUI:ItemListUI",
+        "//submodules/PresentationDataUtils:PresentationDataUtils",
+        "//submodules/AccountContext:AccountContext",
+        "//submodules/TelegramCore:TelegramCore",
+        "//submodules/TelegramUIPreferences:TelegramUIPreferences",
+        "//submodules/UndoUI:UndoUI",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//Qwengram/Enhancements/LinkMetadata:NagramLinkMetadata",
+        "//Qwengram/Strings:QwengramStrings",
+        "//Qwengram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//Qwengram/Enhancements/Translate:NagramTranslate",
+        # MARK: NAGRAM — 贴纸尺寸滑杆(SliderComponent,复刻省电模式粗轨道)
+        "//submodules/AsyncDisplayKit",
+        "//submodules/ComponentFlow",
+        "//submodules/TelegramUI/Components/FaceScanScreen",
+        "//submodules/TelegramUI/Components/SliderComponent",
+        "//submodules/TelegramUI/Components/TabBarComponent",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+)

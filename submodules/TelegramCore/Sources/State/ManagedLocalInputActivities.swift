@@ -1,4 +1,7 @@
 import Foundation
+// MARK: NAGRAM — Qwengram activity policy.
+import QwengramSettings
+import QwengramSettingsSignal
 import Postbox
 import SwiftSignalKit
 import TelegramApi
@@ -78,7 +81,11 @@ private final class ManagedLocalTypingActivitiesContext {
 func managedLocalTypingActivities(activities: Signal<[PeerActivitySpace: [(PeerId, PeerInputActivityRecord)]], NoError>, postbox: Postbox, network: Network, accountPeerId: PeerId) -> Signal<Void, NoError> {
     return Signal { subscriber in
         let context = Atomic(value: ManagedLocalTypingActivitiesContext())
-        let disposable = activities.start(next: { activities in
+        // MARK: NAGRAM — cancel pending chat activity when the policy changes live.
+        let disposable = combineLatest(activities, qwengramSuppressChatActivitySignal()).start(next: { activities, suppressed in
+            let activities = suppressed ? activities.mapValues { records in
+                records.filter { $0.1.activity == .speakingInGroupCall }
+            } : activities
             let (start, dispose) = context.with { context in
                 return context.update(activities: activities)
             }
@@ -143,6 +150,13 @@ private func actionFromActivity(_ activity: PeerInputActivity?) -> Api.SendMessa
 
 private func requestActivity(postbox: Postbox, network: Network, accountPeerId: PeerId, peerId: PeerId, threadId: Int64?, activity: PeerInputActivity?) -> Signal<Void, NoError> {
     return postbox.transaction { transaction -> Signal<Void, NoError> in
+        // MARK: NAGRAM — suppress cloud and encrypted activity at the send boundary.
+        if QwengramGhostPolicy.suppressChatActivity {
+            // Group-call speaking events maintain live call state, not chat typing.
+            if activity != .speakingInGroupCall {
+                return .complete()
+            }
+        }
         if let peer = transaction.getPeer(peerId) {
             if peerId == accountPeerId {
                 return .complete()

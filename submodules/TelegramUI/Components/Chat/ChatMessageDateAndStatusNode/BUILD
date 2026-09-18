@@ -26,7 +26,7 @@ swift_library(
         "//submodules/TelegramUI/Components/AnimationCache",
         "//submodules/TelegramUI/Components/MultiAnimationRenderer",
         # MARK: NAGRAM
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

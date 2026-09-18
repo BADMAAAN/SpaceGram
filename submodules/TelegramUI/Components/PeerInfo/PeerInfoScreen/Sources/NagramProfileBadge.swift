@@ -14,10 +14,10 @@ func nagramProfileBadgeString(_ key: String, languageCode: String) -> String {
     } else {
         languageCode = "en"
     }
-    if let path = bundle.path(forResource: "NagramLocalizable", ofType: "strings", inDirectory: nil, forLocalization: languageCode), let strings = NSDictionary(contentsOfFile: path) as? [String: String], let value = strings[key] {
+    if let path = bundle.path(forResource: "QwengramLocalizable", ofType: "strings", inDirectory: nil, forLocalization: languageCode), let strings = NSDictionary(contentsOfFile: path) as? [String: String], let value = strings[key] {
         return value
     }
-    if let path = bundle.path(forResource: "NagramLocalizable", ofType: "strings", inDirectory: nil, forLocalization: "en"), let strings = NSDictionary(contentsOfFile: path) as? [String: String], let value = strings[key] {
+    if let path = bundle.path(forResource: "QwengramLocalizable", ofType: "strings", inDirectory: nil, forLocalization: "en"), let strings = NSDictionary(contentsOfFile: path) as? [String: String], let value = strings[key] {
         return value
     }
     return key

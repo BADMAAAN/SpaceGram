@@ -6,6 +6,8 @@ swift_library(
     srcs = glob(["*.swift"]),
     copts = ["-warnings-as-errors"],
     deps = [
+        "//Qwengram/Strings:QwengramStrings",
+        "//Qwengram/MediaArchive:QwengramMediaArchive",
         "//Qwengram/HistoryStorage:QwengramHistoryStorage",
         "//submodules/AccountContext:AccountContext",
         "//submodules/Display:Display",

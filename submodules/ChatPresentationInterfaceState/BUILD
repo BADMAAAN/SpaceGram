@@ -25,7 +25,7 @@ swift_library(
         "//submodules/UndoUI",
         "//submodules/TextFormat",
         # MARK: NAGRAM
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

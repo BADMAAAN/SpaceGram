@@ -969,19 +969,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             self.window?.rootViewController?.dismiss(animated: true, completion: nil)
         }, getAvailableAlternateIcons: {
             if #available(iOS 10.3, *) {
-                // MARK: QWENGRAM — keep existing icon identifiers for update compatibility.
-                return [
-                    PresentationAppIcon(name: "Nagram", imageName: "Nagram", isDefault: true),
-                    PresentationAppIcon(name: "NagramBlock", imageName: "NagramBlock"),
-                    PresentationAppIcon(name: "NagramBlockBlack", imageName: "NagramBlockBlack"),
-                    PresentationAppIcon(name: "NagramBlockBlue", imageName: "NagramBlockBlue"),
-                    PresentationAppIcon(name: "NagramBlockNiello", imageName: "NagramBlockNiello"),
-                    PresentationAppIcon(name: "NagramBlockPurple", imageName: "NagramBlockPurple"),
-                    PresentationAppIcon(name: "NagramClassic", imageName: "NagramClassic"),
-                    PresentationAppIcon(name: "NagramColorful", imageName: "NagramColorful"),
-                    PresentationAppIcon(name: "NagramCyan", imageName: "NagramCyan"),
-                    PresentationAppIcon(name: "NagramBlack", imageName: "NagramBlack")
-                ]
+                // MARK: NAGRAM — Qwengram no longer bundles inherited brand icons.
+                return [PresentationAppIcon(name: "BlueIcon", imageName: "BlueIcon", isDefault: true)]
             } else {
                 return []
             }
@@ -2036,13 +2025,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // MARK: NAGRAM — migrate removed Telegram icons after an app update.
-        // UIKit owns the selection; nil restores the primary Nagram icon.
-        if let iconName = application.alternateIconName, [
-            "BlackIcon", "BlackClassicIcon", "BlackFilledIcon", "BlueIcon",
-            "BlueClassicIcon", "BlueFilledIcon", "WhiteFilledIcon", "New1", "New2",
-            "Premium", "PremiumBlack", "PremiumTurbo"
-        ].contains(iconName) {
+        // MARK: NAGRAM — reset a removed alternate icon after upgrading to Qwengram.
+        // UIKit owns the selection; nil restores the primary asset-catalog icon.
+        if let iconName = application.alternateIconName {
             application.setAlternateIconName(nil, completionHandler: { error in
                 if let error = error {
                     Logger.shared.log("App \(self.episodeId)", "failed to reset removed app icon \(iconName): \(error.localizedDescription)")

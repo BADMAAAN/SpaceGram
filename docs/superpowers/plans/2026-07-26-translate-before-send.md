@@ -4,7 +4,7 @@
 
 **Goal:** 长按发送按钮菜单新增「翻译」项,用 Nagram 已配置的翻译 provider 把输入框全文翻译为全局设置的目标语言并替换输入框内容(保留 entities),默认关闭。
 
-**Architecture:** 三层改动——(1) `Nagram/Settings` + `Nagram/SettingsUI` + `Nagram/Strings` 加开关与目标语言设置;(2) `ChatSendMessageActionUI` 的 `SendMessage` params 加可选闭包字段 `nagramTranslateInput`,组件菜单在闭包非 nil 时插入「翻译」项(该模块不依赖任何 Nagram 模块,显隐判断在调用方);(3) `TelegramUI` 的 `ChatMessageDisplaySendMessageOptions.swift` 在 `.sendMessage` 分支按条件构造闭包:调 `NagramTranslateService` 翻译,成功后经 `withUpdatedEffectiveInputState` 回填输入框,失败 toast。
+**Architecture:** 三层改动——(1) `Qwengram/Enhancements/Settings` + `Qwengram/Enhancements/SettingsUI` + `Qwengram/Strings` 加开关与目标语言设置;(2) `ChatSendMessageActionUI` 的 `SendMessage` params 加可选闭包字段 `nagramTranslateInput`,组件菜单在闭包非 nil 时插入「翻译」项(该模块不依赖任何 Nagram 模块,显隐判断在调用方);(3) `TelegramUI` 的 `ChatMessageDisplaySendMessageOptions.swift` 在 `.sendMessage` 分支按条件构造闭包:调 `NagramTranslateService` 翻译,成功后经 `withUpdatedEffectiveInputState` 回填输入框,失败 toast。
 
 **Tech Stack:** Swift、SwiftSignalKit(Signal)、Bazel(Make.py)、jj(版本管理)。
 
@@ -13,11 +13,11 @@ Spec: `docs/superpowers/specs/2026-07-26-translate-before-send-design.md`
 ## Global Constraints
 
 - 版本管理只用 **jj**,禁止任何 `git` 命令(含只读);提交用 `jj commit -m "<type>: <summary>"`。
-- `submodules/` 下每处上游文件修改必须有邻近的 `// MARK: NAGRAM` 注释;`Nagram/` 目录内是 Nagram 自有代码,不需要。
-- `submodules/ChatSendMessageActionUI` **不得**新增对任何 Nagram 模块(NagramSettings / NagramStrings / NagramTranslate)的依赖;菜单项文案复用上游 `environment.strings.Conversation_ContextMenuTranslate`。
+- `submodules/` 下每处上游文件修改必须有邻近的 `// MARK: NAGRAM` 注释;`Qwengram/Enhancements/` 目录内保留历史 Nagram 派生代码,不需要。
+- `submodules/ChatSendMessageActionUI` **不得**新增对任何 Nagram 模块(NagramSettings / QwengramStrings / NagramTranslate)的依赖;菜单项文案复用上游 `environment.strings.Conversation_ContextMenuTranslate`。
 - 不改 `TelegramCore`、不加新 Nagram 模块、不加新 engine wrapper。
 - 项目无覆盖此路径的单元测试;每个任务的验证 = 全量模拟器构建(命令见各任务,预期 exit 0 且输出含 `Build completed successfully`)。
-- 四个语言文件(`en` / `ja` / `zh-hans` / `zh-hant` 的 `NagramLocalizable.strings`)的 key 集合必须保持一致。
+- 四个语言文件(`en` / `ja` / `zh-hans` / `zh-hant` 的 `QwengramLocalizable.strings`)的 key 集合必须保持一致。
 - 删除文件用 `trash`,不用 `rm -rf`(本计划无删除需求,仅备忘)。
 
 构建命令(所有任务共用,下文简称「全量构建」):
@@ -36,12 +36,12 @@ python3 build-system/Make/Make.py --overrideXcodeVersion \
 ### Task 1: 设置项 + 设置界面 + 多语言字符串
 
 **Files:**
-- Modify: `Nagram/Settings/NagramSettings.swift`(约 411 行,`translationLLMTemperatureTenths` 之后)
-- Modify: `Nagram/SettingsUI/NagramSettingsController.swift`(约 435–438 行,Translation 分组)
-- Modify: `Nagram/Strings/Strings/en.lproj/NagramLocalizable.strings`
-- Modify: `Nagram/Strings/Strings/ja.lproj/NagramLocalizable.strings`
-- Modify: `Nagram/Strings/Strings/zh-hans.lproj/NagramLocalizable.strings`
-- Modify: `Nagram/Strings/Strings/zh-hant.lproj/NagramLocalizable.strings`
+- Modify: `Qwengram/Enhancements/Settings/NagramSettings.swift`(约 411 行,`translationLLMTemperatureTenths` 之后)
+- Modify: `Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift`(约 435–438 行,Translation 分组)
+- Modify: `Qwengram/Strings/Strings/en.lproj/QwengramLocalizable.strings`
+- Modify: `Qwengram/Strings/Strings/ja.lproj/QwengramLocalizable.strings`
+- Modify: `Qwengram/Strings/Strings/zh-hans.lproj/QwengramLocalizable.strings`
+- Modify: `Qwengram/Strings/Strings/zh-hant.lproj/QwengramLocalizable.strings`
 
 **Interfaces:**
 - Consumes: `@NagramDefault` 属性包装器、`NagramGroup`/`NagramRow`(`.toggle` / `.choice`)现有机制。
@@ -86,7 +86,7 @@ jj st && jj log -r @ -n 1
 
 每个文件都在 `"Nagram.TranslationProvider.transmart" = ...;` 行之后插入(四个文件行布局一致,约 319 行)。
 
-`en.lproj/NagramLocalizable.strings`:
+`en.lproj/QwengramLocalizable.strings`:
 
 ```
 "Nagram.TranslateBeforeSend" = "Translate Before Send";
@@ -106,7 +106,7 @@ jj st && jj log -r @ -n 1
 "Nagram.TranslateBeforeSendTargetLang.uk" = "Ukrainian";
 ```
 
-`zh-hans.lproj/NagramLocalizable.strings`:
+`zh-hans.lproj/QwengramLocalizable.strings`:
 
 ```
 "Nagram.TranslateBeforeSend" = "发送前翻译";
@@ -126,7 +126,7 @@ jj st && jj log -r @ -n 1
 "Nagram.TranslateBeforeSendTargetLang.uk" = "乌克兰语";
 ```
 
-`zh-hant.lproj/NagramLocalizable.strings`:
+`zh-hant.lproj/QwengramLocalizable.strings`:
 
 ```
 "Nagram.TranslateBeforeSend" = "傳送前翻譯";
@@ -146,7 +146,7 @@ jj st && jj log -r @ -n 1
 "Nagram.TranslateBeforeSendTargetLang.uk" = "烏克蘭語";
 ```
 
-`ja.lproj/NagramLocalizable.strings`:
+`ja.lproj/QwengramLocalizable.strings`:
 
 ```
 "Nagram.TranslateBeforeSend" = "送信前に翻訳";
@@ -169,7 +169,7 @@ jj st && jj log -r @ -n 1
 - [ ] **Step 5: 校验四个文件 key 数量一致**
 
 ```sh
-for f in Nagram/Strings/Strings/*.lproj/NagramLocalizable.strings; do echo "$f: $(grep -c 'Nagram.TranslateBeforeSend' $f)"; done
+for f in Qwengram/Strings/Strings/*.lproj/QwengramLocalizable.strings; do echo "$f: $(grep -c 'Nagram.TranslateBeforeSend' $f)"; done
 ```
 
 预期:四个文件都输出 `15`(1 开关 + 1 失败 + 1 标题 + 12 语言,每行都含 `Nagram.TranslateBeforeSend` 前缀)。
@@ -273,15 +273,15 @@ jj commit -m "feat: add optional translate item to send options menu (NAG-75)"
 - Consumes:
   - Task 1: `NagramSettings.shared.translateBeforeSend`、`NagramSettings.shared.translateBeforeSendTargetLang`、字符串 key `Nagram.TranslateBeforeSend.Failed`
   - Task 2: `SendMessageActionSheetControllerParams.SendMessage(... isMonoforum:nagramTranslateInput:)`
-  - 既有 API:`NagramTranslateService(context:).translate(text:toLang:entities:)` → `Signal<(String, [MessageTextEntity])?, TranslationError>`(不传 `messageId`,LLM 自动走无上下文分支);`generateChatInputTextEntities(_:)`、`chatInputStateStringWithAppliedEntities(_:entities:)`(TextFormat);`ChatTextInputState(inputText:)`(光标置末尾);`OverlayStatusController`;`controllerInteraction.displayUndo(.info(...))`(UndoUI);`ngI18n(_:_:)`(NagramStrings)
+  - 既有 API:`NagramTranslateService(context:).translate(text:toLang:entities:)` → `Signal<(String, [MessageTextEntity])?, TranslationError>`(不传 `messageId`,LLM 自动走无上下文分支);`generateChatInputTextEntities(_:)`、`chatInputStateStringWithAppliedEntities(_:entities:)`(TextFormat);`ChatTextInputState(inputText:)`(光标置末尾);`OverlayStatusController`;`controllerInteraction.displayUndo(.info(...))`(UndoUI);`ngI18n(_:_:)`(QwengramStrings)
 - Produces: 完整功能。
 
 - [ ] **Step 1: `submodules/TelegramUI/BUILD` 加依赖**
 
-Nagram deps 块中 `"//Nagram/SettingsUI:NagramSettingsUI",`(76 行)之后加:
+Nagram deps 块中 `"//Qwengram/Enhancements/SettingsUI:NagramSettingsUI",`(76 行)之后加:
 
 ```python
-        "//Nagram/Translate:NagramTranslate",
+        "//Qwengram/Enhancements/Translate:NagramTranslate",
 ```
 
 (`TranslateUI`、`TextProcessingScreen` 已有同样依赖,无循环。)
@@ -296,7 +296,7 @@ import OverlayStatusController
 import UndoUI
 // MARK: NAGRAM
 import NagramSettings
-import NagramStrings
+import QwengramStrings
 import NagramTranslate
 ```
 

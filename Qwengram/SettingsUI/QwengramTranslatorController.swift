@@ -2,9 +2,11 @@ import AccountContext
 import Display
 import Foundation
 import ItemListUI
+import QwengramStrings
 import PresentationDataUtils
 import QwengramAI
 import QwengramSettings
+import QwengramSettingsSignal
 import SwiftSignalKit
 import TelegramPresentationData
 
@@ -82,7 +84,7 @@ private enum QwengramTranslatorEntry: ItemListNodeEntry {
         case let .input(_, section, text, enabled):
             return ItemListMultilineInputItem(presentationData: presentationData, text: text, placeholder: "Paste or type text to translate", maxLength: nil, sectionId: section, style: .blocks, textUpdated: enabled ? arguments.updateInput : { _ in })
         case let .translate(_, section, enabled):
-            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Translate", kind: .generic, alignment: .natural, sectionId: section, style: .blocks, action: enabled ? arguments.translate : {})
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Translate", kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: enabled ? arguments.translate : {})
         case let .loading(_, section):
             return ItemListTextItem(presentationData: presentationData, text: .plain("Translating…"), sectionId: section)
         case let .result(_, section, text):
@@ -121,6 +123,10 @@ public func qwengramTranslatorController(context: AccountContext, initialText: S
         }
         controller?.present(textAlertController(context: context, title: "Target language", text: "Choose a language", actions: actions), in: .window(.root))
     }, translate: {
+        guard QwengramSettings.shared.qwengramEnabled else {
+            showError(ngI18n("Qwengram.Disabled", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode))
+            return
+        }
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
             showError("Enter text to translate.")
@@ -167,6 +173,8 @@ public func qwengramTranslatorController(context: AccountContext, initialText: S
                 case let .failure(error):
                     let message: String
                     switch error {
+                    case .disabled:
+                        message = ngI18n("Qwengram.Disabled", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode)
                     case .invalidRequest:
                         message = "The Qwen request could not be created. Check the Qwen Provider settings."
                     case .network:
@@ -186,8 +194,8 @@ public func qwengramTranslatorController(context: AccountContext, initialText: S
             }
         }
     })
-    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get())
-    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get(), qwengramEnabledSignal())
+    |> map { presentationData, _, enabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let listPresentationData = ItemListPresentationData(presentationData)
         var entries: [QwengramTranslatorEntry] = [
             .header(0, 0, "Source language"),
@@ -196,7 +204,7 @@ public func qwengramTranslatorController(context: AccountContext, initialText: S
             .targetLanguage(3, 1, targetLanguage, !isTranslating),
             .header(4, 2, "Text"),
             .input(5, 2, input, !isTranslating),
-            .translate(6, 3, !isTranslating),
+            .translate(6, 3, enabled && !isTranslating),
         ]
         if isTranslating {
             entries.append(.loading(7, 3))

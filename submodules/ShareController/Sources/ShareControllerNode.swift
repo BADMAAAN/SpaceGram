@@ -1,6 +1,6 @@
 import Foundation
 // MARK: NAGRAM
-import NagramStrings
+import QwengramStrings
 import UIKit
 import Display
 import AsyncDisplayKit

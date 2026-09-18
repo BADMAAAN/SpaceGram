@@ -1,11 +1,13 @@
 import Foundation
 import Postbox
 import QwengramHistoryStorage
+import QwengramMediaArchive
 import QwengramSettings
+import SwiftSignalKit
 
 // Compiled inside TelegramCore. Never retain the transaction or re-enter message writes.
 func qwengramBeforeMessageUpdate(transaction: Transaction, old: Message, new: StoreMessage, source: MessageUpdateSource) {
-    guard QwengramSettings.shared.messageHistoryEnabled, QwengramSettings.shared.saveEditedMessages else {
+    guard QwengramSettings.shared.captureEditedMessages else {
         return
     }
     // Local -> cloud identity/resource reconciliation is not a message edit.
@@ -54,8 +56,8 @@ enum QwengramHistoryServerDeleteSource: String {
 
 // A server deletion confirms disappearance, not who initiated it.
 // Called in the live transaction immediately before Telegram's normal deletion.
-func qwengramBeforeServerDelete(transaction: Transaction, ids: [MessageId], source: QwengramHistoryServerDeleteSource) {
-    guard QwengramSettings.shared.messageHistoryEnabled, QwengramSettings.shared.saveServerDeletedMessages else {
+func qwengramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids: [MessageId], source: QwengramHistoryServerDeleteSource) {
+    guard QwengramSettings.shared.captureDeletedMessages else {
         return
     }
     var seen = Set<MessageId>()
@@ -67,10 +69,9 @@ func qwengramBeforeServerDelete(transaction: Transaction, ids: [MessageId], sour
             // Local deletes and repeated server echoes have no live OLD to capture.
             continue
         }
-        // Delete updates carry no cause. Conservatively exclude all timed messages,
-        // even before their countdown begins, rather than mislabel expiration.
-        guard !old.attributes.contains(where: { $0 is AutoremoveTimeoutMessageAttribute || $0 is AutoclearTimeoutMessageAttribute }),
-              !old.media.contains(where: { media in
+        // A server update confirms disappearance, including timed messages; its
+        // cause is unknown. Never attribute it to a sender or infer expiration.
+        guard !old.media.contains(where: { media in
                   if media is TelegramMediaExpiredContent {
                       return true
                   }
@@ -91,9 +92,15 @@ func qwengramBeforeServerDelete(transaction: Transaction, ids: [MessageId], sour
             let observedTimestamp = Int64(Date().timeIntervalSince1970)
             record.threadId = old.threadId
             record.revisions.append(QwengramHistoryRevision(number: number, observedTimestamp: observedTimestamp, snapshot: qwengramHistorySnapshot(old)))
-            record.events.append(QwengramHistoryEvent(type: .delete, source: source.rawValue, reason: .serverDelete, observedTimestamp: observedTimestamp, revisionNumber: number))
+            let captures = qwengramPinMessageMedia(postbox: postbox, message: old)
+            var event = QwengramHistoryEvent(type: .delete, source: source.rawValue, reason: .serverDelete, observedTimestamp: observedTimestamp, revisionNumber: number)
+            event.mediaCaptureId = captures.isEmpty ? nil : UUID().uuidString
+            record.events.append(event)
             record.nextRevision += 1
             try QwengramHistoryStore.upsert(transaction: transaction, record: record)
+            if let captureId = event.mediaCaptureId {
+                qwengramStoreMessageMedia(postbox: postbox, key: key, captureId: captureId, captures: captures)
+            }
         } catch {
             // Continue with the remaining IDs and the caller's ordinary deletion.
             NSLog("QwengramHistory: archive write failed; Telegram message deletion will continue")
@@ -101,7 +108,7 @@ func qwengramBeforeServerDelete(transaction: Transaction, ids: [MessageId], sour
     }
 }
 
-private func qwengramHistorySnapshot(_ message: Message) -> QwengramHistorySnapshot {
+func qwengramHistorySnapshot(_ message: Message) -> QwengramHistorySnapshot {
     var snapshot = QwengramHistorySnapshot(text: message.text, originalMessageTimestamp: Int64(message.timestamp))
     snapshot.authorPeerId = message.author?.id.toInt64()
     snapshot.entities = qwengramHistoryEntities(message.attributes)

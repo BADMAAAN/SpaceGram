@@ -38,7 +38,7 @@ swift_library(
         "//submodules/TelegramUI/Components/Chat/ChatSwipeToReplyRecognizer",
         "//submodules/TelegramUI/Components/Chat/ChatMessageReactionsFooterContentNode",
         # MARK: NAGRAM
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

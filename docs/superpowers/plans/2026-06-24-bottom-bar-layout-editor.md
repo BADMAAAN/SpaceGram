@@ -4,7 +4,7 @@
 
 **Goal:** Build a Nagram settings subpage that edits the whole bottom bar and top search layout with a live preview.
 
-**Architecture:** Add a pure `NagramBottomBarSettings` model in `Nagram/Settings`, expose derived compatibility values for existing `hideTabBar*`, `showTabBarSearch`, and `wideTabBar` behavior, then connect Telegram root/tab rendering to the new model. Add a `NagramBottomBarSettingsController` under `Nagram/SettingsUI` with a live preview that edits placement only: drag reorders bottom items, drag into the right external slot swaps with the current external item. Actual visibility is controlled by explicit option rows below the preview. Search is constrained to the right standalone button when visible; hiding search releases the standalone slot.
+**Architecture:** Add a pure `NagramBottomBarSettings` model in `Qwengram/Enhancements/Settings`, expose derived compatibility values for existing `hideTabBar*`, `showTabBarSearch`, and `wideTabBar` behavior, then connect Telegram root/tab rendering to the new model. Add a `NagramBottomBarSettingsController` under `Qwengram/Enhancements/SettingsUI` with a live preview that edits placement only: drag reorders bottom items, drag into the right external slot swaps with the current external item. Actual visibility is controlled by explicit option rows below the preview. Search is constrained to the right standalone button when visible; hiding search releases the standalone slot.
 
 **Tech Stack:** Swift, UserDefaults-backed Nagram settings, ItemListUI, AsyncDisplayKit/UIKit views, existing Telegram `TabBarComponent` integration, Bazel full-app build for verification.
 
@@ -12,12 +12,12 @@
 
 ### File Structure
 
-- Create `Nagram/Settings/NagramBottomBarSettings.swift`: bottom bar item IDs, placement/order model, layout options, migration/defaults, mutation helpers.
-- Create `Nagram/SettingsUI/NagramBottomBarSettingsController.swift`: settings subpage with preview, drag/drop editing, and middle layout options.
-- Modify `Nagram/Settings/NagramSettings.swift`: store new settings and map legacy keys.
-- Modify `Nagram/SettingsUI/NagramSettingsController.swift`: replace scattered bottom bar rows with a single navigation row.
-- Modify `Nagram/SettingsUI/BUILD`: add dependencies needed by the preview view if the glob is not enough.
-- Modify `Nagram/Strings/Strings/*.lproj/NagramLocalizable.strings`: add page labels and option labels.
+- Create `Qwengram/Enhancements/Settings/NagramBottomBarSettings.swift`: bottom bar item IDs, placement/order model, layout options, migration/defaults, mutation helpers.
+- Create `Qwengram/Enhancements/SettingsUI/NagramBottomBarSettingsController.swift`: settings subpage with preview, drag/drop editing, and middle layout options.
+- Modify `Qwengram/Enhancements/Settings/NagramSettings.swift`: store new settings and map legacy keys.
+- Modify `Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift`: replace scattered bottom bar rows with a single navigation row.
+- Modify `Qwengram/Enhancements/SettingsUI/BUILD`: add dependencies needed by the preview view if the glob is not enough.
+- Modify `Qwengram/Strings/Strings/*.lproj/QwengramLocalizable.strings`: add page labels and option labels.
 - Modify `submodules/TelegramUI/Sources/TelegramRootController.swift`: use the new model for root controller list updates.
 - Modify `submodules/TabBarUI/Sources/TabBarContollerNode.swift`: pass new model to `TabBarComponent`, filter/order items, map the external slot.
 - Modify `submodules/TelegramUI/Components/TabBarComponent/Sources/TabBarComponent.swift`: support custom external item, optional labels, width/alignment/slot policy.
@@ -26,8 +26,8 @@
 ### Task 1: Add Bottom Bar Model
 
 **Files:**
-- Create: `Nagram/Settings/NagramBottomBarSettings.swift`
-- Modify: `Nagram/Settings/NagramSettings.swift`
+- Create: `Qwengram/Enhancements/Settings/NagramBottomBarSettings.swift`
+- Modify: `Qwengram/Enhancements/Settings/NagramSettings.swift`
 
 - [ ] Define `NagramBottomBarItemId` cases: `contacts`, `calls`, `chats`, `settings`, `search`.
 - [ ] Define placement as a model with `bottomItems: [NagramBottomBarItemId]`, `externalItem: NagramBottomBarItemId?`, `hiddenItems: Set<NagramBottomBarItemId>`, `topSearchVisible: Bool`, and `searchMode` (`button`, `hidden`; legacy `bar` normalizes to `button`).
@@ -43,8 +43,8 @@
 ### Task 2: Add Settings Entry
 
 **Files:**
-- Modify: `Nagram/SettingsUI/NagramSettingsController.swift`
-- Modify: `Nagram/Strings/Strings/*.lproj/NagramLocalizable.strings`
+- Modify: `Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift`
+- Modify: `Qwengram/Strings/Strings/*.lproj/QwengramLocalizable.strings`
 
 - [ ] Replace Interface group rows for `HideTabBar*`, `ShowTabBarSearch`, and `WideTabBar` with one navigation row `Nagram.BottomBarLayout`.
 - [ ] Keep `HideStories` in the Interface group.
@@ -54,7 +54,7 @@
 ### Task 3: Build Interactive Editor UI
 
 **Files:**
-- Create: `Nagram/SettingsUI/NagramBottomBarSettingsController.swift`
+- Create: `Qwengram/Enhancements/SettingsUI/NagramBottomBarSettingsController.swift`
 
 - [ ] Build an `ItemListController` page with custom preview item, explicit visibility rows, layout option rows, and reset row.
 - [ ] Preview top section renders top search row when `topSearchVisible` is true.
@@ -100,7 +100,7 @@
 **Files:**
 - Read-only verification across modified files.
 
-- [ ] Run `swift` type-oriented checks when feasible for pure `Nagram/Settings` files.
+- [ ] Run `swift` type-oriented checks when feasible for pure `Qwengram/Enhancements/Settings` files.
 - [ ] Run full device build through `build-system/Make/Make.py --configuration=debug_arm64 --continueOnError`.
 - [ ] If the build succeeds, list connected devices with `xcrun devicectl list devices`.
 - [ ] Install `bazel-bin/Telegram/Telegram.ipa` to the available device.

@@ -1,4 +1,6 @@
 import Foundation
+// MARK: NAGRAM — Qwengram automatic receipt policy.
+import QwengramSettings
 import Postbox
 import SwiftSignalKit
 import TelegramApi
@@ -720,7 +722,8 @@ public final class AccountViewTracker {
                             guard let peer = transaction.getPeer(peerId), let inputPeer = apiInputPeer(peer) else {
                                 return .complete()
                             }
-                            return account.network.request(Api.functions.messages.getMessagesViews(peer: inputPeer, id: messageIds.map { $0.id }, increment: .boolTrue))
+                            // MARK: NAGRAM — fetch counters without incrementing while ghost reading.
+                            return account.network.request(Api.functions.messages.getMessagesViews(peer: inputPeer, id: messageIds.map { $0.id }, increment: QwengramGhostPolicy.suppressAutomaticReads ? .boolFalse : .boolTrue))
                             |> map(Optional.init)
                             |> `catch` { _ -> Signal<Api.messages.MessageViews?, NoError> in
                                 return .single(nil)
@@ -944,6 +947,8 @@ public final class AccountViewTracker {
     
     public func updateSeenLiveLocationForMessageIds(messageIds: Set<MessageId>) {
         self.queue.async {
+            // MARK: NAGRAM — do not enqueue acknowledgements or poison dedup state.
+            guard !QwengramGhostPolicy.suppressAutomaticReads else { return }
             var addedMessageIds: [MessageId] = []
             let timestamp = Int32(CFAbsoluteTimeGetCurrent())
             for messageId in messageIds {
@@ -960,6 +965,8 @@ public final class AccountViewTracker {
                     
                     if let account = self.account {
                         let signal = (account.postbox.transaction { transaction -> Signal<Void, NoError> in
+                            // MARK: NAGRAM — policy can change while the transaction waits.
+                            guard !QwengramGhostPolicy.suppressAutomaticReads else { return .complete() }
                             if let peer = transaction.getPeer(peerId), let inputPeer = apiInputPeer(peer) {
                                 let request: Signal<Bool, MTRpcError>
                                 switch inputPeer {
@@ -1646,6 +1653,8 @@ public final class AccountViewTracker {
     
     public func updateMarkMentionsSeenForMessageIds(messageIds: Set<MessageId>) {
         self.queue.async {
+            // MARK: NAGRAM — do not enqueue acknowledgements or poison dedup state.
+            guard !QwengramGhostPolicy.suppressAutomaticReads else { return }
             var addedMessageIds: [MessageId] = []
             for messageId in messageIds {
                 if !self.updatedSeenPersonalMessageIds.contains(messageId) {
@@ -1749,6 +1758,8 @@ public final class AccountViewTracker {
     
     public func updateMarkReactionsAndVotesSeenForMessageIds(messageIds: Set<MessageId>) {
         self.queue.async {
+            // MARK: NAGRAM — do not enqueue acknowledgements or poison dedup state.
+            guard !QwengramGhostPolicy.suppressAutomaticReads else { return }
             let addedMessageIds: [MessageId] = Array(messageIds)
             if !addedMessageIds.isEmpty {
                 if let account = self.account {

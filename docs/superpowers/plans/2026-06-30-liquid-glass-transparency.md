@@ -4,7 +4,7 @@
 
 **Goal:** Add Nagram settings for follow-system or custom Liquid Glass overlay opacity.
 
-**Architecture:** Keep `Nagram/Settings` pure Foundation and expose only mode/percent/factor values. UI modules convert the numeric factor to UIKit colors locally. `Display` receives generic transparency settings through a non-Nagram provider; TelegramUI wires that provider to Nagram settings and triggers refreshes.
+**Architecture:** Keep `Qwengram/Enhancements/Settings` pure Foundation and expose only mode/percent/factor values. UI modules convert the numeric factor to UIKit colors locally. `Display` receives generic transparency settings through a non-Nagram provider; TelegramUI wires that provider to Nagram settings and triggers refreshes.
 
 **Tech Stack:** Swift, Bazel Swift libraries, UserDefaults, SwiftSignalKit, UIKit glass/blur components.
 
@@ -12,10 +12,10 @@
 
 ## File Structure
 
-- Modify `Nagram/Settings/NagramSettings.swift`: add mode enum, stored defaults, clamped helpers.
-- Modify `Nagram/SettingsSignal/Sources/NagramSettingsSignal.swift`: add signal for glass transparency changes.
-- Modify `Nagram/SettingsUI/NagramSettingsController.swift`: add choice row and conditional slider row; make slider row title configurable.
-- Modify `Nagram/Strings/Strings/{en,zh-hans,zh-hant,ja}.lproj/NagramLocalizable.strings`: add labels.
+- Modify `Qwengram/Enhancements/Settings/NagramSettings.swift`: add mode enum, stored defaults, clamped helpers.
+- Modify `Qwengram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift`: add signal for glass transparency changes.
+- Modify `Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift`: add choice row and conditional slider row; make slider row title configurable.
+- Modify `Qwengram/Strings/Strings/{en,zh-hans,zh-hant,ja}.lproj/QwengramLocalizable.strings`: add labels.
 - Modify `submodules/Display/Source/NavigationBackgroundView.swift`: add generic transparency provider and apply overlay factor without importing Nagram.
 - Modify `submodules/TelegramUI/Components/GlassBackgroundComponent/Sources/GlassBackgroundComponent.swift`: apply custom factor locally and respect Reduce Transparency on legacy glass.
 - Modify `submodules/TelegramUI/Sources/TelegramRootController.swift`: wire provider and subscribe to Nagram glass transparency changes.
@@ -33,7 +33,7 @@ This repository has no Nagram unit-test target. Do not create a new testing infr
 ### Task 1: Settings Model
 
 **Files:**
-- Modify: `Nagram/Settings/NagramSettings.swift`
+- Modify: `Qwengram/Enhancements/Settings/NagramSettings.swift`
 
 - [ ] **Step 1: Add pure Foundation data model**
 
@@ -58,14 +58,14 @@ var glassTransparencyFollowsSystem: Bool
 
 - [ ] **Step 2: Verify no UIKit leak**
 
-Run: `rg -n "import UIKit|UIColor|CGFloat" Nagram/Settings`
+Run: `rg -n "import UIKit|UIColor|CGFloat" Qwengram/Enhancements/Settings`
 
 Expected: no output.
 
 ### Task 2: Settings Signal
 
 **Files:**
-- Modify: `Nagram/SettingsSignal/Sources/NagramSettingsSignal.swift`
+- Modify: `Qwengram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift`
 
 - [ ] **Step 1: Add signal**
 
@@ -73,14 +73,14 @@ Add `nagramGlassTransparencySignal() -> Signal<Int32, NoError>` backed by `UserD
 
 - [ ] **Step 2: Verify symbol**
 
-Run: `rg -n "nagramGlassTransparencySignal" Nagram/SettingsSignal`
+Run: `rg -n "nagramGlassTransparencySignal" Qwengram/Enhancements/SettingsSignal`
 
 Expected: function definition appears once.
 
 ### Task 3: Settings UI
 
 **Files:**
-- Modify: `Nagram/SettingsUI/NagramSettingsController.swift`
+- Modify: `Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift`
 
 - [ ] **Step 1: Make slider row title configurable**
 
@@ -97,17 +97,17 @@ Under General -> Interface, add:
 
 - [ ] **Step 3: Verify old sticker row still maps to `Nagram.StickerSize`**
 
-Run: `rg -n "case .*slider|Nagram.StickerSize|GlassTransparency" Nagram/SettingsUI/NagramSettingsController.swift`
+Run: `rg -n "case .*slider|Nagram.StickerSize|GlassTransparency" Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift`
 
 Expected: both sticker and glass slider paths exist.
 
 ### Task 4: Localization
 
 **Files:**
-- Modify: `Nagram/Strings/Strings/en.lproj/NagramLocalizable.strings`
-- Modify: `Nagram/Strings/Strings/zh-hans.lproj/NagramLocalizable.strings`
-- Modify: `Nagram/Strings/Strings/zh-hant.lproj/NagramLocalizable.strings`
-- Modify: `Nagram/Strings/Strings/ja.lproj/NagramLocalizable.strings`
+- Modify: `Qwengram/Strings/Strings/en.lproj/QwengramLocalizable.strings`
+- Modify: `Qwengram/Strings/Strings/zh-hans.lproj/QwengramLocalizable.strings`
+- Modify: `Qwengram/Strings/Strings/zh-hant.lproj/QwengramLocalizable.strings`
+- Modify: `Qwengram/Strings/Strings/ja.lproj/QwengramLocalizable.strings`
 
 - [ ] **Step 1: Add keys**
 
@@ -123,7 +123,7 @@ Nagram.GlassTransparency.Footer
 
 - [ ] **Step 2: Verify all locales**
 
-Run: `for f in Nagram/Strings/Strings/*/NagramLocalizable.strings; do echo "$f"; rg -n "Nagram.GlassTransparency" "$f"; done`
+Run: `for f in Qwengram/Strings/Strings/*/QwengramLocalizable.strings; do echo "$f"; rg -n "Nagram.GlassTransparency" "$f"; done`
 
 Expected: each locale prints all five keys.
 
@@ -206,13 +206,13 @@ Expected: provider setup, disposable, and deinit cleanup are present.
 
 - [ ] **Step 1: Dependency query**
 
-Run: `bazel query 'deps(//Nagram/SettingsUI:NagramSettingsUI)' --noshow_progress >/tmp/nagram-settingsui-deps.txt`
+Run: `bazel query 'deps(//Qwengram/Enhancements/SettingsUI:NagramSettingsUI)' --noshow_progress >/tmp/nagram-settingsui-deps.txt`
 
 Expected: command exits 0.
 
 - [ ] **Step 2: Target query**
 
-Run: `bazel query '//Nagram/Settings:all + //Nagram/SettingsSignal:all + //Nagram/SettingsUI:all + //submodules/TelegramUI/Components/GlassBackgroundComponent:all + //submodules/Display:all' --noshow_progress`
+Run: `bazel query '//Qwengram/Enhancements/Settings:all + //Qwengram/Enhancements/SettingsSignal:all + //Qwengram/Enhancements/SettingsUI:all + //submodules/TelegramUI/Components/GlassBackgroundComponent:all + //submodules/Display:all' --noshow_progress`
 
 Expected: command exits 0.
 

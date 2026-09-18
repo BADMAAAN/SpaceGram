@@ -5,7 +5,8 @@ import TelegramPresentationData
 import MergeLists
 import AccountContext
 import NagramSettings
-import NagramStrings // MARK: NAGRAM
+// MARK: NAGRAM - shared Qwengram localization.
+import QwengramStrings // MARK: NAGRAM
 
 enum ChatListNodeEntryId: Hashable {
     case Header

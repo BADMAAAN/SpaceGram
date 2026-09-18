@@ -6,7 +6,7 @@
 
 Qwengram explores a client with more user control, integrated AI, useful built-in tools, and a cleaner experience for people who want more from Telegram. It uses Telegram infrastructure and protocol through Telegram-iOS; it is not a new messaging network.
 
-The project combines the Telegram-iOS foundation, the Nagram-iOS enhancement layer, and an independent Qwengram product layer. Privacy controls, message tools, and upstream compatibility guide development, while the current MVP centers on settings, local QR generation, and explicit AI workflows.
+Qwengram is built as Telegram-iOS plus a Qwengram product layer. Selected inherited implementations remain as compatibility modules owned under `Qwengram/Enhancements`; Nagram is a historical source of code, not the architectural upstream. See [the current project audit](QWENGRAM_PROJECT_AUDIT.md) for source-verified features and limitations.
 
 ## Why Qwengram exists
 
@@ -17,20 +17,18 @@ The immediate priority is quality: compile, sign, install, and test the existing
 ## Architecture
 
 ```text
-Telegram-iOS
+Telegram-iOS upstream
     ↓
-Nagram-iOS enhancement layer
-    ↓
-Qwengram custom layer
+Qwengram (features, retained enhancements, integration hooks)
 ```
 
 | Layer | Responsibility |
 | --- | --- |
 | Telegram-iOS | Original upstream application and platform foundation, including Telegram integration. |
-| Nagram-iOS | Enhancement layer from which Qwengram was initially forked. |
+| Retained enhancements | Selected inherited implementations under Qwengram ownership; compatibility names and storage keys are preserved. |
 | Qwengram | Independent custom product layer developed in this repository. |
 
-Qwengram-specific code should primarily live under `Qwengram/`. Existing Nagram code remains recognizable as upstream-derived code: mass renaming or rewriting would obscure provenance and make upstream updates harder.
+Qwengram-specific code should primarily live under `Qwengram/`. Inherited implementations live in `Qwengram/Enhancements/`; attribution and stable storage keys remain intact.
 
 Unavoidable Telegram/Nagram integration points use `// MARK: QWENGRAM` and are recorded in the [upstream hook notes](Qwengram/QWENGRAM_HOOKS.md). The hooks connect settings navigation and message actions to Qwengram controllers.
 
@@ -290,7 +288,7 @@ Qwengram/
 | `Qwengram/Settings/` | UserDefaults-backed toggles and model preference. |
 | `Qwengram/SettingsSignal/` | Reactive updates for the two boolean settings. |
 | `Qwengram/SettingsUI/` | Settings, launcher, QR, AI, and message-review controllers. |
-| `Nagram/` | Preserved Nagram enhancement layer. |
+| `Qwengram/Enhancements/` | Retained inherited functions, with documented compatibility identifiers. |
 | `Telegram/`, `submodules/` | App targets and upstream libraries. |
 | `build-system/` | Existing build tooling. |
 
@@ -305,11 +303,11 @@ Contributions should be focused, distinguish implemented behavior from placehold
 ## Upstream projects and credits
 
 - [Telegram-iOS](https://github.com/TelegramMessenger/Telegram-iOS) provides the original client foundation.
-- **Nagram-iOS**, NextAlone, and its contributors provide the inherited enhancement layer. The related Android project is [Nagram](https://github.com/NextAlone/Nagram).
+- **Nagram-iOS**, NextAlone, and its contributors contributed the retained inherited implementations. The related Android project is [Nagram](https://github.com/NextAlone/Nagram).
 - **Qwen / Alibaba Cloud Model Studio** provides the external AI service targeted by the current Qwen implementation.
 - **Qwengram contributors** develop this repository's custom layer and tools.
 
-The [archived original Nagram README](docs/UPSTREAM_NAGRAM_README.md) preserves the complete README inherited from the Nagram fork, including copyright/trademark notices, build notes, and the upstream Telegram compilation guide. It was recovered unchanged from the repository's committed README before this restructuring.
+Inherited copyright and brand notices are preserved in [BRANDING.md](BRANDING.md). The obsolete product README has been removed; current build instructions remain in `docs/build.md`.
 
 The archive is a historical document. Its relative paths still assume the repository root and are intentionally unchanged; for its local references, use [BRANDING.md](BRANDING.md) and [docs/build.md](docs/build.md) from the root.
 
@@ -317,8 +315,8 @@ The archive is a historical document. Its relative paths still assume the reposi
 
 Upstream code and third-party components retain their respective licenses and copyrights. This documentation does not introduce a new license or claim ownership of inherited code.
 
-Nagram-iOS-specific source and materials retain attribution to NextAlone and Nagram-iOS contributors. Nagram icon artwork is copyright MaitungTM, all rights reserved. Nagram names and assets, Telegram names and trademarks, and Qwen/Alibaba names remain with their respective owners. See the existing [branding policy](BRANDING.md) and archived notices.
+Nagram-iOS-specific source and materials retain attribution to NextAlone and Nagram-iOS contributors. Nagram icon artwork is copyright MaitungTM, all rights reserved. Nagram names and assets, Telegram names and trademarks, and Qwen/Alibaba names remain with their respective owners. See the existing [branding policy](BRANDING.md) for inherited notices.
 
-Qwengram uses its own project identity. Completing the application's independent branding and icon remains roadmap work. Source licenses do not grant trademark rights, and Qwengram distributions must not imply official Telegram or Nagram affiliation.
+Qwengram uses its own project identity. The app displays Qwengram and no longer bundles Nagram icons. A distinct Qwengram icon remains roadmap work; the existing Telegram asset catalog is used temporarily. Source licenses do not grant trademark rights, and Qwengram distributions must not imply official Telegram or Nagram affiliation.
 
 **Qwengram is unofficial and independent. It is not affiliated with, endorsed by, or an official product of Telegram, Nagram, Alibaba, or Qwen.**

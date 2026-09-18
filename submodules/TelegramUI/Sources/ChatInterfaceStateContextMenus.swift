@@ -26,10 +26,13 @@ import ReactionListContextMenuContent
 import TelegramUIPreferences
 // MARK: NAGRAM — force-copy 增强开关模块
 import NagramSettings
-import NagramStrings
+// MARK: NAGRAM - shared Qwengram localization.
+import QwengramStrings
 import TranslateUI
 // MARK: QWENGRAM
 import QwengramSettingsUI
+// MARK: NAGRAM — Qwengram master switch.
+import QwengramSettings
 // MARK: NAGRAM
 import QwengramHistoryUI
 import DebugSettingsUI
@@ -1543,12 +1546,14 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     }
                 }
 
-                // MARK: QWENGRAM
-                if messages.count == 1, !message.containsSecretMedia, !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // MARK: NAGRAM — Qwengram AI is disabled at both entry and provider.
+                if QwengramSettings.shared.qwengramEnabled, messages.count == 1, !message.containsSecretMedia, !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     actions.append(.action(ContextMenuActionItem(text: "Qwengram AI", icon: { theme in
                         return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Message"), color: theme.actionSheet.primaryTextColor)
                     }, action: { _, f in
                         f(.dismissWithoutContent)
+                        // MARK: NAGRAM — settings may change while the menu is open.
+                        guard QwengramSettings.shared.qwengramEnabled else { return }
                         controllerInteraction.navigationController()?.pushViewController(qwengramMessageAIController(context: context, text: messageText))
                     })))
                 }

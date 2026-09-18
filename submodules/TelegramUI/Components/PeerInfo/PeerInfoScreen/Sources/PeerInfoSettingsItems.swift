@@ -22,7 +22,7 @@ enum SettingsSection: Int, CaseIterable {
     case accounts
     case myProfile
     case nagram
-    // MARK: QWENGRAM — standalone settings section after Nagram during development.
+    // MARK: QWENGRAM — product settings alongside inherited Telegram enhancements.
     case qwengram
     case proxy
     case apps
@@ -230,7 +230,7 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     }))
 
     // MARK: NAGRAM — 增强设置入口；长按可在隐藏底栏时进入 Debug Settings。
-    items[.nagram]!.append(PeerInfoScreenDisclosureItem(id: 50, text: "Nagram", icon: PresentationResourcesSettings.settings, longPressAction: {
+    items[.nagram]!.append(PeerInfoScreenDisclosureItem(id: 50, text: "Qwengram · Telegram", icon: PresentationResourcesSettings.settings, longPressAction: {
         interaction.openSettings(.nagramDebug)
     }, action: {
         interaction.openSettings(.nagram)

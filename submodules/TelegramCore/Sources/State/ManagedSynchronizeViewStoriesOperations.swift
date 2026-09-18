@@ -1,4 +1,6 @@
 import Foundation
+// MARK: NAGRAM — Qwengram story policy.
+import QwengramSettings
 import Postbox
 import SwiftSignalKit
 import TelegramApi
@@ -119,6 +121,10 @@ func managedSynchronizeViewStoriesOperations(postbox: Postbox, network: Network,
 }
 
 private func pushStoriesAreSeen(postbox: Postbox, network: Network, stateManager: AccountStateManager, peer: Peer, operation: SynchronizeViewStoriesOperation) -> Signal<Void, NoError> {
+    // MARK: NAGRAM — consume suppressed pending operations instead of replaying later.
+    guard !QwengramGhostPolicy.suppressStoryViews else {
+        return .complete()
+    }
     guard let inputPeer = apiInputPeer(peer) else {
         return .complete()
     }

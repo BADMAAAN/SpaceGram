@@ -1,47 +1,58 @@
 # Qwengram
 
-`Qwengram/` contains Qwengram-only features. Qwengram is a standalone Telegram
-iOS client; the `Nagram/` directory is legacy code currently retained only
-where existing Telegram integration still requires it. New Qwengram work must
-not depend on that layer.
+`Qwengram/` owns the client-specific settings, tools, AI and message archive.
+Telegram integration stays in small hooks documented in [QWENGRAM_HOOKS.md](QWENGRAM_HOOKS.md).
+Upstream Swift edits use `// MARK: NAGRAM` as required by the repository guide.
+The common localization loader and resources live in `Qwengram/Strings`.
+Retained implementations are owned in `Qwengram/Enhancements`; compatibility
+symbols and storage keys preserve existing users’ preferences.
 
-Keep the architecture layered:
+## Implemented
 
-```text
-Official Telegram iOS modules
-↓
-Qwengram custom modules
-```
+- Settings and reactive settings signals; a master switch gates new history
+  capture, Qwen requests and Tools actions. Turning it off cancels active Qwen
+  requests and disables Ghost policies. Existing history, settings and Keychain
+  management remain accessible; stored preferences/data are not erased.
+- Tools Hub (existing `Bots` module and IDs retained), with Qwen Assistant,
+  Summarizer, Translator and local QR generation. Unimplemented tools are disabled.
+- Qwen streaming and Stop; model selection and a device-only, when-unlocked
+  Keychain API key. Conversations, summaries and translations remain in memory.
+- Message History: previous versions and selected explicit server deletion events,
+  an account-isolated Postbox store, global browser and per-message details.
+  Storage is bounded; large histories evict older snapshots before rejecting an
+  oversized newest snapshot. Capture never prevents Telegram's ordinary writes.
+- Independent opt-in Ghost controls for automatic chat reading, outgoing chat
+  activity, Story view acknowledgements (including pinned Stories), and explicit online presence.
+  Presence changes leave the Telegram connection and push configuration intact.
 
-If a future upstream modification is unavoidable, mark it with:
+- Opt-in Media Archive: complete received cloud-message resources captured at
+  server deletion, timed consumption and local/remote expiration. Independent
+  account storage, bounded retention, SHA-256 verification and local Quick Look
+  from History. History v1 remains readable; writes use v2 media references.
 
-```swift
-// MARK: QWENGRAM
-```
+## Current limits
 
-Implemented modules:
+Ghost Mode is partial: automatic reads from the chat history view are suppressed
+without changing unread state. Native explicit mark-as-read actions remain
+available. Untimed media-consumption receipts, automatic mention/reaction/poll reads, live
+location receipts, channel view increments and read metrics are also suppressed.
+Timed/view-once lifecycle acknowledgements and previously queued read operations
+remain native; this is not a universal protocol-level read receipt firewall. Requests
+already transmitted cannot be withdrawn. Sending/reactions may expose activity.
+Viewing a later Story with suppression off can acknowledge earlier IDs as well.
+Group-call speaking events are preserved so calls continue functioning.
 
-- SettingsSignal
-- SettingsUI
-- Bots (`QwengramBots`)
-- AI (`QwengramAI`) foundation with Qwen provider support
+Media Archive defaults off and requires Qwengram and Message History enabled.
+Limits are 512 MiB / 1,000 assets per account, 128 MiB per asset, 30-day lazy
+retention. Only complete local files are captured: no network recovery, partial
+streams, secret-chat binaries or Story archive. Unsupported codecs may not play
+in Quick Look. Capture is best effort, not a guarantee against all deletions or
+cache eviction. Archive search/filters/manual cleanup UI, persistent AI
+conversations and further security/appearance controls remain outstanding.
 
-QR Tools is the first functional Bots Hub utility: it generates QR codes locally
-on-device. No bot-network execution or integration exists yet.
+See [MEDIA_ARCHIVE_AUDIT.md](MEDIA_ARCHIVE_AUDIT.md) for current integration,
+protocol exceptions, retention semantics and the required macOS tests.
 
-Qwen credentials are stored in Keychain. Qwen Assistant is the first functional
-AI entry and requires a user-supplied Qwen API key. It supports streaming text
-responses; its conversation remains in-memory only. Attachments and persistence
-are not implemented.
-
-Summarizer is functional and uses the configured Qwen provider. Submitted text
-and generated summaries remain in-memory only.
-
-Translator is functional and uses the configured Qwen provider. Source text and
-translations remain in-memory only; its initial target-language list is
-intentionally small.
-
-Planned modules:
-- Privacy
-- History
-- Media
+See [FOUNDATION_AUDIT.md](FOUNDATION_AUDIT.md) for the source inventory, next
+integration points and the remaining validation work. No iOS build or device
+verification has been performed for this change on the Windows host.

@@ -2,9 +2,11 @@ import AccountContext
 import Display
 import Foundation
 import ItemListUI
+import QwengramStrings
 import PresentationDataUtils
 import QwengramAI
 import QwengramSettings
+import QwengramSettingsSignal
 import SwiftSignalKit
 import TelegramPresentationData
 
@@ -78,7 +80,7 @@ private enum QwengramQwenAssistantEntry: ItemListNodeEntry {
         case let .input(_, section, text, enabled):
             return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: "Message", textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: "Ask Qwen", type: .regular(capitalization: true, autocorrection: true), clearType: .onFocus, sectionId: section, textUpdated: enabled ? arguments.updateInput : { _ in }, action: {})
         case let .send(_, section, enabled):
-            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Send", kind: .generic, alignment: .natural, sectionId: section, style: .blocks, action: enabled ? arguments.send : {})
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Send", kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: enabled ? arguments.send : {})
         case let .stop(_, section):
             return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Stop generating", kind: .generic, alignment: .natural, sectionId: section, style: .blocks, action: arguments.stop)
         }
@@ -119,6 +121,10 @@ public func qwengramQwenAssistantController(context: AccountContext, initialText
     let arguments = QwengramQwenAssistantArguments(updateInput: { value in
         input = value
     }, send: {
+        guard QwengramSettings.shared.qwengramEnabled else {
+            showError(ngI18n("Qwengram.Disabled", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode))
+            return
+        }
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isSending else {
             return
@@ -178,6 +184,8 @@ public func qwengramQwenAssistantController(context: AccountContext, initialText
                     }
                     let message: String
                     switch error {
+                    case .disabled:
+                        message = ngI18n("Qwengram.Disabled", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode)
                     case .invalidRequest:
                         message = "The Qwen request could not be created. Check the Qwen Provider settings."
                     case .network:
@@ -197,8 +205,8 @@ public func qwengramQwenAssistantController(context: AccountContext, initialText
             }
         })
     }, stop: stop)
-    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get())
-    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get(), qwengramEnabledSignal())
+    |> map { presentationData, _, enabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let listPresentationData = ItemListPresentationData(presentationData)
         var entries: [QwengramQwenAssistantEntry] = [.header(0, 0, "Conversation")]
         var stableId: Int32 = 1
@@ -217,7 +225,7 @@ public func qwengramQwenAssistantController(context: AccountContext, initialText
         if isSending {
             entries.append(.stop(stableId, 2))
         } else {
-            entries.append(.send(stableId, 2, true))
+            entries.append(.send(stableId, 2, enabled))
         }
         let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("Qwen Assistant"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (controllerState, (ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: true), arguments))

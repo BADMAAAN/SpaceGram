@@ -167,10 +167,12 @@ All three switches use `QwengramSettings` / `@QwengramDefault` with persistent
 
 The screen observes the existing UserDefaults notification mechanism through
 `QwengramSettingsSignal`. Each capture callback reads current settings before
-snapshotting or accessing HistoryStorage: edit requires master AND save-edited;
-server delete requires master AND save-server-deleted. Turning master off leaves
+snapshotting or accessing HistoryStorage: edit requires Qwengram Enabled AND
+Message History AND save-edited; server delete requires Qwengram Enabled AND
+Message History AND save-server-deleted. Turning master off leaves
 the individual preferences intact. Settings changes never remove stored history.
-The separate general Qwengram Enabled preference is not the history master.
+The general Qwengram Enabled preference also gates capture, without hiding
+previously stored records.
 No new upstream callbacks or message history list UI are introduced.
 
 Validation on Windows: source review and all eight boolean gating combinations.
@@ -279,8 +281,104 @@ remain unavailable without macOS/Xcode. No Actions are used.
   **Module:** `QwengramSettingsUI`
   **Rebase note:** Preserve the direct Bazel dependency next to the other fork UI dependencies.
 
-- **File:** `Nagram/Demo/Sources/NagramDemo.swift`
+- **File:** `Qwengram/Enhancements/Demo/Sources/NagramDemo.swift`
   **Section:** Demo message seeding
   **Reason:** Splits a large `StoreMessage` map expression into smaller typed expressions so Xcode 26.2 can type-check it during the ARM64 build.
   **Module:** `NagramDemo`
   **Rebase note:** Compatibility-only refactor; preserve behavior and re-test whether the workaround is still required after upstream changes.
+
+
+## Ghost policies and master switch (2026-09-18)
+
+The effective policy lives in `Qwengram/Settings/QwengramGhostPolicy.swift`.
+All four Ghost preferences default to false and require Qwengram Enabled.
+Settings are device-wide like the existing Qwengram preferences; each account's
+history remains in its own Postbox. Signals register the notification observer
+before reading the initial value and serialize notification emissions.
+
+- `TelegramCore/Sources/State/ManagedLocalInputActivities.swift`: combines activity
+  updates with the effective policy, disposes pending suppressed activities, and
+  checks again inside the transaction before cloud/encrypted typing requests.
+  Group-call speaking events are exempt because they maintain live call state.
+- `TelegramCore/Sources/State/ManagedAccountPresence.swift`: combines Telegram's
+  desired online state with the policy on the manager queue. Switching suppression
+  on transitions an already-online manager to offline and stops its timer;
+  switching it off resumes Telegram's current desired state. Connection management
+  and push registration are untouched. This is not server-side invisibility.
+- `TelegramCore/Sources/TelegramEngine/Messages/Stories.swift`: suppresses pinned
+  `incrementStoryViews` requests and avoids enqueuing normal view synchronization,
+  while retaining Telegram's existing local story progress.
+- `TelegramCore/Sources/State/ManagedSynchronizeViewStoriesOperations.swift`:
+  pending operations reached while suppressed complete without a request and are
+  removed by the existing operation runner. They are not retried on disable.
+  A later normal `readStories(maxId:)` can still cover earlier story IDs.
+- `TelegramCore/BUILD`: direct dependency on QwengramSettingsSignal (Foundation,
+  QwengramSettings, SwiftSignalKit only; no UI/Core cycle).
+- `TelegramUI/Sources/ChatInterfaceStateContextMenus.swift`: gates Qwengram AI
+  availability and rechecks at tap time. Its BUILD links QwengramSettings.
+  Saved Message History actions deliberately remain available.
+
+All modified upstream sites have nearby `// MARK: NAGRAM` markers. Rebase by
+preserving these boundaries, not by moving product logic into Telegram code.
+
+QwenProvider independently rejects new requests while disabled and owns a
+settings observer for each active request. Both streaming and non-streaming tasks
+are cancelled on disable; a disabled-request outcome is sticky even if the user
+reenables Qwengram before the cancellation callback. Already delivered data cannot
+be recalled. No request body, API key or error containing content is logged.
+
+
+### Automatic chat reading
+
+`TelegramUI/Sources/ChatHistoryListNode.swift` combines its existing can-read signal
+with the Qwengram policy for both visible-index handling and the live read-action
+subscription. It rechecks current settings before applying a visible read index.
+This also pauses its automatic mention/reaction handling and read metrics. The
+TelegramCore store-message action in `InstallInteractiveReadMessagesAction.swift`
+checks the same policy inside the transaction, so newly arriving messages are
+not read by an action awaiting UI disposal. TelegramUI links SettingsSignal directly.
+
+Local unread state is deliberately retained; the hook does not lie to Postbox's
+synchronization queue about having sent a receipt. Native explicit mark-as-read
+(including Mark All) remains an intentional way to acknowledge messages. Turning
+suppression off, or disabling Qwengram, restores normal reading of visible messages.
+
+This covers chat-history viewing, not every possible Telegram receipt. Media
+consumption/TTL, explicit user actions and already queued/transmitted operations
+remain outside this hook. Test peer chats, reply threads, forums, secret chats,
+background/foreground transitions and multiple accounts before release.
+
+
+## Media Archive and extended receipt policy (2026-09-18)
+
+See [MEDIA_ARCHIVE_AUDIT.md](MEDIA_ARCHIVE_AUDIT.md) for the current behavior,
+exceptions and validation. This extends the earlier automatic-read section.
+
+- `TelegramCore/Sources/State/AccountStateManagementUtils.swift`: passes Postbox
+  into both explicit server-delete hooks and cloud remote content-consumption
+  updates; allows pinning complete resources before deletion/tombstoning.
+- `TelegramCore/Sources/State/ManagedAutoremoveMessageOperations.swift`: captures
+  before automatic removal or replacement with expired media.
+- `TelegramCore/Sources/TelegramEngine/Messages/MarkMessageContentAsConsumedInteractively.swift`:
+  captures timed media before initial consumption and remote expiration;
+  suppresses untimed automatic consumption and reaction/poll seen-state mutation.
+  Timed acknowledgement/timer behavior is preserved. Secret-chat remote callers
+  retain the default nil Postbox argument and are not archived.
+- `TelegramCore/Sources/TelegramEngine/Messages/InstallInteractiveReadMessagesAction.swift`:
+  stops automatic reaction/poll pending actions before local mutation.
+- `TelegramCore/Sources/State/AccountViewTracker.swift`: suppresses automatic
+  mention/reaction/poll/live-location reads before queuing, rechecks live-location
+  requests, and fetches channel counters with increment=false under Ghost.
+- `TelegramCore/Sources/TelegramEngine/Messages/TelegramEngineMessages.swift`:
+  suppresses peer-read metrics at request creation.
+- `TelegramCore/BUILD`: adds QwengramMediaArchive. HistoryIntegration's existing
+  Swift filegroup includes QwengramMediaIntegration.swift; do not turn it into a
+  separate module importing TelegramCore (that would create a dependency cycle).
+- `Qwengram/HistoryUI/BUILD`: adds MediaArchive and QwengramStrings. The existing
+  Swift glob includes the Quick Look preview controller. Live Postbox observation
+  refreshes successfully linked assets; copies and verification run off UI.
+- `Tests/AllTests/BUILD`: includes QwengramMediaArchiveTests alongside TgCallsTests.
+
+Upstream modification sites are marked `// MARK: NAGRAM`. Preserve capture order
+before deletion; moving only the path lookup into an asynchronous callback loses
+the original file. Never bypass MediaBox deletion or fake acknowledgement success.

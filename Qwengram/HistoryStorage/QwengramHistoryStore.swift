@@ -42,11 +42,22 @@ public enum QwengramHistoryStore {
     public static func upsert(transaction: Transaction, record: QwengramHistoryRecord) throws -> QwengramHistoryRecord {
         try self.validate(record)
         var bounded = record
+        bounded.version = QwengramHistoryRecord.currentVersion
         bounded.revisions = Array(bounded.revisions.suffix(QwengramHistoryCollection.maxRevisionsPerMessage))
         bounded.events = Array(bounded.events.suffix(QwengramHistoryCollection.maxEventsPerMessage))
         // Store JSON directly in CodableEntry.data (not CodableEntry.get's Postbox format).
         // This provides a throwing codec and an exact persisted payload byte limit.
-        let data = try JSONEncoder().encode(bounded)
+        var data = try JSONEncoder().encode(bounded)
+        // Prefer the newest snapshot when a long edit history reaches the byte cap.
+        // Events can reference evicted revisions; the browser already handles this.
+        while data.count > QwengramHistoryCollection.maxRecordBytes && bounded.revisions.count > 1 {
+            bounded.revisions.removeFirst()
+            data = try JSONEncoder().encode(bounded)
+        }
+        while data.count > QwengramHistoryCollection.maxRecordBytes && bounded.events.count > 1 {
+            bounded.events.removeFirst()
+            data = try JSONEncoder().encode(bounded)
+        }
         try self.checkSize(data)
         transaction.addOrMoveToFirstPositionOrderedItemListItem(
             collectionId: QwengramHistoryCollection.id,
@@ -93,7 +104,7 @@ public enum QwengramHistoryStore {
         let decoder = JSONDecoder()
         // Read the version before interpreting a potentially incompatible future schema.
         let header = try decoder.decode(VersionHeader.self, from: item.contents.data)
-        guard header.version == QwengramHistoryRecord.currentVersion else {
+        guard (1 ... QwengramHistoryRecord.currentVersion).contains(header.version) else {
             throw QwengramHistoryStorageError.unsupportedVersion(header.version)
         }
         let record = try decoder.decode(QwengramHistoryRecord.self, from: item.contents.data)
@@ -109,7 +120,7 @@ public enum QwengramHistoryStore {
     }
 
     private static func validate(_ record: QwengramHistoryRecord) throws {
-        guard record.version == QwengramHistoryRecord.currentVersion else {
+        guard (1 ... QwengramHistoryRecord.currentVersion).contains(record.version) else {
             throw QwengramHistoryStorageError.unsupportedVersion(record.version)
         }
         var previous: Int64 = 0

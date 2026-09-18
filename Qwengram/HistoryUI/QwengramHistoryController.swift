@@ -3,9 +3,11 @@ import Display
 import Foundation
 import ItemListUI
 import LocalizedPeerData
+import QwengramStrings
 import Postbox
 import PresentationDataUtils
 import QwengramHistoryStorage
+import QwengramMediaArchive
 import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
@@ -80,13 +82,14 @@ public func qwengramHistoryController(context: AccountContext) -> ViewController
     let formatter = qwengramHistoryDateFormatter()
     // Read only the selected account's local archive. No network peer fetches.
     let archive: Signal<([QwengramHistoryRow], Int)?, NoError> = .single(nil)
-    |> then(context.account.postbox.transaction { transaction -> ([QwengramHistoryRow], Int)? in
+    |> then(context.account.postbox.combinedView(keys: [.orderedItemList(id: QwengramHistoryCollection.id)])
+    |> mapToSignal { _ in context.account.postbox.transaction { transaction -> ([QwengramHistoryRow], Int)? in
         let result = QwengramHistoryStore.listRecords(transaction: transaction)
         let rows = qwengramHistoryNewestFirst(result.records).map { record in
             QwengramHistoryRow(record: record, peer: qwengramHistoryPeer(transaction: transaction, packedId: record.key.peerId))
         }
         return (rows, result.unreadableCount)
-    })
+    } })
     let signal = combineLatest(context.sharedContext.presentationData, archive)
     |> deliverOnMainQueue
     |> map { presentationData, archive -> (ItemListControllerState, (ItemListNodeState, Any)) in
@@ -100,13 +103,14 @@ public func qwengramHistoryController(context: AccountContext) -> ViewController
             }
             for (index, row) in rows.enumerated() {
                 let event = qwengramHistoryLatestEvent(row.record)
-                let status = event.map { qwengramHistoryEventTitle($0, detail: false) } ?? "Saved revision"
+                let status = event.map { qwengramHistoryEventTitle($0, detail: false, lang: presentationData.strings.baseLanguageCode) } ?? "Saved revision"
+                let mediaLabel = row.record.events.contains(where: { !($0.mediaAssetIds ?? []).isEmpty }) ? " · " + ngI18n("Qwengram.Archive", presentationData.strings.baseLanguageCode) : ""
                 let time = qwengramHistoryDate(event?.observedTimestamp ?? qwengramHistoryLatestTimestamp(row.record), formatter: formatter)
                 entries.append(QwengramHistoryEntry(
                     stableId: Int32(index + 2),
                     section: 1,
                     title: qwengramHistoryPeerTitle(row.peer, presentationData: presentationData),
-                    text: "\(status) · \(time)\n\(qwengramHistoryPreview(row.record))",
+                    text: "\(status)\(mediaLabel) · \(time)\n\(qwengramHistoryPreview(row.record))",
                     action: { pushControllerImpl?(qwengramHistoryDetailController(context: context, key: row.record.key)) }
                 ))
             }
@@ -156,9 +160,12 @@ public func qwengramHistoryDetailController(context: AccountContext, messageId: 
 }
 
 private func qwengramHistoryDetailController(context: AccountContext, key: QwengramHistoryMessageKey) -> ViewController {
+    weak var presentingController: ItemListController?
+    let root = QwengramMediaArchive.root(mediaBoxPath: context.account.postbox.mediaBox.basePath)
     let formatter = qwengramHistoryDateFormatter()
     let record: Signal<QwengramHistoryDetailState, NoError> = .single(.loading)
-    |> then(context.account.postbox.transaction { transaction -> QwengramHistoryDetailState in
+    |> then(context.account.postbox.combinedView(keys: [.orderedItemList(id: QwengramHistoryCollection.id)])
+    |> mapToSignal { _ in context.account.postbox.transaction { transaction -> QwengramHistoryDetailState in
         do {
             guard let record = try QwengramHistoryStore.load(transaction: transaction, key: key) else {
                 return .missing
@@ -167,10 +174,23 @@ private func qwengramHistoryDetailController(context: AccountContext, key: Qweng
         } catch {
             return .unreadable
         }
-    })
-    let signal = combineLatest(context.sharedContext.presentationData, record)
+    } })
+    let mediaRecord = record |> mapToSignal { state -> Signal<(QwengramHistoryDetailState, [QwengramArchivedAsset]), NoError> in
+        guard case let .loaded(row) = state else { return .single((state, [])) }
+        let ids = row.record.events.flatMap { $0.mediaAssetIds ?? [] }
+        return Signal { subscriber in
+            QwengramMediaArchive.list(root: root, ids: ids) { assets in
+                subscriber.putNext((state, assets))
+                subscriber.putCompletion()
+            }
+            return EmptyDisposable
+        }
+    }
+    let signal = combineLatest(context.sharedContext.presentationData, mediaRecord)
     |> deliverOnMainQueue
-    |> map { presentationData, state -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, mediaState -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let (state, assets) = mediaState
+        let lang = presentationData.strings.baseLanguageCode
         var entries: [QwengramHistoryEntry] = []
         switch state {
         case .loading:
@@ -181,12 +201,33 @@ private func qwengramHistoryDetailController(context: AccountContext, key: Qweng
             entries.append(QwengramHistoryEntry(stableId: 0, section: 0, title: "Unable to read history", text: "This saved record is damaged or unsupported."))
         case let .loaded(row):
             entries.append(QwengramHistoryEntry(stableId: 0, section: 0, title: qwengramHistoryPeerTitle(row.peer, presentationData: presentationData), text: "Saved history · Oldest first"))
-            let timeline = qwengramHistoryTimeline(row.record)
+            let timeline = qwengramHistoryTimeline(row.record, lang: lang)
             if timeline.isEmpty {
                 entries.append(QwengramHistoryEntry(stableId: 1, section: 1, title: "No saved revisions or events", text: "This record has no saved content."))
             }
             for (index, item) in timeline.enumerated() {
                 entries.append(QwengramHistoryEntry(stableId: Int32(index + 1), section: Int32(index + 1), title: "\(item.title) · \(qwengramHistoryDate(item.timestamp, formatter: formatter))", text: item.text))
+            }
+            let linkedIds = Set(row.record.events.flatMap { $0.mediaAssetIds ?? [] })
+            let missing = linkedIds.subtracting(assets.map { $0.id }).count
+            if missing > 0 || row.record.events.contains(where: { $0.mediaCaptureId != nil && ($0.mediaAssetIds ?? []).isEmpty }) {
+                entries.append(QwengramHistoryEntry(stableId: Int32(entries.count + 1), section: Int32(entries.count + 1), title: ngI18n("Qwengram.Archive", lang), text: ngI18n("Qwengram.MediaUnavailable", lang)))
+            }
+            for asset in assets {
+                entries.append(QwengramHistoryEntry(stableId: Int32(entries.count + 1), section: Int32(entries.count + 1), title: asset.fileName, text: ngI18n("Qwengram.OpenMedia", lang) + " · " + ByteCountFormatter.string(fromByteCount: asset.bytes, countStyle: .file), action: {
+                    QwengramMediaArchive.preview(root: root, id: asset.id) { result in
+                        Queue.mainQueue().async {
+                            guard let controller = presentingController, controller.isViewLoaded, controller.view.window != nil else { return }
+                            switch result {
+                            case let .success(lease):
+                                controller.present(QwengramMediaPreviewController(lease: lease), animated: true)
+                            case .failure:
+                                let data = context.sharedContext.currentPresentationData.with { $0 }
+                                controller.present(textAlertController(context: context, title: ngI18n("Qwengram.Archive", data.strings.baseLanguageCode), text: ngI18n("Qwengram.MediaUnavailable", data.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: data.strings.Common_OK, action: {})]), in: .window(.root))
+                            }
+                        }
+                    }
+                }))
             }
         }
         let listPresentationData = ItemListPresentationData(presentationData)
@@ -195,5 +236,6 @@ private func qwengramHistoryDetailController(context: AccountContext, key: Qweng
     }
     let controller = ItemListController(context: context, state: signal)
     controller.navigationPresentation = .default
+    presentingController = controller
     return controller
 }

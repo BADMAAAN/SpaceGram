@@ -26,7 +26,7 @@ import ComponentFlow
 import ChatPresentationInterfaceState
 import ComponentDisplayAdapters
 import NagramSettings // MARK: NAGRAM
-import NagramStrings // MARK: NAGRAM
+import QwengramStrings // MARK: NAGRAM
 
 private enum FilterSection: Int32, Hashable {
     case include

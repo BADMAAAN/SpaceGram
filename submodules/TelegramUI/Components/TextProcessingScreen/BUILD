@@ -11,7 +11,7 @@ swift_library(
     ],
     deps = [
         # MARK: NAGRAM — manual single-message translation provider facade
-        "//Nagram/Translate:NagramTranslate",
+        "//Qwengram/Enhancements/Translate:NagramTranslate",
         "//submodules/Display",
         "//submodules/TelegramPresentationData",
         "//submodules/ComponentFlow",

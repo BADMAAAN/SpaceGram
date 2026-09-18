@@ -1,6 +1,6 @@
 # Build Notes
 
-本文记录 Nagram-iOS 本地打包路径、环境约束，以及 2026-06-14 上游 rebase 后实机打包遇到的编译问题。
+本文记录 Qwengram 本地打包路径、环境约束，以及 2026-06-14 上游 rebase 后实机打包遇到的编译问题。
 
 ## 基本原则
 
@@ -231,7 +231,7 @@ PRIMARY="$(cd ../.. && pwd)"
 或者手写主仓库路径：
 
 ```sh
-PRIMARY=/Volumes/Repository/iOS/Nagram-ios
+PRIMARY=/path/to/approved/Qwengram
 ```
 
 一次性复制签名输入：

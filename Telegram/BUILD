@@ -286,7 +286,7 @@ filegroup(
         "{}.lproj/Localizable.strings".format(language) for language in empty_languages
     ] + [
         # MARK: QWENGRAM — Qwengram localizable strings are bundled with the app.
-        "//Nagram/Strings:NagramLocalizableStrings",
+        "//Qwengram/Strings:QwengramLocalizableStrings",
     ],
 )
 
@@ -332,73 +332,7 @@ filegroup(
     ]),
 )
 
-alternate_icon_folders = [
-    # MARK: NAGRAM — only ship Nagram alternate app icons.
-    "Nagram",
-]
-
-# MARK: NAGRAM — the IPA post-processor selects the matching icon set from the
-# active Xcode toolchain. The Xcode 26 Composer sources are supplied separately.
-composer_source_icon_folders = [
-    "Nagram",
-    "NagramBlock",
-    "NagramBlockBlack",
-    "NagramBlockBlue",
-    "NagramBlockNiello",
-    "NagramBlockPurple",
-    "NagramClassic",
-    "NagramColorful",
-    "NagramCyan",
-    "NagramBlack",
-]
-composer_build_icon_folders = ["NagramBuild"]
-composer_xcode26_icon_folders = [
-    "Nagram26",
-    "NagramBlock26",
-    "NagramBlockBlack26",
-    "NagramBlockBlue26",
-    "NagramBlockNiello26",
-    "NagramBlockPurple26",
-    "NagramClassic26",
-    "NagramColorful26",
-    "NagramCyan26",
-    "NagramBlack26",
-]
-
-[
-    filegroup(
-        name = "{}_icon".format(name),
-        srcs = glob(
-            ["Telegram-iOS/{}.icon/**/*".format(name)],
-            allow_empty = True,
-        ),
-    ) for name in composer_xcode26_icon_folders
-]
-
-filegroup(
-    name = "NagramIconPreviews",
-    srcs = glob([
-        "Telegram-iOS/Nagram*.png",
-    ]),
-)
-
-[
-    filegroup(
-        name = "{}".format(name),
-        srcs = glob([
-            "Telegram-iOS/{}.alticon/*.png".format(name),
-        ]),
-    ) for name in alternate_icon_folders
-]
-
-[
-    filegroup(
-        name = "{}_icon".format(name),
-        srcs = glob([
-            "Telegram-iOS/{}.icon/**/*".format(name),
-        ]),
-    ) for name in composer_source_icon_folders + composer_build_icon_folders
-]
+# MARK: NAGRAM — Qwengram uses the existing Telegram asset catalog pending its own icon.
 
 filegroup(
     name = "LaunchScreen",
@@ -1004,56 +938,6 @@ sh_binary(
         "Telegram-iOS/AlternateIcons-iPad.plist",
     ],
     srcs = [":GenerateAddAlternateIcons"],
-)
-
-genrule(
-    name = "GenerateNagramFixComposerAlternateIcons",
-    srcs = [
-        "Telegram-iOS/NagramFixComposerAlternateIcons.sh",
-    ],
-    cmd_bash =
-"""
-    cat $(location Telegram-iOS/NagramFixComposerAlternateIcons.sh) >> $(location NagramFixComposerAlternateIcons.sh)
-""",
-    outs = [
-        "NagramFixComposerAlternateIcons.sh",
-    ],
-    executable = True,
-    visibility = [
-        "//visibility:public",
-    ]
-)
-
-sh_binary(
-    name = "NagramFixComposerAlternateIcons",
-    data = [
-        ":Icons",
-        ":Nagram26_icon",
-        ":NagramBlock26_icon",
-        ":NagramBlockBlack26_icon",
-        ":NagramBlockBlue26_icon",
-        ":NagramBlockNiello26_icon",
-        ":NagramBlockPurple26_icon",
-        ":NagramClassic26_icon",
-        ":NagramColorful26_icon",
-        ":NagramCyan26_icon",
-        ":NagramBlack26_icon",
-        ":Nagram_icon",
-        ":NagramBlock_icon",
-        ":NagramBlockBlack_icon",
-        ":NagramBlockBlue_icon",
-        ":NagramBlockNiello_icon",
-        ":NagramBlockPurple_icon",
-        ":NagramClassic_icon",
-        ":NagramColorful_icon",
-        ":NagramCyan_icon",
-        ":NagramBlack_icon",
-        "//submodules/LegacyComponents:LegacyComponentsAssets",
-        "//submodules/PasswordSetupUI:PasswordSetupUIAssets",
-        "//submodules/TelegramUI:TelegramUIAssets",
-        "//submodules/TelegramUI/Components/Calls/CallScreen:Assets",
-    ],
-    srcs = [":GenerateNagramFixComposerAlternateIcons"],
 )
 
 plist_fragment(
@@ -1846,11 +1730,7 @@ plist_fragment(
             </array>
             <key>UTTypeDescription</key>
             <string>Telegram iOS Color Theme File</string>
-            <key>UTTypeIconFiles</key>
-            <array>
-                <!-- MARK: NAGRAM -->
-                <string>Nagram@3x.png</string>
-            </array>
+            <!-- MARK: NAGRAM — use the system document icon for imported themes. -->
             <key>UTTypeIdentifier</key>
             <string>org.telegram.Telegram-iOS.theme</string>
             <key>UTTypeTagSpecification</key>
@@ -1915,17 +1795,10 @@ ios_application(
         ":RequiredDeviceCapabilitiesPlist",
         ":UrlTypesInfoPlist",
     ],
-    primary_app_icon = "NagramBuild",
-    app_icons = [ ":{}_icon".format(name) for name in composer_build_icon_folders ],
-    alternate_icons = [
-        ":{}".format(name) for name in alternate_icon_folders
-    ],
-    resources = [
-        ":LaunchScreen",
-        ":NagramIconPreviews",
-        #":DefaultAppIcon",
-    ],
-    ipa_post_processor = ":NagramFixComposerAlternateIcons",
+    # MARK: NAGRAM — standard asset-catalog packaging for Qwengram.
+    primary_app_icon = "AppIconLLC",
+    app_icons = [":DefaultAppIcon"],
+    resources = [":LaunchScreen"],
     frameworks = [
         ":MtProtoKitFramework",
         ":SwiftSignalKitFramework",

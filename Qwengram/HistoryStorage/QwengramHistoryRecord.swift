@@ -1,8 +1,8 @@
 import Foundation
 
 public struct QwengramHistoryRecord: Codable, Equatable {
-    public static let currentVersion: Int32 = 1
-    public let version: Int32
+    public static let currentVersion: Int32 = 2
+    public var version: Int32
     public let key: QwengramHistoryMessageKey
     public var threadId: Int64?
     public var revisions: [QwengramHistoryRevision]
@@ -100,6 +100,7 @@ public enum QwengramHistoryReason: String, Codable {
     case clearHistory
     case autoDelete
     case validationCleanup
+    case mediaArchive
 }
 
 public struct QwengramHistoryEvent: Codable, Equatable {
@@ -109,6 +110,9 @@ public struct QwengramHistoryEvent: Codable, Equatable {
     public let reason: QwengramHistoryReason
     public let observedTimestamp: Int64
     public let revisionNumber: Int64?
+    // V2 fields are optional so v1 records decode without rewriting on reads.
+    public var mediaCaptureId: String?
+    public var mediaAssetIds: [String]?
 
     public init(type: QwengramHistoryEventType, source: String, reason: QwengramHistoryReason, observedTimestamp: Int64, revisionNumber: Int64? = nil) {
         self.type = type

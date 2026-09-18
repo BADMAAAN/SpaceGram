@@ -2,6 +2,7 @@ import AccountContext
 import Display
 import Foundation
 import ItemListUI
+import QwengramStrings
 import PresentationDataUtils
 import QwengramHistoryUI
 import QwengramSettings
@@ -41,22 +42,23 @@ public func qwengramHistorySettingsController(context: AccountContext) -> ViewCo
     let signal = combineLatest(context.sharedContext.presentationData, qwengramHistorySettingsSignal())
     |> deliverOnMainQueue
     |> map { presentationData, settings -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let lang = presentationData.strings.baseLanguageCode
         let entries: [QwengramHistorySettingsEntry] = [
-            QwengramHistorySettingsEntry(stableId: 0, title: "Message History", value: settings.0, updated: {
+            QwengramHistorySettingsEntry(stableId: 0, title: ngI18n("Qwengram.History", lang), value: settings.0, updated: {
                 QwengramSettings.shared.messageHistoryEnabled = $0
             }),
-            QwengramHistorySettingsEntry(stableId: 1, title: "Save edited messages", value: settings.1, updated: {
+            QwengramHistorySettingsEntry(stableId: 1, title: ngI18n("Qwengram.SaveEdits", lang), value: settings.1, updated: {
                 QwengramSettings.shared.saveEditedMessages = $0
             }),
-            QwengramHistorySettingsEntry(stableId: 2, title: "Save server-deleted messages", value: settings.2, updated: {
+            QwengramHistorySettingsEntry(stableId: 2, title: ngI18n("Qwengram.SaveDeletes", lang), value: settings.2, updated: {
                 QwengramSettings.shared.saveServerDeletedMessages = $0
             }),
-            QwengramHistorySettingsEntry(stableId: 3, title: "View History", action: {
+            QwengramHistorySettingsEntry(stableId: 3, title: ngI18n("Qwengram.ViewHistory", lang), action: {
                 pushControllerImpl?(qwengramHistoryController(context: context))
             })
         ]
         let listPresentationData = ItemListPresentationData(presentationData)
-        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("History Settings"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text(ngI18n("Qwengram.HistorySettings", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         let listState = ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: true)
         return (controllerState, (listState, ()))
     }

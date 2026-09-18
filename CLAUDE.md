@@ -2,14 +2,14 @@
 
 This file provides guidance to AI assistants when working with code in this repository.
 
-## Nagram fork conventions
+## Qwengram conventions
 
-Nagram-iOS is a Chinese-user-focused enhancement fork of Telegram-iOS, aligned where appropriate with Android Nagram.
+Qwengram builds on Telegram-iOS. Nagram is a historical code source, not the architectural upstream.
 
-- New Nagram-only code belongs under `Nagram/`.
+- New Qwengram code belongs under `Qwengram/`.
 - Every necessary upstream-file modification must have a nearby `// MARK: NAGRAM`.
-- The Nagram settings entry is maintained in `PeerInfoSettingsItems.swift`.
-- The main app name and Nagram icon integration are maintained in `Telegram/BUILD`; extension names remain Telegram unless explicitly changed.
+- The retained enhancement settings entry is maintained in `PeerInfoSettingsItems.swift`.
+- The Qwengram app name and asset-catalog icon integration are maintained in `Telegram/BUILD`; extension names remain Telegram unless explicitly changed.
 
 ## Build
 
@@ -63,7 +63,7 @@ For physical-device work, first follow the signing-mode and preflight requiremen
 
 ## Project Structure
 
-- Nagram-only code belongs in `Nagram/`; reactive settings use `Nagram/SettingsSignal`, and UI belongs in `Nagram/SettingsUI`.
+- Qwengram code belongs in `Qwengram/`; reactive settings use `Qwengram/Enhancements/SettingsSignal`, and UI belongs in `Qwengram/Enhancements/SettingsUI`.
 - Main app and extension targets are in `Telegram/`.
 - Most upstream libraries are in `submodules/`; modifications there require a nearby `// MARK: NAGRAM`.
 - Vendored external code is in `third-party/`.

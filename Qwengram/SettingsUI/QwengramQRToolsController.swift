@@ -4,7 +4,10 @@ import CoreImage
 import Display
 import Foundation
 import ItemListUI
+import QwengramStrings
 import PresentationDataUtils
+import QwengramSettings
+import QwengramSettingsSignal
 import SwiftSignalKit
 import TelegramPresentationData
 import UIKit
@@ -12,15 +15,15 @@ import UIKit
 private enum QwengramQRToolsEntry: ItemListNodeEntry {
     case header(Int32, Int32, String)
     case input(Int32, Int32, String)
-    case generate(Int32, Int32)
+    case generate(Int32, Int32, Bool)
     case result(Int32, Int32, UIImage, Int32)
 
     var section: ItemListSectionId {
-        switch self { case let .header(_, section, _), let .input(_, section, _), let .generate(_, section), let .result(_, section, _, _): return section }
+        switch self { case let .header(_, section, _), let .input(_, section, _), let .generate(_, section, _), let .result(_, section, _, _): return section }
     }
 
     var stableId: Int32 {
-        switch self { case let .header(id, _, _), let .input(id, _, _), let .generate(id, _), let .result(id, _, _, _): return id }
+        switch self { case let .header(id, _, _), let .input(id, _, _), let .generate(id, _, _), let .result(id, _, _, _): return id }
     }
 
     static func == (lhs: QwengramQRToolsEntry, rhs: QwengramQRToolsEntry) -> Bool {
@@ -29,8 +32,8 @@ private enum QwengramQRToolsEntry: ItemListNodeEntry {
             return lId == rId && lSection == rSection && lText == rText
         case let (.input(lId, lSection, lText), .input(rId, rSection, rText)):
             return lId == rId && lSection == rSection && lText == rText
-        case let (.generate(lId, lSection), .generate(rId, rSection)):
-            return lId == rId && lSection == rSection
+        case let (.generate(lId, lSection, lEnabled), .generate(rId, rSection, rEnabled)):
+            return lId == rId && lSection == rSection && lEnabled == rEnabled
         case let (.result(lId, lSection, _, lGeneration), .result(rId, rSection, _, rGeneration)):
             return lId == rId && lSection == rSection && lGeneration == rGeneration
         default:
@@ -47,8 +50,8 @@ private enum QwengramQRToolsEntry: ItemListNodeEntry {
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
         case let .input(_, section, text):
             return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: "Text", textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: "Enter text", type: .regular(capitalization: false, autocorrection: false), clearType: .onFocus, sectionId: section, textUpdated: arguments.updateText, action: {})
-        case let .generate(_, section):
-            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Generate QR", kind: .generic, alignment: .natural, sectionId: section, style: .blocks, action: arguments.generate)
+        case let .generate(_, section, enabled):
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Generate QR", kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: arguments.generate)
         case let .result(_, section, image, _):
             return QwengramQRImageItem(theme: presentationData.theme, image: image, sectionId: section)
         }
@@ -96,6 +99,11 @@ public func qwengramQRToolsController(context: AccountContext) -> ViewController
     let arguments = QwengramQRToolsArguments(updateText: { value in
         text = value
     }, generate: {
+        guard QwengramSettings.shared.toolsEnabled else {
+            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+            controller?.present(textAlertController(context: context, title: "QR Tools", text: ngI18n("Qwengram.Disabled", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+            return
+        }
         guard !text.isEmpty else {
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
             controller?.present(textAlertController(context: context, title: "QR Tools", text: "Enter text to generate a QR code.", actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
@@ -110,13 +118,13 @@ public func qwengramQRToolsController(context: AccountContext) -> ViewController
         generation += 1
         bump()
     })
-    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get())
-    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get(), qwengramToolsEnabledSignal())
+    |> map { presentationData, _, enabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let listPresentationData = ItemListPresentationData(presentationData)
         var entries: [QwengramQRToolsEntry] = [
             .header(0, 0, "Text"),
             .input(1, 0, text),
-            .generate(2, 1)
+            .generate(2, 1, enabled)
         ]
         if let image {
             entries.append(.header(3, 2, "Result"))

@@ -67,4 +67,35 @@ public final class QwengramSettings {
 
     @QwengramStringDefault("qwengram.settings.qwenModel", "qwen-plus")
     public var qwenModel: String
+
+    @QwengramDefault("qwengram.settings.hideChatActivity", false)
+    public var hideChatActivity: Bool
+
+    @QwengramDefault("qwengram.settings.suppressAutomaticReads", false)
+    public var suppressAutomaticReads: Bool
+
+    @QwengramDefault("qwengram.settings.hideStoryViews", false)
+    public var hideStoryViews: Bool
+
+    @QwengramDefault("qwengram.settings.hideOnlinePresence", false)
+    public var hideOnlinePresence: Bool
+
+    @QwengramDefault("qwengram.settings.mediaArchiveEnabled", false)
+    public var mediaArchiveEnabled: Bool
+
+    public var captureMedia: Bool {
+        return qwengramEnabled && messageHistoryEnabled && mediaArchiveEnabled
+    }
+
+    public var toolsEnabled: Bool {
+        return qwengramEnabled && botsHubEnabled
+    }
+
+    public var captureEditedMessages: Bool {
+        return qwengramEnabled && messageHistoryEnabled && saveEditedMessages
+    }
+
+    public var captureDeletedMessages: Bool {
+        return qwengramEnabled && messageHistoryEnabled && saveServerDeletedMessages
+    }
 }

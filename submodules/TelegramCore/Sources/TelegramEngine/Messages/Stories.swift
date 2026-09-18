@@ -1,4 +1,6 @@
 import Foundation
+// MARK: NAGRAM — Qwengram story policy.
+import QwengramSettings
 import SwiftSignalKit
 import Postbox
 import TelegramApi
@@ -2086,6 +2088,10 @@ func _internal_markStoryAsSeen(account: Account, peerId: PeerId, id: Int32, asPi
             }
             #endif
             
+            // MARK: NAGRAM — pinned story views bypass the normal operation log.
+            guard !QwengramGhostPolicy.suppressStoryViews else {
+                return .complete()
+            }
             return account.network.request(Api.functions.stories.incrementStoryViews(peer: inputPeer, id: [id]))
             |> `catch` { _ -> Signal<Api.Bool, NoError> in
                 return .single(.boolFalse)
@@ -2102,7 +2108,10 @@ func _internal_markStoryAsSeen(account: Account, peerId: PeerId, id: Int32, asPi
             
             #if DEBUG && false
             #else
-            _internal_addSynchronizeViewStoriesOperation(peerId: peerId, storyId: id, transaction: transaction)
+            // MARK: NAGRAM — keep local progress without queuing an acknowledgement.
+            if !QwengramGhostPolicy.suppressStoryViews {
+                _internal_addSynchronizeViewStoriesOperation(peerId: peerId, storyId: id, transaction: transaction)
+            }
             #endif
             
             return transaction.getPeer(peerId).flatMap(apiInputUser)

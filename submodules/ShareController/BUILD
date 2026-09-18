@@ -11,7 +11,7 @@ swift_library(
     ],
     deps = [
         # MARK: NAGRAM — Share failure guidance.
-        "//Nagram/Strings:NagramStrings",
+        "//Qwengram/Strings:QwengramStrings",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Postbox:Postbox",
@@ -54,7 +54,7 @@ swift_library(
         "//submodules/ChatPresentationInterfaceState",
         "//submodules/CheckNode",
         # MARK: NAGRAM — 分享发送时盘古之白
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

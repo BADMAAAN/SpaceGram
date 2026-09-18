@@ -2,6 +2,7 @@ import AccountContext
 import Display
 import Foundation
 import ItemListUI
+import QwengramStrings
 import PresentationDataUtils
 import QwengramSettings
 import QwengramSettingsSignal
@@ -81,35 +82,45 @@ private final class QwengramSettingsArguments {
 public func qwengramSettingsController(context: AccountContext) -> ViewController {
     var pushControllerImpl: ((ViewController) -> Void)?
     let arguments = QwengramSettingsArguments(
-        openBotsHub: { pushControllerImpl?(qwengramBotsController(context: context)) },
+        openBotsHub: {
+            guard QwengramSettings.shared.toolsEnabled else { return }
+            pushControllerImpl?(qwengramBotsController(context: context))
+        },
         openQwenProvider: { pushControllerImpl?(qwengramAISettingsController(context: context)) },
         openHistorySettings: { pushControllerImpl?(qwengramHistorySettingsController(context: context)) }
     )
     let signal = combineLatest(
         context.sharedContext.presentationData,
         qwengramEnabledSignal(),
-        botsHubEnabledSignal()
+        botsHubEnabledSignal(),
+        qwengramGhostSettingsSignal(),
+        qwengramAutomaticReadsSettingSignal(),
+        qwengramMediaArchiveSettingSignal()
     )
     |> deliverOnMainQueue
-    |> map { presentationData, qwengramEnabled, botsHubEnabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, qwengramEnabled, botsHubEnabled, ghost, suppressAutomaticReads, mediaArchiveEnabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let lang = presentationData.strings.baseLanguageCode
         let entries: [QwengramSettingsEntry] = [
-            .header(0, 0, "General"),
-            .toggle(1, 0, "Qwengram Enabled", qwengramEnabled, { value in
-                QwengramSettings.shared.qwengramEnabled = value
+            .header(0, 0, ngI18n("Qwengram.General", lang)),
+            .toggle(1, 0, ngI18n("Qwengram.Enabled", lang), qwengramEnabled, {
+                QwengramSettings.shared.qwengramEnabled = $0
             }),
-            .header(2, 1, "Bots"),
-            .toggle(3, 1, "Bots Hub Enabled", botsHubEnabled, { value in
-                QwengramSettings.shared.botsHubEnabled = value
-            }),
-            .navigation(4, 1, "Open Bots Hub", botsHubEnabled, arguments.openBotsHub),
-            .header(5, 2, "AI"),
-            .navigation(6, 2, "Qwen Provider", true, arguments.openQwenProvider),
-            .header(7, 3, "Messages"),
-            .placeholder(8, 3, "Ghost Mode", "Coming soon"),
-            .navigation(9, 3, "Message History", true, arguments.openHistorySettings),
-            .placeholder(10, 3, "Media Archive", "Coming soon"),
-            .header(11, 4, "About"),
-            .about(12, 4, "Qwengram Foundation")
+            .about(2, 0, ngI18n(qwengramEnabled ? "Qwengram.Foundation" : "Qwengram.Disabled", lang)),
+            .header(3, 1, ngI18n("Qwengram.Ghost", lang)),
+            .toggle(4, 1, ngI18n("Qwengram.AutomaticReads", lang), suppressAutomaticReads, { QwengramSettings.shared.suppressAutomaticReads = $0 }),
+            .toggle(5, 1, ngI18n("Qwengram.Activity", lang), ghost.0, { QwengramSettings.shared.hideChatActivity = $0 }),
+            .toggle(6, 1, ngI18n("Qwengram.Stories", lang), ghost.1, { QwengramSettings.shared.hideStoryViews = $0 }),
+            .toggle(7, 1, ngI18n("Qwengram.Online", lang), ghost.2, { QwengramSettings.shared.hideOnlinePresence = $0 }),
+            .about(8, 1, ngI18n("Qwengram.GhostInfo", lang)),
+            .header(9, 2, ngI18n("Qwengram.History", lang)),
+            .navigation(10, 2, ngI18n("Qwengram.History", lang), true, arguments.openHistorySettings),
+            .header(11, 3, ngI18n("Qwengram.Tools", lang)),
+            .toggle(12, 3, ngI18n("Qwengram.ToolsEnabled", lang), botsHubEnabled, { QwengramSettings.shared.botsHubEnabled = $0 }),
+            .navigation(13, 3, ngI18n("Qwengram.OpenTools", lang), qwengramEnabled && botsHubEnabled, arguments.openBotsHub),
+            .navigation(14, 3, ngI18n("Qwengram.Provider", lang), true, arguments.openQwenProvider),
+            .header(15, 4, ngI18n("Qwengram.Media", lang)),
+            .toggle(16, 4, ngI18n("Qwengram.Archive", lang), mediaArchiveEnabled, { QwengramSettings.shared.mediaArchiveEnabled = $0 }),
+            .about(17, 4, ngI18n("Qwengram.ArchiveLimits", lang))
         ]
         let listPresentationData = ItemListPresentationData(presentationData)
         let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("Qwengram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))

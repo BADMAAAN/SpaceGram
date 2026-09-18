@@ -20,7 +20,7 @@ swift_library(
         "//submodules/Emoji:Emoji",
         "//third-party/libprisma",
         # MARK: NAGRAM
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",
@@ -36,7 +36,7 @@ swift_library(
     deps = [
         ":TextFormat",
         # MARK: NAGRAM
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
         "//submodules/TelegramCore:TelegramCore",
         "//submodules/Postbox:Postbox",
     ],

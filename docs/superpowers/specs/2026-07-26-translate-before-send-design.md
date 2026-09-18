@@ -16,7 +16,7 @@ Linear issue: https://linear.app/nagram-ios/issue/NAG-75 (标题:发送消息前
 
 ## 1. 设置
 
-`Nagram/Settings/NagramSettings.swift` 新增:
+`Qwengram/Enhancements/Settings/NagramSettings.swift` 新增:
 
 ```swift
 @NagramDefault("nagram.translateBeforeSend", false)
@@ -26,12 +26,12 @@ public var translateBeforeSend: Bool
 public var translateBeforeSendTargetLang: String
 ```
 
-`Nagram/SettingsUI/NagramSettingsController.swift` 翻译分区(`Nagram.Section.Translation`)新增两行:
+`Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift` 翻译分区(`Nagram.Section.Translation`)新增两行:
 
 - `.toggle`:「发送前翻译」开关。
 - `.choice`:「发送翻译目标语言」,options 取 `popularTranslationLanguages` 短列表(en / ar / zh / fr / de / it / ja / ko / pt-BR / ru / es / uk,12 项),沿用现有 ActionSheet 选择交互。
 
-`Nagram/Strings` 新增键(中英):开关标题、目标语言标题(prefix 形式 `Nagram.TranslateBeforeSendTargetLang.<code>`)及 12 个语言显示名。
+`Qwengram/Strings` 新增键(中英):开关标题、目标语言标题(prefix 形式 `Nagram.TranslateBeforeSendTargetLang.<code>`)及 12 个语言显示名。
 
 ## 2. 菜单项(ChatSendMessageActionUI)
 
@@ -59,7 +59,7 @@ public var translateBeforeSendTargetLang: String
 4. 成功:收起 loading,用 `chatInputStateStringWithAppliedEntities(text, entities:)` 构造 `ChatTextInputState`(光标置末尾),经 `updateChatPresentationInterfaceState` 替换 `effectiveInputState`(与现有「翻译选中文本」`presentInputTextTranslation` 回填同一模式);
 5. 失败(含返回 nil):收起 loading,toast 提示翻译失败,输入框保持原文。
 
-构建依赖:`submodules/TelegramUI/BUILD` 增加 `//Nagram/Translate:NagramTranslate`(TranslateUI、TextProcessingScreen 已有同样依赖,无循环)。
+构建依赖:`submodules/TelegramUI/BUILD` 增加 `//Qwengram/Enhancements/Translate:NagramTranslate`(TranslateUI、TextProcessingScreen 已有同样依赖,无循环)。
 
 ## 4. 错误与边界
 

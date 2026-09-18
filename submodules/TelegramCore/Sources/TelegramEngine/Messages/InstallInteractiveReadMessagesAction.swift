@@ -1,10 +1,16 @@
 import Foundation
+// MARK: NAGRAM — Qwengram automatic read policy.
+import QwengramSettings
 import Postbox
 import TelegramApi
 import SwiftSignalKit
 
 func _internal_installInteractiveReadMessagesAction(postbox: Postbox, stateManager: AccountStateManager, peerId: PeerId, threadId: Int64?) -> Disposable {
     return postbox.installStoreMessageAction(peerId: peerId, { messages, transaction in
+        // MARK: NAGRAM — an installed action can run before the UI receives disable.
+        guard !QwengramGhostPolicy.suppressAutomaticReads else {
+            return
+        }
         var consumeMessageIds: [MessageId] = []
         var readReactionOrPollVotesIds: [MessageId] = []
         
@@ -185,6 +191,8 @@ private final class StoreOrUpdateMessageActionImpl: StoreOrUpdateMessageAction {
     }
     
     func addOrUpdate(messages: [StoreMessage], transaction: Transaction) {
+        // MARK: NAGRAM — automatic reaction/poll receipts share the ghost policy.
+        guard !QwengramGhostPolicy.suppressAutomaticReads else { return }
         var readReactionIds: [MessageId: [ReactionsMessageAttribute.RecentPeer]] = [:]
         var readPollVoteIds = Set<MessageId>()
         

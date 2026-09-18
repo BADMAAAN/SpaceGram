@@ -68,17 +68,21 @@ swift_library(
         "//submodules/TelegramCallsUI:TelegramCallsUI",
         "//submodules/TelegramUIPreferences:TelegramUIPreferences",
         # MARK: NAGRAM — Nagram 增强开关模块
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
         # MARK: NAGRAM — offline screenshot fixtures.
-        "//Nagram/Demo:NagramDemo",
-        "//Nagram/LinkMetadata:NagramLinkMetadata",
-        "//Nagram/SettingsSignal:NagramSettingsSignal",
-        "//Nagram/TelegramSettingsCloudSync:NagramTelegramSettingsCloudSync",
-        "//Nagram/Strings:NagramStrings",
-        "//Nagram/SettingsUI:NagramSettingsUI",
-        "//Nagram/Translate:NagramTranslate",  # MARK: NAGRAM
+        "//Qwengram/Enhancements/Demo:NagramDemo",
+        "//Qwengram/Enhancements/LinkMetadata:NagramLinkMetadata",
+        "//Qwengram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//Qwengram/Enhancements/TelegramSettingsCloudSync:NagramTelegramSettingsCloudSync",
+        "//Qwengram/Strings:QwengramStrings",
+        "//Qwengram/Enhancements/SettingsUI:NagramSettingsUI",
+        "//Qwengram/Enhancements/Translate:NagramTranslate",  # MARK: NAGRAM
         # MARK: QWENGRAM
         "//Qwengram/SettingsUI:QwengramSettingsUI",
+        # // MARK: NAGRAM — Qwengram master switch at message actions.
+        "//Qwengram/Settings:QwengramSettings",
+        # // MARK: NAGRAM — reactive automatic read policy.
+        "//Qwengram/SettingsSignal:QwengramSettingsSignal",
         # // MARK: NAGRAM
         "//Qwengram/HistoryUI:QwengramHistoryUI",
         "//submodules/MediaPlayer:UniversalMediaPlayer",

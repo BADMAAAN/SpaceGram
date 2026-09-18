@@ -21,7 +21,7 @@ swift_library(
         "//submodules/TelegramUI/Components/TabBarComponent",
         "//submodules/TelegramUI/Components/GlassControls",
         # MARK: NAGRAM
-        "//Nagram/Settings:NagramSettings",
+        "//Qwengram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

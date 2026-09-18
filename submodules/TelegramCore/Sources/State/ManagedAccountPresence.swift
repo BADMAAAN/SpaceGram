@@ -1,4 +1,6 @@
 import Foundation
+// MARK: NAGRAM — Qwengram presence policy.
+import QwengramSettingsSignal
 import TelegramApi
 import Postbox
 import SwiftSignalKit
@@ -22,7 +24,9 @@ private final class AccountPresenceManagerImpl {
         self.queue = queue
         self.network = network
         
-        self.shouldKeepOnlinePresenceDisposable = (shouldKeepOnlinePresence
+        // MARK: NAGRAM — preserve the connection; only change explicit presence.
+        self.shouldKeepOnlinePresenceDisposable = (combineLatest(shouldKeepOnlinePresence, qwengramSuppressOnlinePresenceSignal())
+        |> map { online, suppressed in online && !suppressed }
         |> distinctUntilChanged
         |> deliverOn(self.queue)).start(next: { [weak self] value in
             guard let `self` = self else {

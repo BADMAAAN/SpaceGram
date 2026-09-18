@@ -1,4 +1,5 @@
 import Foundation
+import QwengramStrings
 import QwengramHistoryStorage
 
 struct QwengramHistoryTimelineItem {
@@ -7,14 +8,14 @@ struct QwengramHistoryTimelineItem {
     let text: String
 }
 
-func qwengramHistoryEventTitle(_ event: QwengramHistoryEvent, detail: Bool) -> String {
+func qwengramHistoryEventTitle(_ event: QwengramHistoryEvent, detail: Bool, lang: String = "en") -> String {
     switch event.type {
     case .edit:
         return detail ? "Edit" : "Edited"
     case .delete:
         return event.reason == .serverDelete ? "Deleted on server" : "Deleted"
     case .cleanup:
-        return "Cleanup"
+        return event.reason == .mediaArchive ? ngI18n("Qwengram.MediaCaptured", lang) : "Cleanup"
     }
 }
 
@@ -53,11 +54,11 @@ func qwengramHistoryPreview(_ record: QwengramHistoryRecord) -> String {
     return String(qwengramHistoryText(revision).split(whereSeparator: { $0.isWhitespace }).joined(separator: " ").prefix(180))
 }
 
-func qwengramHistoryTimeline(_ record: QwengramHistoryRecord) -> [QwengramHistoryTimelineItem] {
+func qwengramHistoryTimeline(_ record: QwengramHistoryRecord, lang: String = "en") -> [QwengramHistoryTimelineItem] {
     var items = record.events.map { event in
         QwengramHistoryTimelineItem(
             timestamp: event.observedTimestamp,
-            title: qwengramHistoryEventTitle(event, detail: true),
+            title: qwengramHistoryEventTitle(event, detail: true, lang: lang),
             text: qwengramHistoryText(record.revisions.first { $0.number == event.revisionNumber })
         )
     }

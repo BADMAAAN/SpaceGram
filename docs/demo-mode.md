@@ -46,4 +46,4 @@ Demo 用于本地界面展示。发送消息、翻译、远程主题、媒体下
 - 演示账号禁止 MTProto 主连接、上传下载连接和地址发现，不注册推送，不同步设备通讯录。
 - 不带 `--demo` 重新启动，即恢复正常账号与设置；正式账号数据库不会被演示数据写入。
 
-模拟内容集中在 `Nagram/Demo/Sources/NagramDemo.swift`，可修改文案和聊天样例后重新构建。
+模拟内容集中在 `Qwengram/Enhancements/Demo/Sources/NagramDemo.swift`，可修改文案和聊天样例后重新构建。
