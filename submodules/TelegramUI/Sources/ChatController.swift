@@ -8997,8 +8997,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         return .single(false)
     }
     
-    // MARK: NAGRAM — apply once, at the shared text/media enqueue boundary.
-    private func spaceGramDelayedMessages(_ messages: [EnqueueMessage]) -> ([EnqueueMessage], Bool) {
+    // MARK: NAGRAM — shared by the composer and media enqueue boundaries.
+    func spaceGramDelayedMessages(_ messages: [EnqueueMessage]) -> ([EnqueueMessage], Bool) {
+        if case .scheduledMessages = self.presentationInterfaceState.subject { return (messages, false) }
         let settings = SpaceGramSettings.shared
         guard settings.ghostMode.isFull, settings.delayedSend,
               let peer = self.presentationInterfaceState.renderedPeer?.peer,
@@ -9021,7 +9022,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 } else {
                     return (messages, false)
                 }
-                // An unknown size uses the text fallback. Album members share one date.
+                // Unknown media sizes use a conservative 3 MiB estimate. Album members share one date.
                 mediaBytes = max(mediaBytes ?? 0, size ?? 3 * 1_048_576)
             }
         }

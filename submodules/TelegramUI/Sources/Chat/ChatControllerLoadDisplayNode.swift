@@ -1043,7 +1043,10 @@ extension ChatControllerImpl {
                 }
                 
                 let effectiveSilentPosting = silentPosting ?? strongSelf.presentationInterfaceState.interfaceState.silentPosting
-                let transformedMessages = strongSelf.transformEnqueueMessages(messages, silentPosting: effectiveSilentPosting, scheduleTime: scheduleTime, repeatPeriod: repeatPeriod, postpone: postpone)
+                // MARK: NAGRAM — composer text has its own enqueue path. Apply after
+                // native transforms so explicit schedules are never replaced.
+                let delayedMessages = strongSelf.spaceGramDelayedMessages(strongSelf.transformEnqueueMessages(messages, silentPosting: effectiveSilentPosting, scheduleTime: scheduleTime, repeatPeriod: repeatPeriod, postpone: postpone))
+                let transformedMessages = delayedMessages.0
                 
                 var forwardedMessages: [[EnqueueMessage]] = []
                 var forwardSourcePeerIds = Set<PeerId>()
@@ -1067,7 +1070,7 @@ extension ChatControllerImpl {
                 let _ = (strongSelf.shouldDivertMessagesToScheduled(messages: transformedMessages)
                 |> deliverOnMainQueue).start(next: { shouldDivert in
                     let signal: Signal<[MessageId?], NoError>
-                    var shouldOpenScheduledMessages = false
+                    var shouldOpenScheduledMessages = delayedMessages.1
                     if forwardSourcePeerIds.count > 1 {
                         var forwardedMessages = forwardedMessages
                         if shouldDivert {
@@ -1127,6 +1130,8 @@ extension ChatControllerImpl {
                                     strongSelf.layoutActionOnViewTransitionAction = nil
                                     layoutActionOnViewTransitionAction()
                                 }
+                                // MARK: NAGRAM — expose native pending-message edit/cancel UI.
+                                strongSelf.openScheduledMessages(force: true, completion: { _ in })
                             }
                         }
                     })
