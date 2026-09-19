@@ -67,13 +67,19 @@ public func makeTelegramAccountAuxiliaryMethods(uploadInBackground: ((Postbox, M
                 let signal = fetchPhotoLibraryResource(localIdentifier: photoLibraryResource.localIdentifier, width: photoLibraryResource.width, height: photoLibraryResource.height, format: photoLibraryResource.format, quality: photoLibraryResource.quality, hd: photoLibraryResource.forceHd, useExif: useExif)
                 guard stripMetadata else { return signal }
                 return signal |> map { result in
-                    guard case let .dataPart(resourceOffset, data, range, complete) = result, complete,
+                    guard case let .dataPart(resourceOffset, data, _, complete) = result,
+                          complete,
                           let sanitized = SpaceGramMetadataSanitizer.sanitizeStillImage(data) else {
                         // The native photo path has already re-encoded pixel data,
                         // so fallback data contains no original EXIF/GPS blocks.
                         return result
                     }
-                    return .dataPart(resourceOffset: resourceOffset, data: sanitized, range: 0 ..< Int64(sanitized.count), complete: true)
+                    return .dataPart(
+                        resourceOffset: resourceOffset,
+                        data: sanitized,
+                        range: 0 ..< Int64(sanitized.count),
+                        complete: true
+                    )
                 }
             }
         } else if let resource = resource as? ICloudFileResource {
