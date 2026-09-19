@@ -78,13 +78,26 @@ private final class ManagedLocalTypingActivitiesContext {
     }
 }
 
+private func isSpeakingInGroupCall(_ activity: PeerInputActivity?) -> Bool {
+    guard let activity else {
+        return false
+    }
+
+    switch activity {
+    case .speakingInGroupCall(_):
+        return true
+    default:
+        return false
+    }
+}
+
 func managedLocalTypingActivities(activities: Signal<[PeerActivitySpace: [(PeerId, PeerInputActivityRecord)]], NoError>, postbox: Postbox, network: Network, accountPeerId: PeerId) -> Signal<Void, NoError> {
     return Signal { subscriber in
         let context = Atomic(value: ManagedLocalTypingActivitiesContext())
         // MARK: NAGRAM — cancel pending chat activity when the policy changes live.
         let disposable = combineLatest(activities, spaceGramSuppressChatActivitySignal()).start(next: { activities, suppressed in
             let activities = suppressed ? activities.mapValues { records in
-                records.filter { $0.1.activity == .speakingInGroupCall }
+                records.filter { isSpeakingInGroupCall($0.1.activity) }
             } : activities
             let (start, dispose) = context.with { context in
                 return context.update(activities: activities)
@@ -153,7 +166,7 @@ private func requestActivity(postbox: Postbox, network: Network, accountPeerId: 
         // MARK: NAGRAM — suppress cloud and encrypted activity at the send boundary.
         if SpaceGramGhostPolicy.suppressChatActivity {
             // Group-call speaking events maintain live call state, not chat typing.
-            if activity != .speakingInGroupCall {
+            if !isSpeakingInGroupCall(activity) {
                 return .complete()
             }
         }
