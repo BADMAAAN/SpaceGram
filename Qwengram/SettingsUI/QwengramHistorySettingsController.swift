@@ -18,7 +18,7 @@ private struct QwengramHistorySettingsEntry: ItemListNodeEntry {
     var action: (() -> Void)? = nil
 
     var section: ItemListSectionId {
-        return stableId == 0 ? 0 : (stableId == 3 ? 2 : 1)
+        return stableId <= 2 ? 0 : (stableId <= 5 ? 1 : 2)
     }
 
     static func == (lhs: QwengramHistorySettingsEntry, rhs: QwengramHistorySettingsEntry) -> Bool {
@@ -39,9 +39,9 @@ private struct QwengramHistorySettingsEntry: ItemListNodeEntry {
 
 public func qwengramHistorySettingsController(context: AccountContext) -> ViewController {
     var pushControllerImpl: ((ViewController) -> Void)?
-    let signal = combineLatest(context.sharedContext.presentationData, qwengramHistorySettingsSignal())
+    let signal = combineLatest(context.sharedContext.presentationData, qwengramHistorySettingsSignal(), qwengramHistoryIndicatorSettingsSignal())
     |> deliverOnMainQueue
-    |> map { presentationData, settings -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, settings, indicators -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let lang = presentationData.strings.baseLanguageCode
         let entries: [QwengramHistorySettingsEntry] = [
             QwengramHistorySettingsEntry(stableId: 0, title: ngI18n("Qwengram.History", lang), value: settings.0, updated: {
@@ -53,7 +53,10 @@ public func qwengramHistorySettingsController(context: AccountContext) -> ViewCo
             QwengramHistorySettingsEntry(stableId: 2, title: ngI18n("Qwengram.SaveDeletes", lang), value: settings.2, updated: {
                 QwengramSettings.shared.saveServerDeletedMessages = $0
             }),
-            QwengramHistorySettingsEntry(stableId: 3, title: ngI18n("Qwengram.ViewHistory", lang), action: {
+            QwengramHistorySettingsEntry(stableId: 3, title: ngI18n("Qwengram.History.ShowIndicator", lang), value: indicators.0, updated: { QwengramSettings.shared.showHistoryIndicator = $0 }),
+            QwengramHistorySettingsEntry(stableId: 4, title: ngI18n("Qwengram.History.ShowEdited", lang), value: indicators.1, updated: { QwengramSettings.shared.showEditedIndicator = $0 }),
+            QwengramHistorySettingsEntry(stableId: 5, title: ngI18n("Qwengram.History.ShowDeleted", lang), value: indicators.2, updated: { QwengramSettings.shared.showDeletedIndicator = $0 }),
+            QwengramHistorySettingsEntry(stableId: 6, title: ngI18n("Qwengram.ViewHistory", lang), action: {
                 pushControllerImpl?(qwengramHistoryController(context: context))
             })
         ]

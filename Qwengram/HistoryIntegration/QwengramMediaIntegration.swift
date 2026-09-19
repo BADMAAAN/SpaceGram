@@ -67,6 +67,8 @@ func qwengramStoreMessageMedia(postbox: Postbox, key: QwengramHistoryMessageKey,
                 }
                 record.events[index].mediaAssetIds = ids
                 try QwengramHistoryStore.upsert(transaction: transaction, record: record)
+                let references = QwengramHistoryStore.assetReferences(transaction: transaction)
+                QwengramMediaArchive.reconcile(root: root, referencedIds: references.ids, referencesComplete: references.complete)
             } catch {
                 QwengramMediaArchive.remove(root: root, ids: ids)
                 NSLog("QwengramMediaArchive: history link failed")

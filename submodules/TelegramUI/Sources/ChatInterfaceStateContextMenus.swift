@@ -1041,12 +1041,12 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
     }
     
     // MARK: NAGRAM
-    let historyAvailable: Signal<Bool, NoError> = messages.count == 1 && !isScheduled && !isAction
-        ? qwengramMessageHistoryAvailable(context: context, messageId: message.id)
-        : .single(false)
-    return combineLatest(dataSignal, historyAvailable)
+    let historyIndicators: Signal<QwengramMessageHistoryIndicators, NoError> = messages.count == 1 && !isScheduled && !isAction
+        ? qwengramMessageHistoryIndicators(context: context, messageId: message.id)
+        : .single(QwengramMessageHistoryIndicators())
+    return combineLatest(dataSignal, historyIndicators)
     |> deliverOnMainQueue
-    |> map { menuData, historyAvailable -> ContextController.Items in
+    |> map { menuData, historyIndicators -> ContextController.Items in
         // MARK: NAGRAM
         let (data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, _, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer) = menuData
         let isPremium = accountPeer?.isPremium ?? false
@@ -1054,8 +1054,14 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         var actions: [NagramManagedMessageMenuItem] = []
 
         // MARK: NAGRAM
-        if historyAvailable {
-            actions.append(.action(ContextMenuActionItem(text: "Message History", icon: { theme in
+        if historyIndicators.hasHistory {
+            let historyLanguage = chatPresentationInterfaceState.strings.baseLanguageCode
+            var historyTitle = ngI18n("Qwengram.History", historyLanguage)
+            if QwengramSettings.shared.showHistoryIndicator {
+                if historyIndicators.hasEdits && QwengramSettings.shared.showEditedIndicator { historyTitle += " · " + ngI18n("Qwengram.History.Edited", historyLanguage) }
+                if historyIndicators.hasDeletes && QwengramSettings.shared.showDeletedIndicator { historyTitle += " · " + ngI18n("Qwengram.History.Deleted", historyLanguage) }
+            }
+            actions.append(.action(ContextMenuActionItem(text: historyTitle, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Message"), color: theme.actionSheet.primaryTextColor)
             }, action: { _, f in
                 f(.dismissWithoutContent)

@@ -7,6 +7,7 @@ swift_library(
     testonly = True,
     srcs = glob(["*.swift"]),
     deps = [
+        "//Qwengram/AI:QwengramAI",
         "//Qwengram/HistoryStorage:QwengramHistoryStorage",
         "//Qwengram/MediaArchive:QwengramMediaArchive",
     ],

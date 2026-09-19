@@ -83,6 +83,15 @@ public final class QwengramSettings {
     @QwengramDefault("qwengram.settings.mediaArchiveEnabled", false)
     public var mediaArchiveEnabled: Bool
 
+    @QwengramDefault("qwengram.settings.showHistoryIndicator", true)
+    public var showHistoryIndicator: Bool
+
+    @QwengramDefault("qwengram.settings.showEditedIndicator", true)
+    public var showEditedIndicator: Bool
+
+    @QwengramDefault("qwengram.settings.showDeletedIndicator", true)
+    public var showDeletedIndicator: Bool
+
     public var captureMedia: Bool {
         return qwengramEnabled && messageHistoryEnabled && mediaArchiveEnabled
     }

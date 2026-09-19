@@ -20,6 +20,13 @@ public enum QwengramMediaArchiveError: Error {
     case storage
 }
 
+public enum QwengramArchivedAssetState {
+    case available(QwengramArchivedAsset)
+    case expired
+    case missing
+    case corrupt
+}
+
 // A regular, complete cache inode pinned before Telegram unlinks it. No payload
 // is read on Postbox's queue. Closing also releases the bounded pending reservation.
 public final class QwengramMediaCapture {
@@ -70,6 +77,68 @@ public enum QwengramMediaArchive {
     private static var pendingBytes: Int64 = 0
     private struct VersionHeader: Decodable { let version: Int }
 
+    public static func usage(root: URL, completion: @escaping (Result<QwengramMediaArchiveUsage, QwengramMediaArchiveError>) -> Void) {
+        queue.async {
+            do {
+                let usage = try withLock(root: root) { () -> QwengramMediaArchiveUsage in
+                    let policy = try readPolicy(root: root)
+                    let assets = try maintain(root: root, policy: policy)
+                    return QwengramMediaArchiveUsage(bytes: assets.reduce(0) { $0 + $1.bytes }, assetCount: assets.count, policy: policy)
+                }
+                completion(.success(usage))
+            } catch { completion(.failure(.storage)) }
+        }
+    }
+
+    public static func setPolicy(root: URL, policy: QwengramMediaArchivePolicy, completion: @escaping (Bool) -> Void) {
+        queue.async {
+            do {
+                guard policy.isValid else { throw QwengramMediaArchiveError.invalidData }
+                try withLock(root: root) {
+                    let file = root.appendingPathComponent("policy.json")
+                    try JSONEncoder().encode(policy).write(to: file, options: .atomic)
+                    try FileManager.default.setAttributes([.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication], ofItemAtPath: file.path)
+                    _ = try maintain(root: root, policy: policy)
+                }
+                completion(true)
+            } catch { completion(false) }
+        }
+    }
+
+    public static func cleanExpired(root: URL, referencedIds: Set<String>, referencesComplete: Bool, completion: @escaping (Bool) -> Void) {
+        queue.async {
+            do {
+                try withLock(root: root) {
+                    let policy = try readPolicy(root: root)
+                    let assets = try maintain(root: root, policy: policy, forceExpiry: true)
+                    if referencesComplete {
+                        let grace = Date().timeIntervalSince1970 - 5 * 60
+                        for asset in assets where !referencedIds.contains(asset.id) && asset.timestamp < grace {
+                            try erase(root: root, asset: asset)
+                        }
+                    }
+                }
+                completion(true)
+            } catch { completion(false) }
+        }
+    }
+
+    public static func reconcile(root: URL, referencedIds: Set<String>, referencesComplete: Bool) {
+        guard referencesComplete else { return }
+        queue.async {
+            do {
+                try withLock(root: root) {
+                    let policy = try readPolicy(root: root)
+                    guard policy.automaticCleanup else { return }
+                    let grace = Date().timeIntervalSince1970 - 5 * 60
+                    for asset in try maintain(root: root, policy: policy) where !referencedIds.contains(asset.id) && asset.timestamp < grace {
+                        try erase(root: root, asset: asset)
+                    }
+                }
+            } catch { NSLog("QwengramMediaArchive: orphan reconciliation failed") }
+        }
+    }
+
     // MediaBox belongs to one account's Postbox. This sibling is outside MediaBox
     // cleanup, and disappears with the containing account on account removal.
     public static func root(mediaBoxPath: String) -> URL {
@@ -114,10 +183,11 @@ public enum QwengramMediaArchive {
             var saved: [QwengramArchivedAsset] = []
             do {
                 try withLock(root: root) {
-                    var assets = try maintain(root: root)
+                    let policy = try readPolicy(root: root)
+                    var assets = try maintain(root: root, policy: policy)
                     for capture in captures {
                         do {
-                            while !assets.isEmpty && (assets.count >= maxAssets || assets.reduce(Int64(0), { $0 + $1.bytes }) > maxBytes - capture.size) {
+                            while !assets.isEmpty && (assets.count >= maxAssets || assets.reduce(Int64(0), { $0 + $1.bytes }) > policy.storageLimitBytes - capture.size) {
                                 try erase(root: root, asset: assets.removeFirst())
                             }
                             let id = UUID().uuidString.lowercased()
@@ -157,8 +227,91 @@ public enum QwengramMediaArchive {
     public static func list(root: URL, ids: [String], completion: @escaping ([QwengramArchivedAsset]) -> Void) {
         queue.async {
             let wanted = Set(ids)
-            let result = try? withLock(root: root) { try maintain(root: root).filter { wanted.contains($0.id) } }
+            let result = try? withLock(root: root) { try maintain(root: root, policy: readPolicy(root: root)).filter { wanted.contains($0.id) } }
             completion(result ?? [])
+        }
+    }
+
+    // Lightweight list indicator: inspect manifests and file metadata only.
+    // Avoid maintenance here so detail can still diagnose a damaged manifest.
+    public static func available(root: URL, ids: [String], completion: @escaping (Set<String>) -> Void) {
+        queue.async {
+            var available = Set<String>()
+            do {
+                try withLock(root: root) {
+                    let policy = try readPolicy(root: root)
+                    let cutoff = policy.automaticCleanup ? Date().timeIntervalSince1970 - Double(policy.retentionDays) * 24 * 60 * 60 : -Double.infinity
+                    for id in Set(ids) where UUID(uuidString: id) != nil {
+                        let metadata = root.appendingPathComponent(id + ".json")
+                        guard let values = try? metadata.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey]),
+                              values.isRegularFile == true, values.isSymbolicLink != true,
+                              (values.fileSize ?? Int.max) <= 8192,
+                              let data = try? Data(contentsOf: metadata),
+                              let asset = try? JSONDecoder().decode(QwengramArchivedAsset.self, from: data),
+                              asset.version == 1, asset.id == id, asset.timestamp.isFinite, asset.timestamp >= cutoff,
+                              asset.bytes > 0, asset.bytes <= maxAssetBytes,
+                              asset.sha256.count == 64,
+                              !asset.fileExtension.isEmpty, asset.fileExtension.count <= 12,
+                              asset.fileExtension.utf8.allSatisfy({ (48 ... 57).contains($0) || (97 ... 122).contains($0) }) else { continue }
+                        let payloadValues = try? payload(root: root, asset: asset).resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey])
+                        if payloadValues?.isRegularFile == true, payloadValues?.isSymbolicLink != true,
+                           Int64(payloadValues?.fileSize ?? -1) == asset.bytes { available.insert(id) }
+                    }
+                }
+            } catch { }
+            completion(available)
+        }
+    }
+
+    // Inspect only explicitly linked assets on the media queue. This does not
+    // load binary payloads into memory or erase evidence before reporting it.
+    public static func states(root: URL, ids: [String], capturedAt: [String: Int64], completion: @escaping ([String: QwengramArchivedAssetState]) -> Void) {
+        queue.async {
+            var result: [String: QwengramArchivedAssetState] = [:]
+            do {
+                try withLock(root: root) {
+                    let policy = try readPolicy(root: root)
+                    let cutoff = policy.automaticCleanup ? Date().timeIntervalSince1970 - Double(policy.retentionDays) * 24 * 60 * 60 : -Double.infinity
+                    for id in Set(ids) where UUID(uuidString: id) != nil {
+                        let metadata = root.appendingPathComponent(id + ".json")
+                        guard FileManager.default.fileExists(atPath: metadata.path) else {
+                            result[id] = Double(capturedAt[id] ?? 0) < cutoff ? .expired : .missing
+                            continue
+                        }
+                        guard let metadataValues = try? metadata.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey]),
+                              metadataValues.isRegularFile == true, metadataValues.isSymbolicLink != true,
+                              (metadataValues.fileSize ?? Int.max) <= 8192,
+                              let data = try? Data(contentsOf: metadata),
+                              let asset = try? JSONDecoder().decode(QwengramArchivedAsset.self, from: data),
+                              asset.version == 1, asset.id == id, asset.bytes > 0, asset.bytes <= maxAssetBytes,
+                              !asset.fileExtension.isEmpty, asset.fileExtension.count <= 12,
+                              asset.fileExtension.utf8.allSatisfy({ (48 ... 57).contains($0) || (97 ... 122).contains($0) }),
+                              asset.sha256.count == 64 else {
+                            result[id] = .corrupt
+                            continue
+                        }
+                        if asset.timestamp < cutoff {
+                            result[id] = .expired
+                            continue
+                        }
+                        let url = payload(root: root, asset: asset)
+                        guard let values = try? url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey]),
+                              values.isRegularFile == true, values.isSymbolicLink != true else {
+                            result[id] = .missing
+                            continue
+                        }
+                        guard Int64(values.fileSize ?? -1) == asset.bytes,
+                              (try? hashFile(url: url, size: asset.bytes)) == asset.sha256 else {
+                            result[id] = .corrupt
+                            continue
+                        }
+                        result[id] = .available(asset)
+                    }
+                }
+            } catch {
+                for id in ids where result[id] == nil { result[id] = .missing }
+            }
+            completion(result)
         }
     }
 
@@ -167,9 +320,23 @@ public enum QwengramMediaArchive {
             do {
                 try withLock(root: root) {
                     let wanted = Set(ids)
-                    for asset in try maintain(root: root) where wanted.contains(asset.id) { try erase(root: root, asset: asset) }
+                    for asset in try maintain(root: root, policy: readPolicy(root: root)) where wanted.contains(asset.id) { try erase(root: root, asset: asset) }
                 }
             } catch { NSLog("QwengramMediaArchive: cleanup failed") }
+        }
+    }
+
+    public static func clear(root: URL, completion: @escaping (Bool) -> Void) {
+        queue.async {
+            do {
+                try withLock(root: root) {
+                    for asset in try maintain(root: root, policy: readPolicy(root: root)) { try erase(root: root, asset: asset) }
+                }
+                completion(true)
+            } catch {
+                NSLog("QwengramMediaArchive: clear failed")
+                completion(false)
+            }
         }
     }
 
@@ -180,7 +347,7 @@ public enum QwengramMediaArchive {
             do {
                 guard activePreviews < 4 else { throw QwengramMediaArchiveError.capacity }
                 let preview = try withLock(root: root) { () -> QwengramMediaPreview in
-                    guard let asset = try maintain(root: root).first(where: { $0.id == id }) else { throw QwengramMediaArchiveError.unavailable }
+                    guard let asset = try maintain(root: root, policy: readPolicy(root: root)).first(where: { $0.id == id }) else { throw QwengramMediaArchiveError.unavailable }
                     try maintainPreviews(reserving: asset.bytes)
                     let source = try FileHandle(forReadingFrom: payload(root: root, asset: asset))
                     defer { try? source.close() }
@@ -234,11 +401,23 @@ public enum QwengramMediaArchive {
         if fm.fileExists(atPath: metadata.path) { try fm.removeItem(at: metadata) }
     }
 
-    private static func maintain(root: URL) throws -> [QwengramArchivedAsset] {
+    private static func readPolicy(root: URL) throws -> QwengramMediaArchivePolicy {
+        let file = root.appendingPathComponent("policy.json")
+        guard FileManager.default.fileExists(atPath: file.path) else { return .default }
+        let values = try file.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey])
+        guard values.isRegularFile == true, values.isSymbolicLink != true,
+              (values.fileSize ?? Int.max) <= 8192,
+              let policy = try? JSONDecoder().decode(QwengramMediaArchivePolicy.self, from: Data(contentsOf: file)), policy.isValid else {
+            throw QwengramMediaArchiveError.invalidData
+        }
+        return policy
+    }
+
+    private static func maintain(root: URL, policy: QwengramMediaArchivePolicy, forceExpiry: Bool = false) throws -> [QwengramArchivedAsset] {
         let fm = FileManager.default
         let files = try fm.contentsOfDirectory(at: root, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey])
         var assets: [QwengramArchivedAsset] = []
-        let cutoff = Date().timeIntervalSince1970 - retention
+        let cutoff = (policy.automaticCleanup || forceExpiry) ? Date().timeIntervalSince1970 - Double(policy.retentionDays) * 24 * 60 * 60 : -Double.infinity
         for file in files where file.pathExtension == "json" && UUID(uuidString: file.deletingPathExtension().lastPathComponent) != nil {
             let info = try file.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey])
             if info.isRegularFile == true, info.isSymbolicLink != true, (info.fileSize ?? Int.max) <= 8192,
@@ -257,12 +436,8 @@ public enum QwengramMediaArchive {
             guard payloadInfo?.isRegularFile == true, payloadInfo?.isSymbolicLink != true, Int64(payloadInfo?.fileSize ?? -1) == asset.bytes else { continue }
             assets.append(asset)
         }
-        assets.sort { $0.timestamp < $1.timestamp }
-        var total = assets.reduce(Int64(0)) { $0 + $1.bytes }
-        while !assets.isEmpty && (assets.count > maxAssets || total > maxBytes) {
-            total -= assets.removeFirst().bytes
-        }
-        var retained = Set([".lock"])
+        assets = retainedAssets(assets, storageLimitBytes: policy.storageLimitBytes)
+        var retained = Set([".lock", "policy.json"])
         for asset in assets {
             retained.insert(asset.id + ".json")
             retained.insert(asset.id + ".data." + asset.fileExtension)
@@ -270,6 +445,15 @@ public enum QwengramMediaArchive {
         // Commit metadata is written last; interrupted copies and orphan payloads
         // are safely reclaimed under the same cross-process lock.
         for file in files where !retained.contains(file.lastPathComponent) { try fm.removeItem(at: file) }
+        return assets
+    }
+
+    public static func retainedAssets(_ candidates: [QwengramArchivedAsset], storageLimitBytes: Int64, maxCount: Int = QwengramMediaArchive.maxAssets) -> [QwengramArchivedAsset] {
+        var assets = candidates.sorted { $0.timestamp < $1.timestamp }
+        var total = assets.reduce(Int64(0)) { $0 + $1.bytes }
+        while !assets.isEmpty && (assets.count > maxCount || total > storageLimitBytes) {
+            total -= assets.removeFirst().bytes
+        }
         return assets
     }
 
@@ -306,6 +490,20 @@ public enum QwengramMediaArchive {
         }
         guard (try input.read(upToCount: 1) ?? Data()).isEmpty else { throw QwengramMediaArchiveError.invalidData }
         try output.synchronize()
+        return hash.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static func hashFile(url: URL, size: Int64) throws -> String {
+        let input = try FileHandle(forReadingFrom: url)
+        defer { try? input.close() }
+        var hash = SHA256()
+        var remaining = size
+        while remaining > 0 {
+            guard let data = try input.read(upToCount: Int(min(remaining, 1024 * 1024))), !data.isEmpty else { throw QwengramMediaArchiveError.invalidData }
+            hash.update(data: data)
+            remaining -= Int64(data.count)
+        }
+        guard (try input.read(upToCount: 1) ?? Data()).isEmpty else { throw QwengramMediaArchiveError.invalidData }
         return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
 }

@@ -71,11 +71,13 @@ private final class QwengramSettingsArguments {
     let openBotsHub: () -> Void
     let openQwenProvider: () -> Void
     let openHistorySettings: () -> Void
+    let openMediaSettings: () -> Void
 
-    init(openBotsHub: @escaping () -> Void, openQwenProvider: @escaping () -> Void, openHistorySettings: @escaping () -> Void) {
+    init(openBotsHub: @escaping () -> Void, openQwenProvider: @escaping () -> Void, openHistorySettings: @escaping () -> Void, openMediaSettings: @escaping () -> Void) {
         self.openBotsHub = openBotsHub
         self.openQwenProvider = openQwenProvider
         self.openHistorySettings = openHistorySettings
+        self.openMediaSettings = openMediaSettings
     }
 }
 
@@ -87,18 +89,18 @@ public func qwengramSettingsController(context: AccountContext) -> ViewControlle
             pushControllerImpl?(qwengramBotsController(context: context))
         },
         openQwenProvider: { pushControllerImpl?(qwengramAISettingsController(context: context)) },
-        openHistorySettings: { pushControllerImpl?(qwengramHistorySettingsController(context: context)) }
+        openHistorySettings: { pushControllerImpl?(qwengramHistorySettingsController(context: context)) },
+        openMediaSettings: { pushControllerImpl?(qwengramMediaArchiveSettingsController(context: context)) }
     )
     let signal = combineLatest(
         context.sharedContext.presentationData,
         qwengramEnabledSignal(),
         botsHubEnabledSignal(),
         qwengramGhostSettingsSignal(),
-        qwengramAutomaticReadsSettingSignal(),
-        qwengramMediaArchiveSettingSignal()
+        qwengramAutomaticReadsSettingSignal()
     )
     |> deliverOnMainQueue
-    |> map { presentationData, qwengramEnabled, botsHubEnabled, ghost, suppressAutomaticReads, mediaArchiveEnabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, qwengramEnabled, botsHubEnabled, ghost, suppressAutomaticReads -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let lang = presentationData.strings.baseLanguageCode
         let entries: [QwengramSettingsEntry] = [
             .header(0, 0, ngI18n("Qwengram.General", lang)),
@@ -107,20 +109,24 @@ public func qwengramSettingsController(context: AccountContext) -> ViewControlle
             }),
             .about(2, 0, ngI18n(qwengramEnabled ? "Qwengram.Foundation" : "Qwengram.Disabled", lang)),
             .header(3, 1, ngI18n("Qwengram.Ghost", lang)),
-            .toggle(4, 1, ngI18n("Qwengram.AutomaticReads", lang), suppressAutomaticReads, { QwengramSettings.shared.suppressAutomaticReads = $0 }),
-            .toggle(5, 1, ngI18n("Qwengram.Activity", lang), ghost.0, { QwengramSettings.shared.hideChatActivity = $0 }),
-            .toggle(6, 1, ngI18n("Qwengram.Stories", lang), ghost.1, { QwengramSettings.shared.hideStoryViews = $0 }),
-            .toggle(7, 1, ngI18n("Qwengram.Online", lang), ghost.2, { QwengramSettings.shared.hideOnlinePresence = $0 }),
-            .about(8, 1, ngI18n("Qwengram.GhostInfo", lang)),
-            .header(9, 2, ngI18n("Qwengram.History", lang)),
-            .navigation(10, 2, ngI18n("Qwengram.History", lang), true, arguments.openHistorySettings),
-            .header(11, 3, ngI18n("Qwengram.Tools", lang)),
-            .toggle(12, 3, ngI18n("Qwengram.ToolsEnabled", lang), botsHubEnabled, { QwengramSettings.shared.botsHubEnabled = $0 }),
-            .navigation(13, 3, ngI18n("Qwengram.OpenTools", lang), qwengramEnabled && botsHubEnabled, arguments.openBotsHub),
-            .navigation(14, 3, ngI18n("Qwengram.Provider", lang), true, arguments.openQwenProvider),
-            .header(15, 4, ngI18n("Qwengram.Media", lang)),
-            .toggle(16, 4, ngI18n("Qwengram.Archive", lang), mediaArchiveEnabled, { QwengramSettings.shared.mediaArchiveEnabled = $0 }),
-            .about(17, 4, ngI18n("Qwengram.ArchiveLimits", lang))
+            .toggle(4, 1, ngI18n("Qwengram.Activity", lang), ghost.0, { QwengramSettings.shared.hideChatActivity = $0 }),
+            .toggle(5, 1, ngI18n("Qwengram.Stories", lang), ghost.1, { QwengramSettings.shared.hideStoryViews = $0 }),
+            .toggle(6, 1, ngI18n("Qwengram.Online", lang), ghost.2, { QwengramSettings.shared.hideOnlinePresence = $0 }),
+            .about(7, 1, ngI18n("Qwengram.GhostInfo", lang)),
+            .header(8, 2, ngI18n("Qwengram.Privacy", lang)),
+            .toggle(9, 2, ngI18n("Qwengram.AutomaticReads", lang), suppressAutomaticReads, { QwengramSettings.shared.suppressAutomaticReads = $0 }),
+            .header(10, 3, ngI18n("Qwengram.History", lang)),
+            .navigation(11, 3, ngI18n("Qwengram.History", lang), true, arguments.openHistorySettings),
+            .header(12, 4, ngI18n("Qwengram.Archive", lang)),
+            .navigation(13, 4, ngI18n("Qwengram.Archive", lang), true, arguments.openMediaSettings),
+            .header(14, 5, ngI18n("Qwengram.Tools", lang)),
+            .toggle(15, 5, ngI18n("Qwengram.ToolsEnabled", lang), botsHubEnabled, { QwengramSettings.shared.botsHubEnabled = $0 }),
+            .navigation(16, 5, ngI18n("Qwengram.OpenTools", lang), qwengramEnabled && botsHubEnabled, arguments.openBotsHub),
+            .navigation(17, 5, ngI18n("Qwengram.Provider", lang), true, arguments.openQwenProvider),
+            .header(18, 6, ngI18n("Qwengram.Appearance", lang)),
+            .about(19, 6, ngI18n("Qwengram.AppearanceInfo", lang)),
+            .header(20, 7, ngI18n("Qwengram.Advanced", lang)),
+            .about(21, 7, ngI18n("Qwengram.AdvancedInfo", lang))
         ]
         let listPresentationData = ItemListPresentationData(presentationData)
         let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("Qwengram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))

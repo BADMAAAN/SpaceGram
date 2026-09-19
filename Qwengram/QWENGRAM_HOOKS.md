@@ -382,3 +382,27 @@ exceptions and validation. This extends the earlier automatic-read section.
 Upstream modification sites are marked `// MARK: NAGRAM`. Preserve capture order
 before deletion; moving only the path lookup into an asynchronous callback loses
 the original file. Never bypass MediaBox deletion or fake acknowledgement success.
+
+## History browser and Qwen conversations (2026-09-19)
+
+The History browser remains in `Qwengram/HistoryUI`; it uses the existing
+Postbox collection and does not add upstream hooks. Search, event/peer filters,
+time ordering and a 200-row display window are computed from the selected
+account's records off the main thread. Media availability is checked from
+manifests for the visible rows; binary hashing is confined to the selected
+message detail on the Media Archive utility queue. Quick Look still opens a
+verified temporary copy.
+
+Deletion of an event, revision, message, chat or full history runs in the same
+account Postbox. Assets without a surviving readable history reference are
+removed after the transaction;
+clearing Media Archive is a separate confirmed action. History text remains
+readable if Media Archive is cleared. No Telegram message tables are modified.
+
+`Qwengram/AI/QwengramConversationStore.swift` saves each Qwen conversation in
+the selected account directory with iOS file protection and backup exclusion.
+It stores messages and model names, never API keys. The assistant sends a
+bounded suffix of complete messages as context and shows older UI messages on
+demand. The native message context menu displays optional History, Edited and
+Deleted markers in one existing `// MARK: NAGRAM`-scoped TelegramUI hook.
+See [HISTORY_AI_AUDIT.md](HISTORY_AI_AUDIT.md) for policy, migration and tests.

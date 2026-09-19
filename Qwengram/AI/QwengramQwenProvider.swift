@@ -31,7 +31,7 @@ public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramA
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         do {
-            request.httpBody = try JSONEncoder().encode(Request(model: model, messages: messages))
+            request.httpBody = try JSONEncoder().encode(Request(model: model, messages: messages.map { ProviderMessage(role: $0.role, content: $0.content) }))
         } catch {
             completion(.failure(.invalidRequest))
             return
@@ -90,7 +90,7 @@ public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramA
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         do {
-            request.httpBody = try JSONEncoder().encode(StreamingRequest(model: model, messages: messages, stream: true))
+            request.httpBody = try JSONEncoder().encode(StreamingRequest(model: model, messages: messages.map { ProviderMessage(role: $0.role, content: $0.content) }, stream: true))
         } catch {
             completion(.failure(.invalidRequest))
             return nil
@@ -103,14 +103,19 @@ public final class QwengramQwenProvider: NSObject, QwengramAIProvider, QwengramA
         return delegate
     }
 
+    private struct ProviderMessage: Encodable {
+        let role: QwengramAIMessage.Role
+        let content: String
+    }
+
     private struct Request: Encodable {
         let model: String
-        let messages: [QwengramAIMessage]
+        let messages: [ProviderMessage]
     }
 
     private struct StreamingRequest: Encodable {
         let model: String
-        let messages: [QwengramAIMessage]
+        let messages: [ProviderMessage]
         let stream: Bool
     }
 

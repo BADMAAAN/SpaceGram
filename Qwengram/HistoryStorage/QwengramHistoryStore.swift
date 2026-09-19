@@ -95,6 +95,75 @@ public enum QwengramHistoryStore {
         transaction.removeOrderedItemListItem(collectionId: QwengramHistoryCollection.id, itemId: MemoryBuffer(data: key.binaryKey))
     }
 
+    // Return only assets no longer referenced by this record. The caller removes
+    // binary media after the Postbox transaction has committed.
+    public static func removeEvent(transaction: Transaction, key: QwengramHistoryMessageKey, index: Int, expected: QwengramHistoryEvent) throws -> [String] {
+        guard var record = try self.load(transaction: transaction, key: key),
+              record.events.indices.contains(index), record.events[index] == expected else { return [] }
+        let removed = record.events.remove(at: index)
+        if let number = removed.revisionNumber, !record.events.contains(where: { $0.revisionNumber == number }) {
+            record.revisions.removeAll { $0.number == number }
+        }
+        let detached = removed.mediaAssetIds ?? []
+        if record.events.isEmpty && record.revisions.isEmpty {
+            self.remove(transaction: transaction, key: key)
+        } else {
+            try self.upsert(transaction: transaction, record: record)
+        }
+        return self.unreferencedAssets(transaction: transaction, candidates: detached)
+    }
+
+    public static func removeRevision(transaction: Transaction, key: QwengramHistoryMessageKey, number: Int64) throws {
+        guard var record = try self.load(transaction: transaction, key: key),
+              record.revisions.contains(where: { $0.number == number }) else { return }
+        record.revisions.removeAll { $0.number == number }
+        if record.events.isEmpty && record.revisions.isEmpty {
+            self.remove(transaction: transaction, key: key)
+        } else {
+            try self.upsert(transaction: transaction, record: record)
+        }
+    }
+
+    public static func removeMessage(transaction: Transaction, key: QwengramHistoryMessageKey) throws -> [String] {
+        guard let record = try self.load(transaction: transaction, key: key) else { return [] }
+        self.remove(transaction: transaction, key: key)
+        return self.unreferencedAssets(transaction: transaction, candidates: record.events.flatMap { $0.mediaAssetIds ?? [] })
+    }
+
+    public static func removePeer(transaction: Transaction, peerId: Int64) -> [String] {
+        var assetIds: [String] = []
+        for record in self.listRecords(transaction: transaction).records where record.key.peerId == peerId {
+            assetIds.append(contentsOf: record.events.flatMap { $0.mediaAssetIds ?? [] })
+            self.remove(transaction: transaction, key: record.key)
+        }
+        return self.unreferencedAssets(transaction: transaction, candidates: assetIds)
+    }
+
+    @discardableResult
+    public static func clearArchiveWithAssets(transaction: Transaction) -> [String] {
+        let assetIds = self.listRecords(transaction: transaction).records.flatMap { $0.events.flatMap { $0.mediaAssetIds ?? [] } }
+        self.clearArchive(transaction: transaction)
+        return assetIds
+    }
+
+    // Fault isolation must not turn an unreadable record into permission to
+    // delete a possibly shared asset. Retry orphan cleanup after repair/clear.
+    public static func assetReferences(transaction: Transaction) -> (ids: Set<String>, complete: Bool) {
+        let result = self.listRecords(transaction: transaction)
+        return (Set(result.records.flatMap { $0.events.flatMap { $0.mediaAssetIds ?? [] } }), result.unreadableCount == 0)
+    }
+
+    private static func unreferencedAssets(transaction: Transaction, candidates: [String]) -> [String] {
+        let result = self.listRecords(transaction: transaction)
+        return self.detachedAssets(candidates: candidates, remainingRecords: result.records, complete: result.unreadableCount == 0)
+    }
+
+    public static func detachedAssets(candidates: [String], remainingRecords: [QwengramHistoryRecord], complete: Bool) -> [String] {
+        guard complete else { return [] }
+        let references = Set(remainingRecords.flatMap { $0.events.flatMap { $0.mediaAssetIds ?? [] } })
+        return Set(candidates).filter { !references.contains($0) }.sorted()
+    }
+
     public static func clearArchive(transaction: Transaction) {
         transaction.replaceOrderedItemListItems(collectionId: QwengramHistoryCollection.id, items: [])
     }

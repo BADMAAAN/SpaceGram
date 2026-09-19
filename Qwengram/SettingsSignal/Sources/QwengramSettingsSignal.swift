@@ -36,6 +36,16 @@ public func qwengramHistorySettingsSignal() -> Signal<(Bool, Bool, Bool), NoErro
     })
 }
 
+public func qwengramHistoryIndicatorSettingsSignal() -> Signal<(Bool, Bool, Bool), NoError> {
+    return settingsSignal {
+        let settings = QwengramSettings.shared
+        return (settings.showHistoryIndicator, settings.showEditedIndicator, settings.showDeletedIndicator)
+    }
+    |> distinctUntilChanged(isEqual: { lhs, rhs in
+        lhs.0 == rhs.0 && lhs.1 == rhs.1 && lhs.2 == rhs.2
+    })
+}
+
 public func qwengramEnabledSignal() -> Signal<Bool, NoError> {
     return settingsSignal { QwengramSettings.shared.qwengramEnabled } |> distinctUntilChanged
 }
