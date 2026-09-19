@@ -10,12 +10,20 @@ import json
 import plistlib
 from pathlib import Path
 import re
+import shutil
 import struct
 import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 errors = []
+
+rg = shutil.which("rg")
+if rg is None:
+    raise SystemExit(
+        "This consistency check requires ripgrep (`rg`). "
+        "Install it with Homebrew: brew install ripgrep"
+    )
 
 
 def check(condition, message):
@@ -48,7 +56,7 @@ for path in builds:
 swift = list(ROOT.glob("SpaceGram/**/*.swift")) + list(ROOT.glob("Tests/SpaceGram*/**/*.swift"))
 # Include upstream integration imports without pretending to type-check Swift.
 imports = subprocess.run(
-    ["rg", "-l", r"^import (Nagram|SpaceGram)", "submodules", "Telegram", "SpaceGram", "-g", "*.swift"],
+    [rg, "-l", r"^import (Nagram|SpaceGram)", "submodules", "Telegram", "SpaceGram", "-g", "*.swift"],
     cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=False,
 )
 check(imports.returncode in (0, 1), f"Could not scan integration imports: {imports.stderr}")

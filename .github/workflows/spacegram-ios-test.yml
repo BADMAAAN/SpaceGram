@@ -22,6 +22,14 @@ jobs:
           submodules: recursive
           fetch-depth: 1
 
+      - name: Install consistency-check dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install ripgrep
+          command -v rg
+          rg --version
+
       - name: Check SpaceGram source and asset consistency
         run: python3 tools/check_spacegram_consistency.py
 
