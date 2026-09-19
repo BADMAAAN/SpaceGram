@@ -920,12 +920,6 @@
       "sha256": "9947e9fccba2bfe533ae81d2bae51ec38f5582b405563f7ed906c265eaceb556"
     },
     {
-      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-76.png",
-      "status": "??",
-      "bytes": 7617,
-      "sha256": "9b0545dfdb45f3599bfb69908f0f5622554ed52b0a1574518e3972c632244311"
-    },
-    {
       "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-76@2x.png",
       "status": "??",
       "bytes": 23071,
@@ -1044,12 +1038,6 @@
       "status": "??",
       "bytes": 23652,
       "sha256": "7b0564a4d45641d13ce712df415efa6b90539354123833e83e73ab67d39ac17c"
-    },
-    {
-      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-76.png",
-      "status": "??",
-      "bytes": 6150,
-      "sha256": "3b79e789769f08b832a7db122494921390add29fa8d4268a529f070b3862aa2b"
     },
     {
       "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-76@2x.png",
