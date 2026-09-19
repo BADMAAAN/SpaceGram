@@ -1,0 +1,274 @@
+[
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20@2x.png",
+    "pixels": [
+      40,
+      40
+    ],
+    "sha256": "a668cc2ddd6f462e7a9cd56607056ee46b0e54a034ce23cf1329fecd776363ea"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20@3x.png",
+    "pixels": [
+      60,
+      60
+    ],
+    "sha256": "078614acea2fd55620f149336a4d99b20ee2785f04d1345af495c0603783aefa"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29@2x.png",
+    "pixels": [
+      58,
+      58
+    ],
+    "sha256": "ea3bfa8134fff342ff4c65f768609cd903aca382e1b5013aeaeb7933d3659218"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29@3x.png",
+    "pixels": [
+      87,
+      87
+    ],
+    "sha256": "90dd521aefed7003caa380c08d1183ed174b2f3bf6d89cf8f2a8c488ff0e5d7b"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40@2x.png",
+    "pixels": [
+      80,
+      80
+    ],
+    "sha256": "2a79cafb28412aa915a7a13ff271d24f07d40aea21b73136bc2a2128f77721c9"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40@3x.png",
+    "pixels": [
+      120,
+      120
+    ],
+    "sha256": "39d72b94f0435c1531377e4fa358c9c0605f7a2648c647c264f0b781aa85f534"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-60@2x.png",
+    "pixels": [
+      120,
+      120
+    ],
+    "sha256": "39d72b94f0435c1531377e4fa358c9c0605f7a2648c647c264f0b781aa85f534"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-60@3x.png",
+    "pixels": [
+      180,
+      180
+    ],
+    "sha256": "ff9f28a7ce4ab9fd962fa56a212b3516b5f6327fa18852c2f68717732d4b05d1"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20.png",
+    "pixels": [
+      20,
+      20
+    ],
+    "sha256": "a10f54b99c8fdde3285e9dc381bcae50228f3653f8515b5eafc7af1ccff0319b"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20@2x-ipad.png",
+    "pixels": [
+      40,
+      40
+    ],
+    "sha256": "a668cc2ddd6f462e7a9cd56607056ee46b0e54a034ce23cf1329fecd776363ea"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29.png",
+    "pixels": [
+      29,
+      29
+    ],
+    "sha256": "753617863f280e40b3926649fb3ae560d3c5b20aab140b79bca716d5a3ab0d92"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29@2x-ipad.png",
+    "pixels": [
+      58,
+      58
+    ],
+    "sha256": "ea3bfa8134fff342ff4c65f768609cd903aca382e1b5013aeaeb7933d3659218"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40.png",
+    "pixels": [
+      40,
+      40
+    ],
+    "sha256": "a668cc2ddd6f462e7a9cd56607056ee46b0e54a034ce23cf1329fecd776363ea"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40@2x-ipad.png",
+    "pixels": [
+      80,
+      80
+    ],
+    "sha256": "2a79cafb28412aa915a7a13ff271d24f07d40aea21b73136bc2a2128f77721c9"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-76@2x.png",
+    "pixels": [
+      152,
+      152
+    ],
+    "sha256": "b783af052de26a764aed50923d0ec95631956ba27d30a262e74e15bbcc9fc048"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-83.5@2x.png",
+    "pixels": [
+      167,
+      167
+    ],
+    "sha256": "0d697257595d1af74e3d6ad07f1945885460ab7afdd533ca87c9fc1cf582e1bc"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-1024.png",
+    "pixels": [
+      1024,
+      1024
+    ],
+    "sha256": "fcfbba7347ca40f37586a9f2c1f75fc04395b98b020ba90e899cd84064122fae"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20@2x.png",
+    "pixels": [
+      40,
+      40
+    ],
+    "sha256": "7618fc94904a6860ed3975d90a57fa8bead67f9db765ab083cfafc98d1543a5a"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20@3x.png",
+    "pixels": [
+      60,
+      60
+    ],
+    "sha256": "43b8355e26125e6e7d4a356e38b27976bd9f2a16efe38a451b62b21d52d1ae33"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29@2x.png",
+    "pixels": [
+      58,
+      58
+    ],
+    "sha256": "a9dba28d5c1d30b0eb210b5fac1426302f41c95e2f0fbdfa02a8e21d2121ec79"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29@3x.png",
+    "pixels": [
+      87,
+      87
+    ],
+    "sha256": "583ef4b2d35e821142558916d45a8a420acfdaed70bce182d3d3ee708e1e0112"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40@2x.png",
+    "pixels": [
+      80,
+      80
+    ],
+    "sha256": "dd13b75c276a1eb372280fb8e25a859c28b44528c7f55dffd38be4c04d580dff"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40@3x.png",
+    "pixels": [
+      120,
+      120
+    ],
+    "sha256": "cbbf646571c91c76d0093fca7f9ed574ca39c51f5cdaf4bf95935d75a0a3c1e7"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-60@2x.png",
+    "pixels": [
+      120,
+      120
+    ],
+    "sha256": "cbbf646571c91c76d0093fca7f9ed574ca39c51f5cdaf4bf95935d75a0a3c1e7"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-60@3x.png",
+    "pixels": [
+      180,
+      180
+    ],
+    "sha256": "f7b792bb5c52c2aa6cba79d494869510ea718c6239b7a11294b1c2a27567db8b"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20.png",
+    "pixels": [
+      20,
+      20
+    ],
+    "sha256": "99ce09d35e9eebb206597c7a138b1524d5254bac629d0c4e3b0bc2298ac5a05a"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20@2x-ipad.png",
+    "pixels": [
+      40,
+      40
+    ],
+    "sha256": "7618fc94904a6860ed3975d90a57fa8bead67f9db765ab083cfafc98d1543a5a"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29.png",
+    "pixels": [
+      29,
+      29
+    ],
+    "sha256": "75a06f0f99b5598c81ea6a07dbd3c233a9f6dc50dd0c32e92753424eb2ef5bb8"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29@2x-ipad.png",
+    "pixels": [
+      58,
+      58
+    ],
+    "sha256": "a9dba28d5c1d30b0eb210b5fac1426302f41c95e2f0fbdfa02a8e21d2121ec79"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40.png",
+    "pixels": [
+      40,
+      40
+    ],
+    "sha256": "7618fc94904a6860ed3975d90a57fa8bead67f9db765ab083cfafc98d1543a5a"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40@2x-ipad.png",
+    "pixels": [
+      80,
+      80
+    ],
+    "sha256": "dd13b75c276a1eb372280fb8e25a859c28b44528c7f55dffd38be4c04d580dff"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-76@2x.png",
+    "pixels": [
+      152,
+      152
+    ],
+    "sha256": "c1c65d4ea52f0a9436d223a9ec5a9ac65c4fb541b27253b203a89835ee2c035a"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-83.5@2x.png",
+    "pixels": [
+      167,
+      167
+    ],
+    "sha256": "3be8f880418d6d0e2fae96dd5c2ab375b11e6bc52abd41eda7ca215ec4a65387"
+  },
+  {
+    "file": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-1024.png",
+    "pixels": [
+      1024,
+      1024
+    ],
+    "sha256": "69810aac65bfa2c86846f2f888f35f078800c73a39f9cb1d0c312c21b8e91ce0"
+  }
+]

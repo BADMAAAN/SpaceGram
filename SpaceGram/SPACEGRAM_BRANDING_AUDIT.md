@@ -51,8 +51,13 @@ No storage migration is required for this branding stage.
 The official master assets are retained unchanged under
 `Branding/SpaceGram/IconSources`:
 
-- `SpaceGram-Primary.jpeg` is the primary icon source;
-- `SpaceGram-Alternate.jpeg` is the alternate icon source.
+- `SpaceGram-Primary.png` is the current unframed primary icon source;
+- `SpaceGram-Alternate.png` is the current unframed alternate icon source.
+
+The initial framed JPEG masters were moved to `Branding/SpaceGram/LegacySources/`
+after device feedback. Current validation and the static welcome-screen change
+are documented in [the device feedback audit](../SPACEGRAM_DEVICE_FEEDBACK_AUDIT.md).
+Earlier rendition counts and validation below describe the original branding pass.
 
 Both sources are 1254 × 1254 JPEG images in RGB mode, with no alpha channel and
 no embedded ICC profile. Their EXIF data only describes orientation 1 and 72 dpi.

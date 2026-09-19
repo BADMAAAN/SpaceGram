@@ -1,0 +1,44 @@
+[
+  {
+    "file": "SpaceGram/Enhancements/Settings/NagramSettings.swift",
+    "baseline_nodes": 0,
+    "current_nodes": 0,
+    "unchanged_diagnostics": true
+  },
+  {
+    "file": "SpaceGram/Migration/SpaceGramMigrationCoordinator.swift",
+    "baseline_nodes": 0,
+    "current_nodes": 0,
+    "unchanged_diagnostics": true
+  },
+  {
+    "file": "SpaceGram/Settings/SpaceGramSettings.swift",
+    "baseline_nodes": 0,
+    "current_nodes": 0,
+    "unchanged_diagnostics": true
+  },
+  {
+    "file": "SpaceGram/SettingsSignal/Sources/SpaceGramSettingsSignal.swift",
+    "baseline_nodes": 0,
+    "current_nodes": 0,
+    "unchanged_diagnostics": true
+  },
+  {
+    "file": "Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift",
+    "baseline_nodes": 0,
+    "current_nodes": 0,
+    "unchanged_diagnostics": true
+  },
+  {
+    "file": "submodules/TelegramUI/Sources/ApplicationContext.swift",
+    "baseline_nodes": 0,
+    "current_nodes": 0,
+    "unchanged_diagnostics": true
+  },
+  {
+    "file": "Tests/SpaceGramMediaArchiveTests/SpaceGramSettingsStartupTests.swift",
+    "baseline_nodes": 0,
+    "current_nodes": 0,
+    "unchanged_diagnostics": true
+  }
+]
