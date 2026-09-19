@@ -16,7 +16,8 @@ import FetchVideoMediaResource
 import FetchAudioMediaResource
 import Display
 import UIKit
-import QwengramPrivacy // MARK: NAGRAM — outgoing photo metadata policy.
+// MARK: NAGRAM
+import SpaceGramPrivacy // MARK: NAGRAM — outgoing photo metadata policy.
 
 public func makeTelegramAccountAuxiliaryMethods(uploadInBackground: ((Postbox, MediaResource) -> Signal<String?, NoError>)?) -> AccountAuxiliaryMethods {
     return AccountAuxiliaryMethods(fetchResource: { postbox, resource, ranges, _ in
@@ -57,7 +58,8 @@ public func makeTelegramAccountAuxiliaryMethods(uploadInBackground: ((Postbox, M
                 if let data = appConfig.data, let _ = data["ios_killswitch_disable_use_photo_exif"] {
                     useExif = false
                 }
-                let stripMetadata = QwengramPrivacyPolicyStore.loadAccountPolicy(mediaBoxPath: postbox.mediaBox.basePath).stripPhotoMetadata
+                // MARK: NAGRAM — SpaceGram master switch gates active sanitization.
+                let stripMetadata = SpaceGramPrivacyPolicyStore.effectiveAccountPolicy(mediaBoxPath: postbox.mediaBox.basePath).stripPhotoMetadata
                 return (stripMetadata ? false : useExif, stripMetadata)
             }
             |> castError(MediaResourceDataFetchError.self)
@@ -66,7 +68,7 @@ public func makeTelegramAccountAuxiliaryMethods(uploadInBackground: ((Postbox, M
                 guard stripMetadata else { return signal }
                 return signal |> map { result in
                     guard case let .dataPart(resourceOffset, data, range, complete) = result, complete,
-                          let sanitized = QwengramMetadataSanitizer.sanitizeStillImage(data) else {
+                          let sanitized = SpaceGramMetadataSanitizer.sanitizeStillImage(data) else {
                         // The native photo path has already re-encoded pixel data,
                         // so fallback data contains no original EXIF/GPS blocks.
                         return result

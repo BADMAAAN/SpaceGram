@@ -1,0 +1,1628 @@
+{
+  "scope": "Current changed and nonignored untracked files, including user patch; excludes manifest itself, unchanged files, nested dependency contents and gitignored inputs. Not proof of a complete Mac checkout.",
+  "files": [
+    {
+      "path": ".github/workflows/qwengram-ios-test.yml",
+      "status": " M",
+      "bytes": 5061,
+      "sha256": "7c6982e290a2946da362b4a83cb493b14533c6caa718e9e6908dcc258bfe7d0e"
+    },
+    {
+      "path": ".github/workflows/testflight.yml",
+      "status": " M",
+      "bytes": 17250,
+      "sha256": "bf027280d9fce698eab2fa54d96eec1f511017eba8cdef8772a26ad1714d734f"
+    },
+    {
+      "path": "AGENTS.md",
+      "status": " M",
+      "bytes": 14050,
+      "sha256": "67a392e3dd5ebf3ddb8897928d83311d24813c3f8ed57420e63e907d4f9be9fc"
+    },
+    {
+      "path": "BRANDING.md",
+      "status": " M",
+      "bytes": 4257,
+      "sha256": "5ca140cd452894dc33b9be8c7580b1364842eb6d2797961e9e5fd0aea7fcaf79"
+    },
+    {
+      "path": "Branding/SpaceGram/IconSources/SpaceGram-Alternate.jpeg",
+      "status": "??",
+      "bytes": 258387,
+      "sha256": "a6b26041ff7a8bc2cc2cfd48f0646098b8050be8d9e913036cd8add0ed8bfc3e"
+    },
+    {
+      "path": "Branding/SpaceGram/IconSources/SpaceGram-Primary.jpeg",
+      "status": "??",
+      "bytes": 240575,
+      "sha256": "dd7e638c282c6519fcfe420bd8f174f55cc50f13dbbbee6c4e02a39bd68afbdd"
+    },
+    {
+      "path": "Branding/SpaceGram/LegacySources/README.md",
+      "status": "??",
+      "bytes": 209,
+      "sha256": "fde772c39d838a292342aa40b78bcdcbd51aa7b2c843a2e711c42f3ad1f5ca50"
+    },
+    {
+      "path": "Branding/SpaceGram/LegacySources/SpaceGram-Graphite-Legacy.png",
+      "status": "??",
+      "bytes": 987393,
+      "sha256": "8d26f6e032d330cf0313f6cd58b66b7cff8a3cfa03bab4fb7cc00ad64d1ca664"
+    },
+    {
+      "path": "CLAUDE.md",
+      "status": " M",
+      "bytes": 22313,
+      "sha256": "ac211850df8138edd224da819ecceba6e5c32d04bcd19550bc42c5138b6f8e15"
+    },
+    {
+      "path": "QWENGRAM_PROJECT_AUDIT.md",
+      "status": " M",
+      "bytes": 29656,
+      "sha256": "801386735d725ee2b63e45cf31a2620405b6061439819f910bb94f1cf9e92105"
+    },
+    {
+      "path": "README.md",
+      "status": " M",
+      "bytes": 21418,
+      "sha256": "db73f9bdb583c8e92319e501fbbbb00559a722d860b91e2a82e437f900d3eb68"
+    },
+    {
+      "path": "README_RU.md",
+      "status": " M",
+      "bytes": 36310,
+      "sha256": "56c87813e4c9f4ebe2e9fa695ffe0635f3926e166e229a7d0325ea31072f6b1b"
+    },
+    {
+      "path": "SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md",
+      "status": "??",
+      "bytes": 10270,
+      "sha256": "210eb26117c03e2a908c0b745bc95c86d227c98c53ba26573d0b6fd3daa110e9"
+    },
+    {
+      "path": "SPACEGRAM_MAC_PREFLIGHT_AUDIT.md",
+      "status": "??",
+      "bytes": 26719,
+      "sha256": "662964b1c635e4222d0de179257efad7a62b94afa03f01a695582c0b468932dd"
+    },
+    {
+      "path": "SPACEGRAM_OVERNIGHT_AUDIT.md",
+      "status": "??",
+      "bytes": 19144,
+      "sha256": "22b73a7b5ea6d603c29eef84f8a5358025e978cb90608ede3f65be65cd19bfa1"
+    },
+    {
+      "path": "SpaceGram/AI/BUILD",
+      "status": "??",
+      "bytes": 378,
+      "sha256": "75d539aaa884b0b5468866629f08d125c6479bce86d6dc3833483f55ef4dd416"
+    },
+    {
+      "path": "SpaceGram/AI/SpaceGramAIError.swift",
+      "status": "??",
+      "bytes": 236,
+      "sha256": "386136eec59ea0296f2fd53407e51bdbe43825a2679a2f899a5bd382c1a11405"
+    },
+    {
+      "path": "SpaceGram/AI/SpaceGramAIKeychain.swift",
+      "status": "??",
+      "bytes": 5769,
+      "sha256": "99cc9012bd0470991282902f9bcefcf21744e617c0f867269d7f366f39d73d2b"
+    },
+    {
+      "path": "SpaceGram/AI/SpaceGramAIMessage.swift",
+      "status": "??",
+      "bytes": 1975,
+      "sha256": "793aa3cde89d61b838f7acd681b344a569ab74aad01df24301e0a131ce1fc267"
+    },
+    {
+      "path": "SpaceGram/AI/SpaceGramAIProvider.swift",
+      "status": "??",
+      "bytes": 597,
+      "sha256": "4738b68547b17b9fe2e088f8278c250f162e29af525bee80121643a253320c66"
+    },
+    {
+      "path": "SpaceGram/AI/SpaceGramAIRequestGate.swift",
+      "status": "??",
+      "bytes": 1562,
+      "sha256": "f1232b1be2bb41b40080a6aae110ce67c94801daa60bd583411afc30cc50d834"
+    },
+    {
+      "path": "SpaceGram/AI/SpaceGramConversationStore.swift",
+      "status": "??",
+      "bytes": 10364,
+      "sha256": "d8d84d77a30c7470dcb1eb52b0aab1985313330e99bdd566b9ed96c7a23071b4"
+    },
+    {
+      "path": "SpaceGram/AI/SpaceGramQwenProvider.swift",
+      "status": "??",
+      "bytes": 10816,
+      "sha256": "74d0c55b0716ef4c0a83bed857b6c71656ccdda011806bc2be6025123562539c"
+    },
+    {
+      "path": "SpaceGram/Appearance/BUILD",
+      "status": "??",
+      "bytes": 409,
+      "sha256": "7ba9ae0266c55c0452cc182271704f2c563163240580e0d2d9631052ffbbcf90"
+    },
+    {
+      "path": "SpaceGram/Appearance/SpaceGramAppearance.swift",
+      "status": "??",
+      "bytes": 694,
+      "sha256": "c3e45cdb7d0effd7e0cc1a54ea904244bb77ddd1fea2e0abe027f08a9e198148"
+    },
+    {
+      "path": "SpaceGram/Bots/BUILD",
+      "status": "??",
+      "bytes": 269,
+      "sha256": "77e396cbc887e6ea309e920e18d0be2d33cc39b38420c9ded1f33f46e49b27a6"
+    },
+    {
+      "path": "SpaceGram/Bots/SpaceGramBotDescriptor.swift",
+      "status": "??",
+      "bytes": 1915,
+      "sha256": "17404a1a52e9bd613768cb8bdc5db7f277febba81f11217cf87949cba9c5a052"
+    },
+    {
+      "path": "SpaceGram/Core/BUILD",
+      "status": "??",
+      "bytes": 320,
+      "sha256": "6d17d49cfc062d3a146ac675a9b5bf491153a7f653a9ab67d2e9b12b36daf908"
+    },
+    {
+      "path": "SpaceGram/Core/SpaceGramProduct.swift",
+      "status": "??",
+      "bytes": 81,
+      "sha256": "1e835941286492e6c8ff6bda8fae695da94ca118e082cbd7bb1037862f5e3d30"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Demo/BUILD",
+      "status": "??",
+      "bytes": 459,
+      "sha256": "814c28d66d8e207bf1466dfd3e6aa4550692012ecc4c030180da63b7bf1a4bfc"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Demo/Sources/NagramDemo.swift",
+      "status": "??",
+      "bytes": 10983,
+      "sha256": "da9f688980179f9cbf683676cf4492c9f27fcf4a3df1e11e4dc33623ca8cb885"
+    },
+    {
+      "path": "SpaceGram/Enhancements/LinkMetadata/BUILD",
+      "status": "??",
+      "bytes": 428,
+      "sha256": "13af66d287020265f1aaa0e7f771a06c7590b8a1f8de52ca3a900b023e88481e"
+    },
+    {
+      "path": "SpaceGram/Enhancements/LinkMetadata/Sources/NagramLinkMetadata.swift",
+      "status": "??",
+      "bytes": 10172,
+      "sha256": "3cc4137daccb08fd5ba9e9a68a53787ef7f86cadb2075dfbb210ada15aea486f"
+    },
+    {
+      "path": "SpaceGram/Enhancements/MediaMetadata/BUILD",
+      "status": "??",
+      "bytes": 937,
+      "sha256": "3a36203beb88dda532c9d8f03099e94986ac425693729c31cad65cbbab4885b8"
+    },
+    {
+      "path": "SpaceGram/Enhancements/MediaMetadata/Sources/NagramMediaMetadata.swift",
+      "status": "??",
+      "bytes": 16168,
+      "sha256": "61a75690e0b290ccf1a67d23a13d52e44e9194deddf77927ad2c9e335a97152e"
+    },
+    {
+      "path": "SpaceGram/Enhancements/README.md",
+      "status": "??",
+      "bytes": 2066,
+      "sha256": "a773598d31a424ade9036da575edf7c896170e08376f31f7ce0f0c957ec827f5"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/BUILD",
+      "status": "??",
+      "bytes": 535,
+      "sha256": "99d279b5150d88058d8075abeeaa031718e5e9999dab8ab803bc4cfff5d9d552"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramAutoTranslateSettings.swift",
+      "status": "??",
+      "bytes": 1074,
+      "sha256": "2bfabb0c766c2b22803618796475c137307038aff95680b95ba477487f9ff33f"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+      "status": "??",
+      "bytes": 19309,
+      "sha256": "afcd090b2b2edfbab7b55415f41be4093392f128753040364b359e534fade02b"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramDemoMode.swift",
+      "status": "??",
+      "bytes": 514,
+      "sha256": "612ba93ca0712b3e751f367a39249882132c47d9bc2acf7123ce22fec4ed141d"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramMessageDoubleTapAction.swift",
+      "status": "??",
+      "bytes": 477,
+      "sha256": "18ec54a2ac33257a7de0be7a564d2ae2b6b97a50b9da55ed5b2db569aeca2449"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramMessageMenuSettings.swift",
+      "status": "??",
+      "bytes": 4736,
+      "sha256": "2f017072785173529aec3816111c6aa4e0c421df570b730d922b6f1e7707b913"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramPangu.swift",
+      "status": "??",
+      "bytes": 11248,
+      "sha256": "26b240f6a4bb94f9c08f77598da3532bba3261bd899d28545aaf9bb4882bf68d"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramRecentChats.swift",
+      "status": "??",
+      "bytes": 10454,
+      "sha256": "8d0c1d0856076b7b4e15d4d195a679518756258cf2305f6f2fdefc989ad417ca"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramRegexFilters.swift",
+      "status": "??",
+      "bytes": 17795,
+      "sha256": "c43996507f2979f28a0098552719248c19ffbdd4d0a241c6ef706198c4db56c8"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramRegistrationDate.swift",
+      "status": "??",
+      "bytes": 5194,
+      "sha256": "0f507b0088143123a33a36969cdff9dde2885911927125abfb15b64e518fa0f4"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramSettings.swift",
+      "status": "??",
+      "bytes": 30294,
+      "sha256": "8748a33fb1e06c9a63f8aa0723441ac4717f4e696bf1560bc3f18ee1fffbfa5d"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramSettingsCloudSync.swift",
+      "status": "??",
+      "bytes": 11806,
+      "sha256": "fb5a0eb46cc2ad3768cf41ccfd16f90cfcc4fe1cab332707776af19ebd3d0318"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Settings/NagramTranslationLLMKeychain.swift",
+      "status": "??",
+      "bytes": 2763,
+      "sha256": "c7b04a0e89903ef98599de7807417b4a5483847439b52f92fcfb75171241cc37"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsSignal/BUILD",
+      "status": "??",
+      "bytes": 593,
+      "sha256": "5c88c1a70628aab0a22da04b6ddac3a06296eada89f8c99aa4af0dec990ff0e7"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+      "status": "??",
+      "bytes": 5274,
+      "sha256": "671c4e938155ace8126bc28b192f19143370f07ade7e8d29fd82982c91b87137"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/BUILD",
+      "status": "??",
+      "bytes": 1705,
+      "sha256": "a1ec7a4f1bcc00d624c4d6034f97a77ff0dacd1de274c0f6f1031dd4a65fdc16"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/NagramBottomBarSettingsController.swift",
+      "status": "??",
+      "bytes": 49005,
+      "sha256": "3f9ab41fcad0bbdfe8a718d4b70ae0d69426fa9af6a505170dbff7919be107bd"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/NagramGroupProfileSettingsController.swift",
+      "status": "??",
+      "bytes": 4589,
+      "sha256": "04355ae66970c14a8e0e937e6d366eae02a0249c9596ac38b0c5e52cbf6c5205"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/NagramInlineBotRulesController.swift",
+      "status": "??",
+      "bytes": 2409,
+      "sha256": "a04c7391d6eec7fa2c146765459f356127b07543d593e192d0dc45b204dcb910"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/NagramLLMTranslationSettingsController.swift",
+      "status": "??",
+      "bytes": 22814,
+      "sha256": "09b8d3d79abc6edd8b7219b42f14bdf9bb8aa831b5905397f8211a1edec2b8ab"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/NagramMessageMenuSettingsController.swift",
+      "status": "??",
+      "bytes": 9848,
+      "sha256": "05e1ab5d7c22021bdf73d6cbc08e3e6abbc3a178f98309655b3b1364c4c92c86"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/NagramRegexFilterSettingsController.swift",
+      "status": "??",
+      "bytes": 29228,
+      "sha256": "4ef06cf1baca1e9e8297f4c96b882784cc021cd1f0804a266ec14a7cbe070acf"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/NagramSettingsController.swift",
+      "status": "??",
+      "bytes": 57655,
+      "sha256": "97541b57a865738b63ab3667773bf7019c335d19699edaee550e89130220ef9e"
+    },
+    {
+      "path": "SpaceGram/Enhancements/SettingsUI/Sources/NagramSliderItem.swift",
+      "status": "??",
+      "bytes": 17191,
+      "sha256": "37cbd01d704db050fde3c1a780bf61770b76328579145f3a9e1835a04339726d"
+    },
+    {
+      "path": "SpaceGram/Enhancements/TelegramSettingsCloudSync/BUILD",
+      "status": "??",
+      "bytes": 732,
+      "sha256": "e4d00b644f7606714466b1af9ad427b265808de93405512fc8d34994e6eb4a7b"
+    },
+    {
+      "path": "SpaceGram/Enhancements/TelegramSettingsCloudSync/Sources/NagramTelegramSettingsCloudSync.swift",
+      "status": "??",
+      "bytes": 10060,
+      "sha256": "67091b795d3fc5a0abb49a88b63dfeb5adcc2b5d933eaea415aa1b2786d675ed"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Translate/BUILD",
+      "status": "??",
+      "bytes": 664,
+      "sha256": "1c8980d6b8937935594b6cf5a671dd311eea1232582672e5c4634cb55207dd59"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Translate/Sources/NagramExternalTranslateProviders.swift",
+      "status": "??",
+      "bytes": 10686,
+      "sha256": "3514d27b457f90f8f6aca1300ca2c98c52b44d1745d287893b8f703fd49423b5"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Translate/Sources/NagramLLMTranslateProvider.swift",
+      "status": "??",
+      "bytes": 14027,
+      "sha256": "a996c03e6d5a943b480cfed94d431ccb2f4fd0a2a8db6e041ad639a919d1c46a"
+    },
+    {
+      "path": "SpaceGram/Enhancements/Translate/Sources/NagramTranslateService.swift",
+      "status": "??",
+      "bytes": 8409,
+      "sha256": "b8241b8516a0a13a5884afd0e0041683deaf1c9dffb03fd07c6eee9672359940"
+    },
+    {
+      "path": "SpaceGram/FOUNDATION_AUDIT.md",
+      "status": "??",
+      "bytes": 8571,
+      "sha256": "215993e8bf74481c51d6d8b64f2ba92c84e0a4e59c50907fcc2a48b4f51f26e9"
+    },
+    {
+      "path": "SpaceGram/HISTORY_AI_AUDIT.md",
+      "status": "??",
+      "bytes": 7964,
+      "sha256": "804eb08e400ea6f023b677b755d18c4513603cffc16a5a0750d19df08b514a18"
+    },
+    {
+      "path": "SpaceGram/HistoryIntegration/BUILD",
+      "status": "??",
+      "bytes": 121,
+      "sha256": "ec9638e1f876c20868555365c18b00f39d13fe8117623a2bfbe13257131f621d"
+    },
+    {
+      "path": "SpaceGram/HistoryIntegration/SpaceGramHistoryIntegration.swift",
+      "status": "??",
+      "bytes": 13264,
+      "sha256": "63c91a881367c61d2af843d3503ca4b1d920b28997dcaab9db79151ebb1e93ed"
+    },
+    {
+      "path": "SpaceGram/HistoryIntegration/SpaceGramMediaIntegration.swift",
+      "status": "??",
+      "bytes": 5971,
+      "sha256": "186bd1816a5788471ccaa99ff75640fca6dea713625d4943a8db73c4a7b68b70"
+    },
+    {
+      "path": "SpaceGram/HistoryStorage/BUILD",
+      "status": "??",
+      "bytes": 322,
+      "sha256": "3f738aa7cdf6337893d325d7954ea6525a2e092242ee45f0a12bd8c7e9da8f21"
+    },
+    {
+      "path": "SpaceGram/HistoryStorage/STORAGE.md",
+      "status": "??",
+      "bytes": 4365,
+      "sha256": "5b70dc3dd4ba5d3d5c957638cc3271fbfea98390a00de255d12a92b19a396092"
+    },
+    {
+      "path": "SpaceGram/HistoryStorage/SpaceGramHistoryCollection.swift",
+      "status": "??",
+      "bytes": 1413,
+      "sha256": "577eac37b9e1fac44fd6a0ec0d80bd20e974e7084cb8b6b1b62c6308bc5028b2"
+    },
+    {
+      "path": "SpaceGram/HistoryStorage/SpaceGramHistoryQuery.swift",
+      "status": "??",
+      "bytes": 1567,
+      "sha256": "c4585aac2136b0d1bc3c77887a518c0b912bb418c25969ec0b7a50c5111e3ca8"
+    },
+    {
+      "path": "SpaceGram/HistoryStorage/SpaceGramHistoryRecord.swift",
+      "status": "??",
+      "bytes": 4173,
+      "sha256": "b48a4bc4cce186a0266ee4eb91130b456dc4d6747e0b7020413b1d79fc8f4542"
+    },
+    {
+      "path": "SpaceGram/HistoryStorage/SpaceGramHistoryStore.swift",
+      "status": "??",
+      "bytes": 11130,
+      "sha256": "35ac3b16c5e0f859bde895b80bb03d5670e3ce05c88d028e02a44252b3ecbb2b"
+    },
+    {
+      "path": "SpaceGram/HistoryUI/BUILD",
+      "status": "??",
+      "bytes": 1106,
+      "sha256": "764e05f049f54c0abafe3622062f23ae2b2a42df0f607f9069f538b89359f54e"
+    },
+    {
+      "path": "SpaceGram/HistoryUI/SpaceGramHistoryController.swift",
+      "status": "??",
+      "bytes": 33509,
+      "sha256": "f91a9cd6b29ae222d19214494d25a9bafbb86880e2af1e99fa452b0a890f7a69"
+    },
+    {
+      "path": "SpaceGram/HistoryUI/SpaceGramHistoryPresentation.swift",
+      "status": "??",
+      "bytes": 4139,
+      "sha256": "2970201c76452afcfdbc2e0113e89bfbc011158cdbc45603663ce61a823202f4"
+    },
+    {
+      "path": "SpaceGram/HistoryUI/SpaceGramHistoryRichText.swift",
+      "status": "??",
+      "bytes": 1918,
+      "sha256": "84d7e0413ef4d4d8c2932674d48c7fabbb14deae17e8f56618133146d98a9c4e"
+    },
+    {
+      "path": "SpaceGram/HistoryUI/SpaceGramMediaPreviewController.swift",
+      "status": "??",
+      "bytes": 673,
+      "sha256": "9e4c96468ca0e9b9a122bbddb6399d83ecd1ef0add79b906553bf7a1c9dd6400"
+    },
+    {
+      "path": "SpaceGram/IOS_TEST_BUILD.md",
+      "status": "??",
+      "bytes": 885,
+      "sha256": "6947ca4384583662a230dff70ae314b7a7130efb48dd4df53cd4a7922023f491"
+    },
+    {
+      "path": "SpaceGram/MEDIA_ARCHIVE_AUDIT.md",
+      "status": "??",
+      "bytes": 15682,
+      "sha256": "8371e21d4f4bd00b19bb9c9fe478a9222167974d78d27a1630e1b09f07a903bc"
+    },
+    {
+      "path": "SpaceGram/MediaArchive/BUILD",
+      "status": "??",
+      "bytes": 330,
+      "sha256": "cc9bb0acc8a0cda1d897eb5d6b12f21dba6eb84ed6f2db4b8746ecba9df3abc0"
+    },
+    {
+      "path": "SpaceGram/MediaArchive/SpaceGramMediaArchive.swift",
+      "status": "??",
+      "bytes": 28267,
+      "sha256": "ba78bb87a321f8d4901f2aa4f88320c94f49df59afc4f3c3ba3cccdbdacfc2db"
+    },
+    {
+      "path": "SpaceGram/MediaArchive/SpaceGramMediaArchivePolicy.swift",
+      "status": "??",
+      "bytes": 1103,
+      "sha256": "1e867de9e1d6917e7dacee96a19d041ff1cc6b773eb0740eab30f27ad81a69f0"
+    },
+    {
+      "path": "SpaceGram/Migration/BUILD",
+      "status": "??",
+      "bytes": 267,
+      "sha256": "eff1ec6d52e3c9d8e04b531e218d78100ffbad5b695fe8795e48f9d17572b3ce"
+    },
+    {
+      "path": "SpaceGram/Migration/SpaceGramMigrationCoordinator.swift",
+      "status": "??",
+      "bytes": 5153,
+      "sha256": "1094e65e85dd3e3391eddeba28207810ad6adb5d7cc3ece6975d68b5ca66de17"
+    },
+    {
+      "path": "SpaceGram/NAGRAM_REMOVAL_AUDIT.md",
+      "status": "??",
+      "bytes": 18274,
+      "sha256": "ce50d782927a3ad145e9ee9b9d552ace9db1b4e36a3fca7e0e65709bc15f8927"
+    },
+    {
+      "path": "SpaceGram/PRIVACY_SECURITY_AUDIT.md",
+      "status": "??",
+      "bytes": 6515,
+      "sha256": "be4826aeb34202a4f726c559e05b3239547af37264b157e0e6a34c915873d4f4"
+    },
+    {
+      "path": "SpaceGram/Privacy/BUILD",
+      "status": "??",
+      "bytes": 318,
+      "sha256": "e3ddcce7988856c6758343e588c6a0acbe1263d29c3c90d358056d828d76292d"
+    },
+    {
+      "path": "SpaceGram/Privacy/SpaceGramMetadataSanitizer.swift",
+      "status": "??",
+      "bytes": 1293,
+      "sha256": "2774e0672720afcdeb8f2bc0617d52f1dcea51d3918700cf626b345fdeb6d678"
+    },
+    {
+      "path": "SpaceGram/Privacy/SpaceGramPrivacyPolicy.swift",
+      "status": "??",
+      "bytes": 8755,
+      "sha256": "8843423909050c88800223596b35563df6014ff63ea4ec1a968ce0a6e6eeab73"
+    },
+    {
+      "path": "SpaceGram/README.md",
+      "status": "??",
+      "bytes": 3951,
+      "sha256": "64de9e3f74dbf09ea42b0ab464f7a8e48d708e307aeb249e166bb2afe0bea5ce"
+    },
+    {
+      "path": "SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md",
+      "status": "??",
+      "bytes": 13755,
+      "sha256": "565f5a9c0057b256dece3a26204e2d110b5f3e6457dd0806e77edfc0f73cc70b"
+    },
+    {
+      "path": "SpaceGram/SPACEGRAM_BRANDING_AUDIT.md",
+      "status": "??",
+      "bytes": 7680,
+      "sha256": "ed046eb4d74d3a19c95efb75c0d5f3a6791c3d0a6308ca548581bbd9f9fe77ee"
+    },
+    {
+      "path": "SpaceGram/SPACEGRAM_HOOKS.md",
+      "status": "??",
+      "bytes": 27939,
+      "sha256": "00222c99c133362b68aa1032773fefbb947c256fc0f700788101d84b7d437acc"
+    },
+    {
+      "path": "SpaceGram/Settings/BUILD",
+      "status": "??",
+      "bytes": 384,
+      "sha256": "3ee96c49a5cbb726b36e591ea2118b43e49d0adad23b6d7084afc09e9b121db6"
+    },
+    {
+      "path": "SpaceGram/Settings/SpaceGramGhostPolicy.swift",
+      "status": "??",
+      "bytes": 849,
+      "sha256": "f0c7302d683c35231c2910cd9103805800c1afac807a643058ce8a8ad6cf3231"
+    },
+    {
+      "path": "SpaceGram/Settings/SpaceGramSettings.swift",
+      "status": "??",
+      "bytes": 5429,
+      "sha256": "6baa71da453c5648f164881af48b0114a8e706e446c74aa36f55cfd67e20b3d9"
+    },
+    {
+      "path": "SpaceGram/SettingsSignal/BUILD",
+      "status": "??",
+      "bytes": 472,
+      "sha256": "aff2adde19cb8dc231e4d724dff37d4087a668a84d5aa78b5a6d53916b7eb11f"
+    },
+    {
+      "path": "SpaceGram/SettingsSignal/Sources/SpaceGramSettingsSignal.swift",
+      "status": "??",
+      "bytes": 3463,
+      "sha256": "382d156b9b375956a564a05c149368cbd27d6e57231f0dfe0970c762a754c81d"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/BUILD",
+      "status": "??",
+      "bytes": 1449,
+      "sha256": "cb3d2232002f0b213673e6f88c67c4be7960f8958976f58e90f3dcb112021a34"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramAIRichText.swift",
+      "status": "??",
+      "bytes": 3536,
+      "sha256": "dfa73cc223876a2ddc7e8c412a2d0a1103d3b77ce6da821c88b0233b8faa4242"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramAISettingsController.swift",
+      "status": "??",
+      "bytes": 8730,
+      "sha256": "a65b0c9f82abec857a3b83300306266f2248be5e6b4d344d6d8cc5028ce01382"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramBotsController.swift",
+      "status": "??",
+      "bytes": 5049,
+      "sha256": "4265d79384940d02fb04bc5b5a4f91e65064fce90f6e9d18935febd98940dd58"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramHistorySettingsController.swift",
+      "status": "??",
+      "bytes": 4367,
+      "sha256": "9ac473897cc0f163cb9a5468b45a75d5620b91a0e527242c7c7d8c97e7ce8897"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramMediaArchiveSettingsController.swift",
+      "status": "??",
+      "bytes": 8517,
+      "sha256": "458eb616b4c3413fb8c1146247dc0e439d31ef0975e63d3c68b662081c566d1f"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramMessageAIController.swift",
+      "status": "??",
+      "bytes": 4376,
+      "sha256": "e3ca3af549b1c14f737ebe42cf6e93e639b26ea3c678798e3c36486f5612f652"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramPrivacySettingsController.swift",
+      "status": "??",
+      "bytes": 14825,
+      "sha256": "6b1472b9dca569421a155eb93d84511bcc36ed482778635dc066b2179273a789"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramQRToolsController.swift",
+      "status": "??",
+      "bytes": 10404,
+      "sha256": "ca6f044dac88df749352f1258851c21c8807fdee3ca6b7581aacfef4c38a8ba2"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramQwenAssistantController.swift",
+      "status": "??",
+      "bytes": 31854,
+      "sha256": "7bb84d76f446391250ba67f7c08cba8d672277d6a51a6bb5f2f8e025b1c17679"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramSettingsController.swift",
+      "status": "??",
+      "bytes": 8978,
+      "sha256": "44b9308b8b57a48828e4b804505c0ae9d0d51982b3bee3ca0257e9442c5e6fac"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramSummarizerController.swift",
+      "status": "??",
+      "bytes": 9454,
+      "sha256": "f395aafc93e7f5d7fe1b550c7e468421cce29a91e5e709159444c360d220c830"
+    },
+    {
+      "path": "SpaceGram/SettingsUI/SpaceGramTranslatorController.swift",
+      "status": "??",
+      "bytes": 11903,
+      "sha256": "ea846d2dd2930b7e84d0cca229aba49373b8cd74421f9292706a7609d3c1de90"
+    },
+    {
+      "path": "SpaceGram/Strings/BUILD",
+      "status": "??",
+      "bytes": 724,
+      "sha256": "a9b53ed5ca704cf0c2e398df4ca486eb84810e87648c9cb5b0e4341374ba8b45"
+    },
+    {
+      "path": "SpaceGram/Strings/Sources/SpaceGramLocalization.swift",
+      "status": "??",
+      "bytes": 2544,
+      "sha256": "7eb40cdde258b076b792d5bded3a004123aaf77f7fff82084510b471fa64765f"
+    },
+    {
+      "path": "SpaceGram/Strings/Strings/en.lproj/SpaceGramLocalizable.strings",
+      "status": "??",
+      "bytes": 33344,
+      "sha256": "e706faefe59a8e621bb92d391fbf11b73db943da3fa127a7e5914cc10341d144"
+    },
+    {
+      "path": "SpaceGram/Strings/Strings/ja.lproj/SpaceGramLocalizable.strings",
+      "status": "??",
+      "bytes": 27117,
+      "sha256": "daf1b50cdb509145f794060cfc7eb426f812358afb083c0d6592e990e214e4d5"
+    },
+    {
+      "path": "SpaceGram/Strings/Strings/ru.lproj/SpaceGramLocalizable.strings",
+      "status": "??",
+      "bytes": 14865,
+      "sha256": "32e381ea27cb16e22601a17c36ee064e1a606f670cf5c5e7f61058a60c4baa12"
+    },
+    {
+      "path": "SpaceGram/Strings/Strings/zh-hans.lproj/SpaceGramLocalizable.strings",
+      "status": "??",
+      "bytes": 22576,
+      "sha256": "0b68108691e43540b91ef27b08b9e0e07b4246a4a8cc14ca33e5ec4f62743b7e"
+    },
+    {
+      "path": "SpaceGram/Strings/Strings/zh-hant.lproj/SpaceGramLocalizable.strings",
+      "status": "??",
+      "bytes": 22642,
+      "sha256": "b7b0f8c6c62ef14bdfb505e62e9c7ee984a06fff455b58683005c314316edf23"
+    },
+    {
+      "path": "SpaceGram/audits/enhancement-dependencies.tsv",
+      "status": "??",
+      "bytes": 4387,
+      "sha256": "8999d3ba4441fa19cbba17f881ec6e38844363f4de35dc3446422cd409143bbe"
+    },
+    {
+      "path": "SpaceGram/audits/enhancement-imports.tsv",
+      "status": "??",
+      "bytes": 8276,
+      "sha256": "198d2ee3c23be77386ae3711eb80caac6c99b2b59252ca525912168da727c0e8"
+    },
+    {
+      "path": "SpaceGram/audits/mac-preflight-static.json",
+      "status": "??",
+      "bytes": 2702,
+      "sha256": "896d3145424e2bade3d0ba3a6cbb11d2c8087e20dec97abdd5584bd216e42158"
+    },
+    {
+      "path": "SpaceGram/audits/overnight-migration-map.json",
+      "status": "??",
+      "bytes": 9188,
+      "sha256": "4c5a4168731ebce1fbc8297988be82fc29dd8a78d2083f4f15fe3affc92fc956"
+    },
+    {
+      "path": "SpaceGram/audits/overnight-preflight.json",
+      "status": "??",
+      "bytes": 5496,
+      "sha256": "307af83df5b958b30cf03d05527168af4ba76ab0ff61125ff4104d6cbd7a1f14"
+    },
+    {
+      "path": "SpaceGram/audits/remaining-nagram-references.tsv",
+      "status": "??",
+      "bytes": 559016,
+      "sha256": "874c026f9319496c3a26b62287c4fe1dba92f00abd4ab6d1e43ddecc3250e6df"
+    },
+    {
+      "path": "SpaceGram/audits/remaining-qwengram-references.tsv",
+      "status": "??",
+      "bytes": 28612,
+      "sha256": "652aaf376dd79268fbf1bbe17fc0e70ac265ea8832d5cb4d960ff95df2f44c34"
+    },
+    {
+      "path": "SpaceGram/audits/spacegram-inventory.json",
+      "status": "??",
+      "bytes": 14448,
+      "sha256": "545e84406d5dd1f67d9f246862929e46974ef4053c0518c1baf1397d76668a0a"
+    },
+    {
+      "path": "SpaceGram/audits/spacegram-targets.tsv",
+      "status": "??",
+      "bytes": 2089,
+      "sha256": "cd6d4fdedefe36a65364e191cc21f5b18443065f9b02e52072b8a3eceedbd197"
+    },
+    {
+      "path": "Telegram/BUILD",
+      "status": " M",
+      "bytes": 57847,
+      "sha256": "d70c9bc1f8e4a9d944b3278a0c72480da2157e9b16fbb636739af921d5ef923d"
+    },
+    {
+      "path": "Telegram/NotificationService/BUILD",
+      "status": " M",
+      "bytes": 1404,
+      "sha256": "459d9a4509d9d110546d2fb3d01210d74ee2de484f11dc20a051d7b9e9a0ab04"
+    },
+    {
+      "path": "Telegram/NotificationService/Sources/NotificationService.swift",
+      "status": " M",
+      "bytes": 185726,
+      "sha256": "673103b7befac2b423f61257013d184da4a0c1dc4e901e5b345f46a9a1a30129"
+    },
+    {
+      "path": "Telegram/SiriIntents/IntentHandler.swift",
+      "status": " M",
+      "bytes": 65992,
+      "sha256": "d1d6171551d1d696dc7afd0df217d70a7321296c04fb3a92060377eaa248420a"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/Info.plist",
+      "status": " M",
+      "bytes": 7592,
+      "sha256": "9d4649334346ca2887ece441aab3851ea5d9a349d5e1c89e2ab43fb2bac6562a"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/Contents.json",
+      "status": "??",
+      "bytes": 1951,
+      "sha256": "8024ccff1c08d2f4f1476548a33801c726354860ce4eb97a790fcd8933604b32"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-1024.png",
+      "status": "??",
+      "bytes": 675003,
+      "sha256": "e2bb465b65dcc2db969eda22ad1b9dd686e861fc0215bdd068a6c4c6793b931d"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20.png",
+      "status": "??",
+      "bytes": 1275,
+      "sha256": "f3952885785e483478bc4c5ba017be2953b4b96e8e7ee014fc988ea7c5924604"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20@2x-ipad.png",
+      "status": "??",
+      "bytes": 2940,
+      "sha256": "7bcfff26252a58e0be7ff5e5d8e5b107e6742c96d9f2f3a846f986a44552d752"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20@2x.png",
+      "status": "??",
+      "bytes": 2940,
+      "sha256": "7bcfff26252a58e0be7ff5e5d8e5b107e6742c96d9f2f3a846f986a44552d752"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-20@3x.png",
+      "status": "??",
+      "bytes": 5291,
+      "sha256": "e3e4b4078772b4acc0e161a3a6491ec41906a0fbf94f189a2f42e6de4e032a20"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29.png",
+      "status": "??",
+      "bytes": 1940,
+      "sha256": "1310f0b459bbd80ce5895d67e9577f29c2a1bf9ae565b29d1d0ebadd67010a87"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29@2x-ipad.png",
+      "status": "??",
+      "bytes": 5071,
+      "sha256": "7e3d28d2fdf79279478b94adb150f8b1bd6d64a14f2f60c301201ab77501f23c"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29@2x.png",
+      "status": "??",
+      "bytes": 5071,
+      "sha256": "7e3d28d2fdf79279478b94adb150f8b1bd6d64a14f2f60c301201ab77501f23c"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-29@3x.png",
+      "status": "??",
+      "bytes": 9398,
+      "sha256": "cd7c628303ab527a2f0b889444cd4b3c9c8110358357b1cbc7b90efc2b36dfef"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40.png",
+      "status": "??",
+      "bytes": 2940,
+      "sha256": "7bcfff26252a58e0be7ff5e5d8e5b107e6742c96d9f2f3a846f986a44552d752"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40@2x-ipad.png",
+      "status": "??",
+      "bytes": 8223,
+      "sha256": "309bca00231efea1d6bd10bc4da9c19ed8fed56ea3da6bdd261dda1e3655eedf"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40@2x.png",
+      "status": "??",
+      "bytes": 8223,
+      "sha256": "309bca00231efea1d6bd10bc4da9c19ed8fed56ea3da6bdd261dda1e3655eedf"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-40@3x.png",
+      "status": "??",
+      "bytes": 15572,
+      "sha256": "40d095d59b59a4958cd3075777f36eafd2440638581390ad5182552a090cd076"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-60@2x.png",
+      "status": "??",
+      "bytes": 15572,
+      "sha256": "40d095d59b59a4958cd3075777f36eafd2440638581390ad5182552a090cd076"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-60@3x.png",
+      "status": "??",
+      "bytes": 30481,
+      "sha256": "9947e9fccba2bfe533ae81d2bae51ec38f5582b405563f7ed906c265eaceb556"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-76.png",
+      "status": "??",
+      "bytes": 7617,
+      "sha256": "9b0545dfdb45f3599bfb69908f0f5622554ed52b0a1574518e3972c632244311"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-76@2x.png",
+      "status": "??",
+      "bytes": 23071,
+      "sha256": "f45265a3b311a43ff51867f99cae394b773cf40bc254fd490a86c45f9815bc68"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Alternate.appiconset/SpaceGram-Alternate-83.5@2x.png",
+      "status": "??",
+      "bytes": 26799,
+      "sha256": "7501c8d34ba78b251254b9f22a50bdeb0fbc1a85e20db91b109f32a3eb1b7803"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/Contents.json",
+      "status": "??",
+      "bytes": 60,
+      "sha256": "f5fb0e1f3a8142892ed092efb5955c1c2cc537003a89ad7bbdb9dade7fe8985f"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/Contents.json",
+      "status": "??",
+      "bytes": 66,
+      "sha256": "26f9d6bcb345989bb8b3429ba7a5b1859fd1febd08002a303dae5b6814a9a6b3"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/Contents.json",
+      "status": "??",
+      "bytes": 2391,
+      "sha256": "96d3dcec36a1d41564e8e60fb8f2469b8b5f1ff217d735dd7ee869c8763652f5"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-1024.png",
+      "status": "??",
+      "bytes": 587795,
+      "sha256": "fa8123c7b8d92deb8683ebda4128f6245fd9afcf4c88b9e38a5090edecb22a22"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20.png",
+      "status": "??",
+      "bytes": 1195,
+      "sha256": "e815221ca5fb302b28123cfc939f015563c2d3325664e621823997904675049b"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20@2x-ipad.png",
+      "status": "??",
+      "bytes": 2558,
+      "sha256": "2c30dd3b7daa11cfcee691ef7407017e65fdcec0f1dec5441aca5e19f6883965"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20@2x.png",
+      "status": "??",
+      "bytes": 2558,
+      "sha256": "2c30dd3b7daa11cfcee691ef7407017e65fdcec0f1dec5441aca5e19f6883965"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-20@3x.png",
+      "status": "??",
+      "bytes": 4406,
+      "sha256": "4110c57ea5edcb962129721a9b8401f512a1f39f6d06eeabcfeb481046003970"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29.png",
+      "status": "??",
+      "bytes": 1754,
+      "sha256": "aebd3dc14fcf6b790f71ecb3de6d6a6c28ba5596b756ae0a3f7a9db39b540ff2"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29@2x-ipad.png",
+      "status": "??",
+      "bytes": 4203,
+      "sha256": "025ec527bfe0999c442c7fd528d721ec27e0700721a6076fbd51812cd30fcb1b"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29@2x.png",
+      "status": "??",
+      "bytes": 4203,
+      "sha256": "025ec527bfe0999c442c7fd528d721ec27e0700721a6076fbd51812cd30fcb1b"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-29@3x.png",
+      "status": "??",
+      "bytes": 7542,
+      "sha256": "3b45fad0329027a4760f978544568ff62e1c6987909c064040cbb047f482b7af"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40.png",
+      "status": "??",
+      "bytes": 2558,
+      "sha256": "2c30dd3b7daa11cfcee691ef7407017e65fdcec0f1dec5441aca5e19f6883965"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40@2x-ipad.png",
+      "status": "??",
+      "bytes": 6681,
+      "sha256": "823761f9ea5ff5832ed9eb1df3aa61ad0374c871841414938be4b54f6afdcfb6"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40@2x.png",
+      "status": "??",
+      "bytes": 6681,
+      "sha256": "823761f9ea5ff5832ed9eb1df3aa61ad0374c871841414938be4b54f6afdcfb6"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-40@3x.png",
+      "status": "??",
+      "bytes": 12245,
+      "sha256": "afb033e84fda2a02cdd03ec10b6b526e8f39bf261ae8c2f85d305f5d5ba33a7a"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-60@2x.png",
+      "status": "??",
+      "bytes": 12245,
+      "sha256": "afb033e84fda2a02cdd03ec10b6b526e8f39bf261ae8c2f85d305f5d5ba33a7a"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-60@3x.png",
+      "status": "??",
+      "bytes": 23652,
+      "sha256": "7b0564a4d45641d13ce712df415efa6b90539354123833e83e73ab67d39ac17c"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-76.png",
+      "status": "??",
+      "bytes": 6150,
+      "sha256": "3b79e789769f08b832a7db122494921390add29fa8d4268a529f070b3862aa2b"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-76@2x.png",
+      "status": "??",
+      "bytes": 17914,
+      "sha256": "7f3bfe1f8e38b111032637697511add760f621148ac1092f14e374cdbfdd37af"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets/SpaceGramAppIcon.appiconset/SpaceGram-83.5@2x.png",
+      "status": "??",
+      "bytes": 20924,
+      "sha256": "082bd08a29919e00b5688d51a8b3c7b71479a631c4da44fd46b86b1f544c3a70"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/ar.lproj/InfoPlist.strings",
+      "status": " M",
+      "bytes": 2042,
+      "sha256": "175ab14caf35a856ac677de4b1e977267d0f312f726a9ef2fb12079c6c171e90"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/en.lproj/Localizable.strings",
+      "status": " M",
+      "bytes": 848829,
+      "sha256": "95342c539ae8ca1cfbfd592034606ee4c80c2ef63a38065aeac97af1ff8ca4a0"
+    },
+    {
+      "path": "Telegram/Telegram-iOS/ko.lproj/InfoPlist.strings",
+      "status": " M",
+      "bytes": 1639,
+      "sha256": "f82c28eded562c5df65065c8acc1e2ded73a171785956dc2d3929002270a7782"
+    },
+    {
+      "path": "Telegram/WidgetKitWidget/en.lproj/Localizable.strings",
+      "status": " M",
+      "bytes": 143,
+      "sha256": "5093f9b79449affaffd9969620e3da8bea38884af398e698b7c5acafedf9450f"
+    },
+    {
+      "path": "Tests/AllTests/BUILD",
+      "status": " M",
+      "bytes": 321,
+      "sha256": "5ab7177e0d7f6a5fdcd7282f373c4ce074625f0d0071ccc1574cb2846f1d165e"
+    },
+    {
+      "path": "Tests/SpaceGramMediaArchiveTests/BUILD",
+      "status": "??",
+      "bytes": 977,
+      "sha256": "8f88cebb1ac549b6d6acfeace1424699a186724f6cdca29b0400ee7e9793262d"
+    },
+    {
+      "path": "Tests/SpaceGramMediaArchiveTests/SpaceGramConversationStoreTests.swift",
+      "status": "??",
+      "bytes": 14615,
+      "sha256": "0e791cf1edd8dca0ade142da874d2f064b5b3b1d6d7ef98a4c400fafb59286eb"
+    },
+    {
+      "path": "Tests/SpaceGramMediaArchiveTests/SpaceGramHistoryQueryTests.swift",
+      "status": "??",
+      "bytes": 2285,
+      "sha256": "233346c8c01ed790f6ce23c1d5616b094b9958f5ef88bbcd4af283c78ec60f56"
+    },
+    {
+      "path": "Tests/SpaceGramMediaArchiveTests/SpaceGramMediaArchiveTests.swift",
+      "status": "??",
+      "bytes": 17379,
+      "sha256": "ba6caa485bb4a48670ed1f7a983553cc45df45f6660743d71f57c76274246482"
+    },
+    {
+      "path": "Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift",
+      "status": "??",
+      "bytes": 8903,
+      "sha256": "82ff620e12efcb85bd284c3c096306cf9f27694feafce498c0b0841139589c2b"
+    },
+    {
+      "path": "Tests/SpaceGramMediaArchiveTests/SpaceGramPrivacyTests.swift",
+      "status": "??",
+      "bytes": 5415,
+      "sha256": "496cd32d1f1c33b8ceb53999c54ae774f284f97e8ea314ed695224f7db02f7a4"
+    },
+    {
+      "path": "docs/demo-mode.md",
+      "status": " M",
+      "bytes": 2975,
+      "sha256": "6bef1567c2352a7ab8990c74ea362506910c4fe4246f83e61a2b1cda87b0dff0"
+    },
+    {
+      "path": "qwengram_run7_fix.patch",
+      "status": "??",
+      "bytes": 4426,
+      "sha256": "1a375a8973c3f8c9cdb6c15ad12b52d0d78681def9978f80c57232a6094af0e0"
+    },
+    {
+      "path": "submodules/AppLock/Sources/AppLock.swift",
+      "status": " M",
+      "bytes": 18139,
+      "sha256": "58cd57dc8e9add06f742de5e28f16f024f853a4bbddb838cdc196887e3b8c1ce"
+    },
+    {
+      "path": "submodules/AuthorizationUI/Sources/AuthorizationSequenceSplashController.swift",
+      "status": " M",
+      "bytes": 11113,
+      "sha256": "146b731ed96092713d7460e9fb8c3c0d01f2ce983eae241d4356411bec1b6e0a"
+    },
+    {
+      "path": "submodules/ChatListUI/BUILD",
+      "status": " M",
+      "bytes": 8500,
+      "sha256": "a9f34ebbb3e86f999a0bc316d807664fbcc52a4b5b90857c70615ccf17ad2138"
+    },
+    {
+      "path": "submodules/ChatListUI/Sources/ChatListFilterPresetController.swift",
+      "status": " M",
+      "bytes": 123966,
+      "sha256": "c44b840b971e55bba3db50c567603914a0f871e5091c041e16e605cfd874c6dd"
+    },
+    {
+      "path": "submodules/ChatListUI/Sources/Node/ChatListItem.swift",
+      "status": " M",
+      "bytes": 367063,
+      "sha256": "2c2fa3143508b7115babed68ba86f29d45206d568ca6d2f162b2d51d53b48c00"
+    },
+    {
+      "path": "submodules/ChatListUI/Sources/Node/ChatListNodeEntries.swift",
+      "status": " M",
+      "bytes": 48969,
+      "sha256": "bf13cecb5d9bfcfe8d9b64837587cd777fbb3936e133a75bc130c951979a703f"
+    },
+    {
+      "path": "submodules/ChatPresentationInterfaceState/BUILD",
+      "status": " M",
+      "bytes": 1142,
+      "sha256": "2aca40cb25d6e88527feac4408c57f99759e5805009c2379af5aba4f139252da"
+    },
+    {
+      "path": "submodules/ContactListUI/BUILD",
+      "status": " M",
+      "bytes": 2740,
+      "sha256": "7e828b43d1e7e250d45ff9c6ba399a143ec97b15bf4d112b879dc81ac051ef48"
+    },
+    {
+      "path": "submodules/GalleryUI/BUILD",
+      "status": " M",
+      "bytes": 4297,
+      "sha256": "484ff448246d9792f5eab4f156eface4289c09e398543c41169d38eb92af7308"
+    },
+    {
+      "path": "submodules/LegacyMediaPickerUI/BUILD",
+      "status": " M",
+      "bytes": 1721,
+      "sha256": "74c99e935da54f213210cc1cc27bff43785aaacc2153acf9ef4ba965c0608b1e"
+    },
+    {
+      "path": "submodules/MediaPickerUI/BUILD",
+      "status": " M",
+      "bytes": 3297,
+      "sha256": "c63ef39cd5042b0bf8b51a83eae518e19802b9d5c2bafd2c8cf046df6c87d741"
+    },
+    {
+      "path": "submodules/SettingsUI/Sources/Privacy and Security/PasscodeOptionsController.swift",
+      "status": " M",
+      "bytes": 29076,
+      "sha256": "66492719fb51f496de081ba067c2d169a3fb7a5900cf4f932fad483e620565e9"
+    },
+    {
+      "path": "submodules/SettingsUI/Sources/Themes/ThemeSettingsAppIconItem.swift",
+      "status": " M",
+      "bytes": 21705,
+      "sha256": "f6c5ce06751cadcd811e9135dd8448be8cadfb97c21c461a72cc70e72648efb2"
+    },
+    {
+      "path": "submodules/ShareController/BUILD",
+      "status": " M",
+      "bytes": 3080,
+      "sha256": "cde3377d250c83838634aef3f8e5f246fbea469cf1090801b1aaa24aa1202804"
+    },
+    {
+      "path": "submodules/ShareController/Sources/ShareControllerNode.swift",
+      "status": " M",
+      "bytes": 111613,
+      "sha256": "6d97814f762642c5c106e463b66c902d9ea707ee397afde80536feae96255724"
+    },
+    {
+      "path": "submodules/TabBarUI/BUILD",
+      "status": " M",
+      "bytes": 884,
+      "sha256": "e758e8876a245ea7c7c2ec6b8556e694372e15ee87b46d30a08b7fb7940569a2"
+    },
+    {
+      "path": "submodules/TelegramCore/BUILD",
+      "status": " M",
+      "bytes": 1659,
+      "sha256": "8c2a19c0d216807c6fd2723dd5e7734796456a29847f42911367cbecb1649d87"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/Account/AccountIntermediateState.swift",
+      "status": " M",
+      "bytes": 61298,
+      "sha256": "4498976e7e2fe4ed78fbf7b0a40eb7f43bb2a60ab7949ca5533ad7b3f7dc9a2e"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/State/AccountStateManagementUtils.swift",
+      "status": " M",
+      "bytes": 389668,
+      "sha256": "18987ba4f8c9437ce12adf0d80d8202616614a4b0459d9e3be30d1e1e405f6fb"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/State/AccountViewTracker.swift",
+      "status": " M",
+      "bytes": 162177,
+      "sha256": "f3e89508e2a3020e35b1f3d17c2f46de3c9d4af4cd90ea0b6e28ccf6541dc605"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift",
+      "status": " M",
+      "bytes": 3678,
+      "sha256": "c7d55683dfbab31cbc3d84fd4198cc81bdc8eaa0163419f41bc1d3b3024e47a6"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/State/ManagedAutoremoveMessageOperations.swift",
+      "status": " M",
+      "bytes": 9898,
+      "sha256": "0e5cd18193fba91d119eabff7158e664aa7e1f20b823ade4a2c3e0e44c472a57"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift",
+      "status": " M",
+      "bytes": 9119,
+      "sha256": "02cafedd605b8a3fe72dceecfecf5a829d65ad0b6ede1eebc7cec6f760b35638"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/State/ManagedSynchronizeViewStoriesOperations.swift",
+      "status": " M",
+      "bytes": 6085,
+      "sha256": "ee618639085ae7c0b2e4f9949095dd6878d6226ded5a7d260b544c32b08d84cd"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/SyncCore/SyncCore_StandaloneAccountTransaction.swift",
+      "status": " M",
+      "bytes": 13406,
+      "sha256": "2be9b4e6189ce4af81390b3535f649fa60d49ac3887b0e5ea2efe58f1e90e884"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/TelegramEngine/Messages/InstallInteractiveReadMessagesAction.swift",
+      "status": " M",
+      "bytes": 13587,
+      "sha256": "39883fa4a27c583a8478670d0c9b85887b7f51e97fc6102a006f03cef938df50"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkMessageContentAsConsumedInteractively.swift",
+      "status": " M",
+      "bytes": 19094,
+      "sha256": "d9a83608f87b4d483108f6a1526fc5e0f7fa7df5a128f293be18c1dc059d18dc"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/TelegramEngine/Messages/Stories.swift",
+      "status": " M",
+      "bytes": 148260,
+      "sha256": "a80020fd28d18563f587b4847ff7474b6874436b8d471cb32d663cc50b7ee4e4"
+    },
+    {
+      "path": "submodules/TelegramCore/Sources/TelegramEngine/Messages/TelegramEngineMessages.swift",
+      "status": " M",
+      "bytes": 121494,
+      "sha256": "c7e391f11b0c81e1824f41a15b78e3590fd552e8abbaac1e3a043142df6becde"
+    },
+    {
+      "path": "submodules/TelegramUI/BUILD",
+      "status": " M",
+      "bytes": 35355,
+      "sha256": "fe7b2cf4c6808bfc35b1470dbf85e3f5faf32ea5344fcb4e2bf5a95d6275ae5d"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageAnimatedStickerItemNode/BUILD",
+      "status": " M",
+      "bytes": 3065,
+      "sha256": "4f0d69ae6c49704b808d36829ba9469c352638364a1af27b1a3efa054946f7a0"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageBubbleItemNode/BUILD",
+      "status": " M",
+      "bytes": 6504,
+      "sha256": "d3bbdd92ce06f37d375c3179d20318766cf751a5aed348e7b359b7538765d62f"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageDateAndStatusNode/BUILD",
+      "status": " M",
+      "bytes": 1150,
+      "sha256": "470f3e80f7e76f095237002f61d10fd919888894c7961a389512c148194f3926"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageForwardInfoNode/BUILD",
+      "status": " M",
+      "bytes": 1172,
+      "sha256": "df72f688df4ebe9646945d365ff3686993c0f31828f3898626c9782530da6060"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageInstantVideoItemNode/BUILD",
+      "status": " M",
+      "bytes": 2133,
+      "sha256": "e6d9ade578f0790dc10d789b74b0ccd508152d9c2456fe07041312d7413af1a9"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageItemImpl/BUILD",
+      "status": " M",
+      "bytes": 1851,
+      "sha256": "a2273099980f9ef792571fd6bfe1cc5dfaa6762cba895c6fd140488393ea71c3"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageStickerItemNode/BUILD",
+      "status": " M",
+      "bytes": 2153,
+      "sha256": "295146cde7b672dc71dab618b53b1178078a7bbcf661e16b4d94759c706ba7d4"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatMessageTextBubbleContentNode/BUILD",
+      "status": " M",
+      "bytes": 2124,
+      "sha256": "a742b45cd317ed82604f0b72991c2dadcb9bde2cd0165a0f7cfc531135e752df"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/Chat/ChatTextInputPanelNode/BUILD",
+      "status": " M",
+      "bytes": 3675,
+      "sha256": "e98c11766c688863fbb6d98f5ac84d4586f871d70923b37702f03320ce540e75"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/EntityKeyboard/BUILD",
+      "status": " M",
+      "bytes": 3455,
+      "sha256": "c28de574d7b8b5ba8843f8dd6c308fbbb4c7c48ed5e5d48109240fa699affbd2"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/GlassBackgroundComponent/BUILD",
+      "status": " M",
+      "bytes": 681,
+      "sha256": "32c6d540725e6952c5a9850d3a21bcbd04ba29074817841cd32c1f9a7100a269"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/BUILD",
+      "status": " M",
+      "bytes": 9614,
+      "sha256": "1e8bb13332eb94aa8befd1053ff29824354d32b7ca84f08e245ca9d6f861bb70"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoHeaderNode.swift",
+      "status": " M",
+      "bytes": 166854,
+      "sha256": "0f704774ef5b79e1cf00797c7a4b2b459b5e138a1d36bb77432f3054a777c9cb"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoProfileItems.swift",
+      "status": " M",
+      "bytes": 126723,
+      "sha256": "dd47fc04ff740d10f3ef6ea1498d0bc4da7507794a9c1bf06fe9e881047e4f9a"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreen.swift",
+      "status": " M",
+      "bytes": 426857,
+      "sha256": "ad185db69e47aeda019f30b46e133c369867b331e9d8dd11edaf65017f9a11b8"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreenSettingsActions.swift",
+      "status": " M",
+      "bytes": 21160,
+      "sha256": "03d9a8f059b1cce506fd5466aa1aee27bb86c53105c610322fb9a4d3c35915c6"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoSettingsItems.swift",
+      "status": " M",
+      "bytes": 30456,
+      "sha256": "6fe05536f6ef3639abe7f8bde8155ad7636a9048c77a38fea9ab01fd0fc7c5c9"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/TelegramAccountAuxiliaryMethods/BUILD",
+      "status": " M",
+      "bytes": 1190,
+      "sha256": "c72c0bf3a7c3c33ff054e5931e4fd0c24f22771abdef9a6a1974983f6a5c7721"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/TelegramAccountAuxiliaryMethods/Sources/TelegramAccountAuxiliaryMethods.swift",
+      "status": " M",
+      "bytes": 10166,
+      "sha256": "b2f7ce11d6a488215a34f631851ab0663a539133d3ff05f3cddc458d826b7f22"
+    },
+    {
+      "path": "submodules/TelegramUI/Components/TextProcessingScreen/BUILD",
+      "status": " M",
+      "bytes": 2585,
+      "sha256": "9a5668cec880696b760ef7ae5abcfe7f22686b55fd30d7e873f7911e78b470aa"
+    },
+    {
+      "path": "submodules/TelegramUI/Sources/AccountContext.swift",
+      "status": " M",
+      "bytes": 51784,
+      "sha256": "6312c9fb85e22b3f12098569c125fddcf2806bbb9132b238713569847c4768dd"
+    },
+    {
+      "path": "submodules/TelegramUI/Sources/AppDelegate.swift",
+      "status": " M",
+      "bytes": 166986,
+      "sha256": "3896b4e52282aac54fe9a7e6d00dce3fae61ee78b45ca6d47a9543bd9912df7e"
+    },
+    {
+      "path": "submodules/TelegramUI/Sources/Chat/ChatMessageDisplaySendMessageOptions.swift",
+      "status": " M",
+      "bytes": 20495,
+      "sha256": "d220818c9a62bf6036514d195994cb606b58c6688003f7ea46ae5b988723408b"
+    },
+    {
+      "path": "submodules/TelegramUI/Sources/ChatHistoryEntriesForView.swift",
+      "status": " M",
+      "bytes": 48351,
+      "sha256": "f371945f5dd5afc1b8e00b1f163a6f600b9456c043027e3e9a65135d7d9bba00"
+    },
+    {
+      "path": "submodules/TelegramUI/Sources/ChatHistoryListNode.swift",
+      "status": " M",
+      "bytes": 304925,
+      "sha256": "b7a8a70c078236982838f0390c97b9566eb385f9ecb981275677dab5c90741cc"
+    },
+    {
+      "path": "submodules/TelegramUI/Sources/ChatInterfaceStateContextMenus.swift",
+      "status": " M",
+      "bytes": 231280,
+      "sha256": "575b382659a57c35b1d7848bad5830f377ab42f6b3e9b3f53af5e792d27d4280"
+    },
+    {
+      "path": "submodules/TelegramUI/Sources/OpenResolvedUrl.swift",
+      "status": " M",
+      "bytes": 129306,
+      "sha256": "525187879c810153e880f223dbcfddeb407d279c4fc125929ff13c86b7550843"
+    },
+    {
+      "path": "submodules/TextFormat/BUILD",
+      "status": " M",
+      "bytes": 1581,
+      "sha256": "7ee21443a947a998a4cd2b0d168edfdf5f01812cb68b75d123b1669137191064"
+    },
+    {
+      "path": "submodules/TranslateUI/BUILD",
+      "status": " M",
+      "bytes": 2384,
+      "sha256": "55e45c38dee2be23b9809a9df97b78d7d0f5950ce61593ae8de8e6c0b6d69c28"
+    },
+    {
+      "path": "tools/audit_spacegram_architecture.py",
+      "status": "??",
+      "bytes": 6969,
+      "sha256": "ab044a2a33d39860b592e9afb6bddb87778a281fa0f7a899241f51bd2b7a4802"
+    },
+    {
+      "path": "tools/check_spacegram_consistency.py",
+      "status": "??",
+      "bytes": 9720,
+      "sha256": "9aa5ac1d8537cde53c9806638f35439f6b2ecf931685a6cb128ab7f0eef22031"
+    },
+    {
+      "path": "tools/check_spacegram_preflight.py",
+      "status": "??",
+      "bytes": 6226,
+      "sha256": "d378f9f6d6f0d4b6a8dc13085171cffbf05c0317082d83de9276ef40603e84bb"
+    }
+  ],
+  "deleted_paths": [
+    "Qwengram/AI/BUILD",
+    "Qwengram/AI/QwengramAIError.swift",
+    "Qwengram/AI/QwengramAIKeychain.swift",
+    "Qwengram/AI/QwengramAIMessage.swift",
+    "Qwengram/AI/QwengramAIProvider.swift",
+    "Qwengram/AI/QwengramAIRequestGate.swift",
+    "Qwengram/AI/QwengramConversationStore.swift",
+    "Qwengram/AI/QwengramQwenProvider.swift",
+    "Qwengram/Bots/BUILD",
+    "Qwengram/Bots/QwengramBotDescriptor.swift",
+    "Qwengram/Core/BUILD",
+    "Qwengram/Core/QwengramProduct.swift",
+    "Qwengram/Enhancements/Demo/BUILD",
+    "Qwengram/Enhancements/Demo/Sources/NagramDemo.swift",
+    "Qwengram/Enhancements/LinkMetadata/BUILD",
+    "Qwengram/Enhancements/LinkMetadata/Sources/NagramLinkMetadata.swift",
+    "Qwengram/Enhancements/MediaMetadata/BUILD",
+    "Qwengram/Enhancements/MediaMetadata/Sources/NagramMediaMetadata.swift",
+    "Qwengram/Enhancements/README.md",
+    "Qwengram/Enhancements/Settings/BUILD",
+    "Qwengram/Enhancements/Settings/NagramAutoTranslateSettings.swift",
+    "Qwengram/Enhancements/Settings/NagramBottomBarSettings.swift",
+    "Qwengram/Enhancements/Settings/NagramDemoMode.swift",
+    "Qwengram/Enhancements/Settings/NagramMessageDoubleTapAction.swift",
+    "Qwengram/Enhancements/Settings/NagramMessageMenuSettings.swift",
+    "Qwengram/Enhancements/Settings/NagramPangu.swift",
+    "Qwengram/Enhancements/Settings/NagramRecentChats.swift",
+    "Qwengram/Enhancements/Settings/NagramRegexFilters.swift",
+    "Qwengram/Enhancements/Settings/NagramRegistrationDate.swift",
+    "Qwengram/Enhancements/Settings/NagramSettings.swift",
+    "Qwengram/Enhancements/Settings/NagramSettingsCloudSync.swift",
+    "Qwengram/Enhancements/Settings/NagramTranslationLLMKeychain.swift",
+    "Qwengram/Enhancements/SettingsSignal/BUILD",
+    "Qwengram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+    "Qwengram/Enhancements/SettingsUI/BUILD",
+    "Qwengram/Enhancements/SettingsUI/NagramBottomBarSettingsController.swift",
+    "Qwengram/Enhancements/SettingsUI/NagramGroupProfileSettingsController.swift",
+    "Qwengram/Enhancements/SettingsUI/NagramInlineBotRulesController.swift",
+    "Qwengram/Enhancements/SettingsUI/NagramLLMTranslationSettingsController.swift",
+    "Qwengram/Enhancements/SettingsUI/NagramMessageMenuSettingsController.swift",
+    "Qwengram/Enhancements/SettingsUI/NagramRegexFilterSettingsController.swift",
+    "Qwengram/Enhancements/SettingsUI/NagramSettingsController.swift",
+    "Qwengram/Enhancements/SettingsUI/Sources/NagramSliderItem.swift",
+    "Qwengram/Enhancements/TelegramSettingsCloudSync/BUILD",
+    "Qwengram/Enhancements/TelegramSettingsCloudSync/Sources/NagramTelegramSettingsCloudSync.swift",
+    "Qwengram/Enhancements/Translate/BUILD",
+    "Qwengram/Enhancements/Translate/Sources/NagramExternalTranslateProviders.swift",
+    "Qwengram/Enhancements/Translate/Sources/NagramLLMTranslateProvider.swift",
+    "Qwengram/Enhancements/Translate/Sources/NagramTranslateService.swift",
+    "Qwengram/FOUNDATION_AUDIT.md",
+    "Qwengram/HISTORY_AI_AUDIT.md",
+    "Qwengram/HistoryIntegration/BUILD",
+    "Qwengram/HistoryIntegration/QwengramHistoryIntegration.swift",
+    "Qwengram/HistoryIntegration/QwengramMediaIntegration.swift",
+    "Qwengram/HistoryStorage/BUILD",
+    "Qwengram/HistoryStorage/QwengramHistoryCollection.swift",
+    "Qwengram/HistoryStorage/QwengramHistoryRecord.swift",
+    "Qwengram/HistoryStorage/QwengramHistoryStore.swift",
+    "Qwengram/HistoryStorage/STORAGE.md",
+    "Qwengram/HistoryUI/BUILD",
+    "Qwengram/HistoryUI/QwengramHistoryController.swift",
+    "Qwengram/HistoryUI/QwengramHistoryPresentation.swift",
+    "Qwengram/HistoryUI/QwengramMediaPreviewController.swift",
+    "Qwengram/IOS_TEST_BUILD.md",
+    "Qwengram/MEDIA_ARCHIVE_AUDIT.md",
+    "Qwengram/MediaArchive/BUILD",
+    "Qwengram/MediaArchive/QwengramMediaArchive.swift",
+    "Qwengram/MediaArchive/QwengramMediaArchivePolicy.swift",
+    "Qwengram/NAGRAM_REMOVAL_AUDIT.md",
+    "Qwengram/PRIVACY_SECURITY_AUDIT.md",
+    "Qwengram/Privacy/BUILD",
+    "Qwengram/Privacy/QwengramMetadataSanitizer.swift",
+    "Qwengram/Privacy/QwengramPrivacyPolicy.swift",
+    "Qwengram/QWENGRAM_HOOKS.md",
+    "Qwengram/README.md",
+    "Qwengram/Settings/BUILD",
+    "Qwengram/Settings/QwengramGhostPolicy.swift",
+    "Qwengram/Settings/QwengramSettings.swift",
+    "Qwengram/SettingsSignal/BUILD",
+    "Qwengram/SettingsSignal/Sources/QwengramSettingsSignal.swift",
+    "Qwengram/SettingsUI/BUILD",
+    "Qwengram/SettingsUI/QwengramAIRichText.swift",
+    "Qwengram/SettingsUI/QwengramAISettingsController.swift",
+    "Qwengram/SettingsUI/QwengramBotsController.swift",
+    "Qwengram/SettingsUI/QwengramHistorySettingsController.swift",
+    "Qwengram/SettingsUI/QwengramMediaArchiveSettingsController.swift",
+    "Qwengram/SettingsUI/QwengramMessageAIController.swift",
+    "Qwengram/SettingsUI/QwengramPrivacySettingsController.swift",
+    "Qwengram/SettingsUI/QwengramQRToolsController.swift",
+    "Qwengram/SettingsUI/QwengramQwenAssistantController.swift",
+    "Qwengram/SettingsUI/QwengramSettingsController.swift",
+    "Qwengram/SettingsUI/QwengramSummarizerController.swift",
+    "Qwengram/SettingsUI/QwengramTranslatorController.swift",
+    "Qwengram/Strings/BUILD",
+    "Qwengram/Strings/Sources/QwengramLocalization.swift",
+    "Qwengram/Strings/Strings/en.lproj/QwengramLocalizable.strings",
+    "Qwengram/Strings/Strings/ja.lproj/QwengramLocalizable.strings",
+    "Qwengram/Strings/Strings/ru.lproj/QwengramLocalizable.strings",
+    "Qwengram/Strings/Strings/zh-hans.lproj/QwengramLocalizable.strings",
+    "Qwengram/Strings/Strings/zh-hant.lproj/QwengramLocalizable.strings",
+    "Qwengram/audits/enhancement-dependencies.tsv",
+    "Qwengram/audits/remaining-nagram-references.tsv",
+    "Tests/QwengramMediaArchiveTests/BUILD",
+    "Tests/QwengramMediaArchiveTests/QwengramConversationStoreTests.swift",
+    "Tests/QwengramMediaArchiveTests/QwengramMediaArchiveTests.swift",
+    "Tests/QwengramMediaArchiveTests/QwengramPrivacyTests.swift",
+    "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/NagramProfileBadge.swift",
+    "tools/check_qwengram_consistency.py"
+  ],
+  "other_entries": []
+}

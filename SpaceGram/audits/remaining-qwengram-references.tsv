@@ -1,0 +1,282 @@
+file	line	occurrences	classification
+.github/workflows/qwengram-ios-test.yml	15	1	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	19	1	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	22	1	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	47	2	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	48	2	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	51	2	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	52	2	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	60	1	D: existing branch / bundle ID / CI secret contract
+.github/workflows/qwengram-ios-test.yml	61	1	D: existing branch / bundle ID / CI secret contract
+.github/workflows/testflight.yml	40	1	D: existing branch / bundle ID / CI secret contract
+BRANDING.md	7	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	1	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	5	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	8	1	C: preserved checkout/root path
+QWENGRAM_PROJECT_AUDIT.md	15	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	18	2	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	20	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	28	2	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	29	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	39	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	52	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	53	2	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	54	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	59	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	68	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	81	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	82	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	85	2	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	89	2	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	107	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	108	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	130	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	134	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	135	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	144	2	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	175	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	182	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	184	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	194	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	200	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	203	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	218	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	223	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	225	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	240	2	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	246	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	262	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	291	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	307	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	318	1	B: historical documentation or compatibility explanation
+QWENGRAM_PROJECT_AUDIT.md	320	2	B: historical documentation or compatibility explanation
+README.md	7	1	B: historical documentation or compatibility explanation
+README.md	229	2	B: historical documentation or compatibility explanation
+README.md	240	1	B: historical documentation or compatibility explanation
+README_RU.md	7	1	B: historical documentation or compatibility explanation
+README_RU.md	229	2	B: historical documentation or compatibility explanation
+README_RU.md	240	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	3	1	C: preserved checkout/root path
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	4	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	6	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	13	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	14	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	15	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	16	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	17	2	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	18	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	19	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	20	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	21	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	22	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	43	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	44	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	59	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	89	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	91	1	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	124	2	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	125	2	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	131	2	B: historical documentation or compatibility explanation
+SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md	133	1	B: historical documentation or compatibility explanation
+SPACEGRAM_OVERNIGHT_AUDIT.md	3	1	C: preserved checkout/root path
+SPACEGRAM_OVERNIGHT_AUDIT.md	4	1	B: historical documentation or compatibility explanation
+SPACEGRAM_OVERNIGHT_AUDIT.md	47	1	B: historical documentation or compatibility explanation
+SPACEGRAM_OVERNIGHT_AUDIT.md	66	1	B: historical documentation or compatibility explanation
+SpaceGram/AI/SpaceGramAIKeychain.swift	12	1	A: migration fixture / compatibility storage contract
+SpaceGram/AI/SpaceGramConversationStore.swift	171	1	A: migration fixture / compatibility storage contract
+SpaceGram/FOUNDATION_AUDIT.md	1	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	15	2	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	16	3	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	17	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	18	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	19	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	27	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	33	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	35	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	37	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	63	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	64	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	72	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	73	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	75	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	88	1	B: historical documentation or compatibility explanation
+SpaceGram/FOUNDATION_AUDIT.md	108	1	B: historical documentation or compatibility explanation
+SpaceGram/HISTORY_AI_AUDIT.md	3	1	B: historical documentation or compatibility explanation
+SpaceGram/HISTORY_AI_AUDIT.md	8	1	B: historical documentation or compatibility explanation
+SpaceGram/HISTORY_AI_AUDIT.md	72	1	B: historical documentation or compatibility explanation
+SpaceGram/HISTORY_AI_AUDIT.md	118	1	B: historical documentation or compatibility explanation
+SpaceGram/IOS_TEST_BUILD.md	4	1	B: historical documentation or compatibility explanation
+SpaceGram/IOS_TEST_BUILD.md	9	1	B: historical documentation or compatibility explanation
+SpaceGram/IOS_TEST_BUILD.md	10	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	10	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	40	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	41	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	44	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	78	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	121	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	174	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	178	1	B: historical documentation or compatibility explanation
+SpaceGram/MEDIA_ARCHIVE_AUDIT.md	179	1	B: historical documentation or compatibility explanation
+SpaceGram/MediaArchive/SpaceGramMediaArchive.swift	378	1	A: migration fixture / compatibility storage contract
+SpaceGram/MediaArchive/SpaceGramMediaArchive.swift	471	1	A: migration fixture / compatibility storage contract
+SpaceGram/Migration/SpaceGramMigrationCoordinator.swift	30	2	A: migration fixture / compatibility storage contract
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	9	1	C: preserved checkout/root path
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	10	2	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	19	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	24	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	27	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	33	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	34	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	35	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	36	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	37	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	38	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	39	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	40	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	41	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	42	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	43	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	44	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	45	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	46	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	53	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	54	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	56	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	57	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	59	2	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	61	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	87	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	104	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	121	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	134	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	145	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	160	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	172	1	B: historical documentation or compatibility explanation
+SpaceGram/NAGRAM_REMOVAL_AUDIT.md	181	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	1	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	4	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	9	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	10	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	30	2	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	52	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	66	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	75	1	B: historical documentation or compatibility explanation
+SpaceGram/PRIVACY_SECURITY_AUDIT.md	84	1	B: historical documentation or compatibility explanation
+SpaceGram/Privacy/SpaceGramPrivacyPolicy.swift	110	1	A: migration fixture / compatibility storage contract
+SpaceGram/Privacy/SpaceGramPrivacyPolicy.swift	111	1	A: migration fixture / compatibility storage contract
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	7	1	C: preserved checkout/root path
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	8	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	15	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	52	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	62	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	63	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	64	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	65	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	66	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	67	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	68	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	69	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	70	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	71	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	72	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	73	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	76	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	91	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	120	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	124	2	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	126	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	139	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md	145	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	8	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	12	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	23	2	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	31	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	38	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	39	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	40	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	42	2	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	76	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	112	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_BRANDING_AUDIT.md	135	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_HOOKS.md	164	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_HOOKS.md	165	1	B: historical documentation or compatibility explanation
+SpaceGram/SPACEGRAM_HOOKS.md	166	1	B: historical documentation or compatibility explanation
+Tests/SpaceGramMediaArchiveTests/SpaceGramConversationStoreTests.swift	8	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramConversationStoreTests.swift	39	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramMediaArchiveTests.swift	60	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift	24	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift	25	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift	29	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift	41	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift	50	1	A: migration fixture / compatibility storage contract
+Tests/SpaceGramMediaArchiveTests/SpaceGramMigrationTests.swift	100	1	A: migration fixture / compatibility storage contract
+docs/build.md	3	1	B: historical documentation or compatibility explanation
+docs/build.md	234	1	C: preserved checkout/root path
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	7	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	15	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	16	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	17	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	18	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	19	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	20	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	29	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	30	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	46	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	47	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	57	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-24-bottom-bar-layout-editor.md	103	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	7	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	15	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	16	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	17	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	18	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	36	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	61	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	68	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	76	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	83	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	100	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	107	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	108	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	109	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	110	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	126	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	209	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-06-30-liquid-glass-transparency.md	215	3	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	7	3	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	16	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	17	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	20	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	39	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	40	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	41	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	42	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	43	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	44	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	89	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	109	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	129	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	149	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	172	2	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	276	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	281	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	284	1	B: historical documentation or compatibility explanation
+docs/superpowers/plans/2026-07-26-translate-before-send.md	299	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-06-30-liquid-glass-transparency-design.md	16	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-06-30-liquid-glass-transparency-design.md	21	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-06-30-liquid-glass-transparency-design.md	23	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-06-30-liquid-glass-transparency-design.md	60	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-07-26-translate-before-send-design.md	19	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-07-26-translate-before-send-design.md	29	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-07-26-translate-before-send-design.md	34	1	B: historical documentation or compatibility explanation
+docs/superpowers/specs/2026-07-26-translate-before-send-design.md	62	1	B: historical documentation or compatibility explanation
+tools/audit_spacegram_architecture.py	47	1	A: legacy-reference regression guard / protected user artifact
+tools/audit_spacegram_architecture.py	62	1	A: legacy-reference regression guard / protected user artifact
+tools/audit_spacegram_architecture.py	64	2	C: preserved checkout/root path
+tools/audit_spacegram_architecture.py	105	1	A: legacy-reference regression guard / protected user artifact
+tools/check_spacegram_consistency.py	40	2	A: legacy-reference regression guard / protected user artifact
+tools/check_spacegram_consistency.py	61	2	A: legacy-reference regression guard / protected user artifact
+tools/check_spacegram_consistency.py	89	2	A: legacy-reference regression guard / protected user artifact
+tools/check_spacegram_consistency.py	105	1	A: legacy-reference regression guard / protected user artifact
+tools/check_spacegram_preflight.py	79	1	A: legacy-reference regression guard / protected user artifact
+tools/check_spacegram_preflight.py	107	4	A: legacy-reference regression guard / protected user artifact

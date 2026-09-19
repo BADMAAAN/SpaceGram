@@ -1,6 +1,24 @@
-# Nagram-iOS Copyright and Brand Assets Policy
+# SpaceGram Branding and Inherited Asset Policy
+
+## SpaceGram product identity
+
+**SpaceGram** is the product name used by this fork. Its primary application
+icon is the graphite `S` artwork in
+`Telegram/Telegram-iOS/SpaceGramAppIcon.xcassets`. Internal Qwengram names are
+retained where they form compatibility, storage, migration, signing, or source
+integration contracts; they do not represent the current user-facing brand.
+
+The following sections preserve the inherited Nagram attribution and asset
+restrictions that remain relevant to source history and alternate icon assets.
 
 ## Source code and copyright
+
+SpaceGram no longer displays project-specific developer/sponsor badges on
+Telegram profiles. The removed badge directory credited nekohasekai, Haruhi,
+NextAlone, Queally, MaiTungTM, Lagrio, NahidaBuer, blxueya, xtao, Kitsune,
+Sevtinge, YuKongA, waifucon, and lutit as Nagram contributors, and Miaoqiqi and
+Natu as Nagram sponsors. This historical credit is retained here; these roles
+do not imply affiliation with SpaceGram.
 
 Nagram-iOS is based on Telegram-iOS. Copyright in upstream and third-party
 components remains with their respective authors and contributors.

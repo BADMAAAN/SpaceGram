@@ -17,7 +17,7 @@ private func isLocked(passcodeSettings: PresentationPasscodeSettings, state: Loc
     if state.isManuallyLocked {
         return true
     } else if let autolockTimeout = passcodeSettings.autolockTimeout {
-        // MARK: NAGRAM — -1 is Qwengram's immediate-after-background policy.
+        // MARK: NAGRAM — -1 is SpaceGram's immediate-after-background policy.
         if autolockTimeout == -1 {
             return immediateLockPending
         }

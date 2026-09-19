@@ -21,7 +21,7 @@ import CoreServices
 import ImageIO
 import UniformTypeIdentifiers
 import NagramSettings // MARK: NAGRAM
-import QwengramPrivacy // MARK: NAGRAM — account-scoped notification privacy.
+import SpaceGramPrivacy // MARK: NAGRAM — account-scoped notification privacy.
 
 // MARK: NAGRAM
 private let canFilterEmptyControlNotifications = (Bundle.main.object(forInfoDictionaryKey: "NagramNotificationFilteringEnabled") as? Bool) == true
@@ -535,7 +535,7 @@ private struct NotificationContent: CustomStringConvertible {
     var senderImage: INImage?
     
     var isLockedMessage: String?
-    var qwengramPrivacyPolicy: QwengramPrivacyPolicy = .default
+    var spaceGramPrivacyPolicy: SpaceGramPrivacyPolicy = .default
     
     init(isLockedMessage: String?) {
         self.isLockedMessage = isLockedMessage
@@ -598,7 +598,7 @@ private struct NotificationContent: CustomStringConvertible {
 
     func generate() -> UNNotificationContent {
         var content = UNMutableNotificationContent()
-        let privacy = self.qwengramPrivacyPolicy.notificationPresentation(title: self.title, subtitle: self.subtitle, body: self.body, appLocked: self.isLockedMessage != nil)
+        let privacy = self.spaceGramPrivacyPolicy.notificationPresentation(title: self.title, subtitle: self.subtitle, body: self.body, appLocked: self.isLockedMessage != nil)
         
         //Logger.shared.log("NotificationService", "Generating final content: \(self.description)")
 
@@ -890,11 +890,11 @@ private final class NotificationServiceHandler {
         let baseAppBundleId = String(appBundleIdentifier[..<lastDotRange.lowerBound])
         // MARK: NAGRAM — sanitize only after the notification key identifies
         // the target account. Error/control notifications keep native content.
-        let currentPrivacyPolicy = Atomic<QwengramPrivacyPolicy>(value: .default)
+        let currentPrivacyPolicy = Atomic<SpaceGramPrivacyPolicy>(value: .default)
         let rawUpdateCurrentContent = updateCurrentContent
         let updateCurrentContent: (NotificationContent) -> Void = { value in
             var value = value
-            value.qwengramPrivacyPolicy = currentPrivacyPolicy.with { $0 }
+            value.spaceGramPrivacyPolicy = currentPrivacyPolicy.with { $0 }
             rawUpdateCurrentContent(value)
         }
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
@@ -1048,7 +1048,7 @@ private final class NotificationServiceHandler {
                 return
             }
 
-            let _ = currentPrivacyPolicy.swap(QwengramPrivacyPolicyStore.loadNotificationPolicy(accountId: recordId.int64, baseBundleId: baseAppBundleId))
+            let _ = currentPrivacyPolicy.swap(SpaceGramPrivacyPolicyStore.loadNotificationPolicy(accountId: recordId.int64, baseBundleId: baseAppBundleId))
 
             let _ = (standaloneStateManagerWithRetry(
                 queue: strongSelf.queue,

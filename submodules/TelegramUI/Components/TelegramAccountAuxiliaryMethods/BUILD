@@ -10,7 +10,7 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
-        "//Qwengram/Privacy:QwengramPrivacy", # MARK: NAGRAM — outgoing photo metadata policy.
+        "//SpaceGram/Privacy:SpaceGramPrivacy", # MARK: NAGRAM — outgoing photo metadata policy.
         "//submodules/Display",
         "//submodules/TelegramCore",
         "//submodules/Postbox",

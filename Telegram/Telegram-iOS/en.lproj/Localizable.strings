@@ -402,30 +402,30 @@
 
 // Tour
 // MARK: NAGRAM
-"Tour.Title1" = "Qwengram";
+"Tour.Title1" = "SpaceGram";
 "Tour.Text1" = "A fast messaging client with **more ways to customize** your daily chats.";
 
 "Tour.Title2" = "Fast";
-// MARK: NAGRAM - Qwengram product branding.
-"Tour.Text2" = "**Qwengram** keeps conversations responsive, familiar and focused.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Tour.Text2" = "**SpaceGram** keeps conversations responsive, familiar and focused.";
 
 "Tour.Title3" = "Powerful";
-// MARK: NAGRAM - Qwengram product branding.
-"Tour.Text3" = "**Qwengram** supports rich chats, media, files, groups and channels.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Tour.Text3" = "**SpaceGram** supports rich chats, media, files, groups and channels.";
 
 "Tour.Title4" = "Privacy";
-// MARK: NAGRAM - Qwengram product branding.
-"Tour.Text4" = "**Qwengram** keeps sensitive permissions tied to clear user actions.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Tour.Text4" = "**SpaceGram** keeps sensitive permissions tied to clear user actions.";
 
 "Tour.Title5" = "Multi-Device";
-// MARK: NAGRAM - Qwengram product branding.
-"Tour.Text5" = "**Qwengram** lets you access your chats from multiple devices.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Tour.Text5" = "**SpaceGram** lets you access your chats from multiple devices.";
 
 "Tour.Title6" = "Flexible";
-// MARK: NAGRAM - Qwengram product branding.
-"Tour.Text6" = "**Qwengram** adds local settings for gestures, menus and interface details.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Tour.Text6" = "**SpaceGram** adds local settings for gestures, menus and interface details.";
 
-"Tour.StartButton" = "Start with Qwengram";
+"Tour.StartButton" = "Start with SpaceGram";
 
 // Login
 "Login.PhoneAndCountryHelp" = "Please confirm your country code\nand enter your phone number.";
@@ -498,10 +498,10 @@
 "Contacts.TabTitle" = "Contacts";
 "Contacts.Title" = "Contacts";
 "Contacts.FailedToSendInvitesMessage" = "An error occurred.";
-// MARK: NAGRAM - Qwengram product branding.
-"Contacts.AccessDeniedError" = "Qwengram does not have access to your contacts";
-"Contacts.AccessDeniedHelpLandscape" = "Please go to your %@ Settings — Privacy — Contacts.\nThen select ON for Qwengram.";
-"Contacts.AccessDeniedHelpPortrait" = "Please go to your %@ Settings — Privacy — Contacts. Then select ON for Qwengram.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Contacts.AccessDeniedError" = "SpaceGram does not have access to your contacts";
+"Contacts.AccessDeniedHelpLandscape" = "Please go to your %@ Settings — Privacy — Contacts.\nThen select ON for SpaceGram.";
+"Contacts.AccessDeniedHelpPortrait" = "Please go to your %@ Settings — Privacy — Contacts. Then select ON for SpaceGram.";
 "Contacts.AccessDeniedHelpON" = "ON";
 "Contacts.InviteToTelegram" = "Invite to Telegram";
 "Contacts.InviteFriends" = "Invite Friends";
@@ -1243,18 +1243,18 @@
 "PasscodeSettings.EncryptData" = "Encrypt Local Database";
 "PasscodeSettings.EncryptDataHelp" = "Experimental feature, use with caution. Encrypt your local Telegram data, using a derivative of your passcode as the key.";
 
-// MARK: NAGRAM - Qwengram product branding.
-"EnterPasscode.EnterTitle" = "Enter your Qwengram Passcode";
+// MARK: NAGRAM - SpaceGram product branding.
+"EnterPasscode.EnterTitle" = "Enter your SpaceGram Passcode";
 "EnterPasscode.ChangeTitle" = "Change Passcode";
-"EnterPasscode.EnterPasscode" = "Enter your Qwengram Passcode";
+"EnterPasscode.EnterPasscode" = "Enter your SpaceGram Passcode";
 "EnterPasscode.EnterNewPasscodeNew" = "Enter a passcode";
 "EnterPasscode.EnterNewPasscodeChange" = "Enter your new passcode";
 "EnterPasscode.RepeatNewPasscode" = "Re-enter your new passcode";
 "EnterPasscode.EnterCurrentPasscode" = "Enter your current passcode";
-// MARK: NAGRAM - Qwengram product branding.
-"EnterPasscode.TouchId" = "Unlock Qwengram";
+// MARK: NAGRAM - SpaceGram product branding.
+"EnterPasscode.TouchId" = "Unlock SpaceGram";
 
-"DialogList.PasscodeLockHelp" = "Tap to lock Qwengram";
+"DialogList.PasscodeLockHelp" = "Tap to lock SpaceGram";
 
 "PasscodeSettings.AutoLock" = "Auto-Lock";
 "PasscodeSettings.AutoLock.Disabled" = "Disabled";
@@ -1273,38 +1273,38 @@
 
 "AccessDenied.Title" = "Please Allow Access";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.Contacts" = "Qwengram can use your existing contact list to help you find people you know.\n\nPlease go to Settings > Privacy > Contacts and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.Contacts" = "SpaceGram can use your existing contact list to help you find people you know.\n\nPlease go to Settings > Privacy > Contacts and set SpaceGram to ON.";
 
-"AccessDenied.VoiceMicrophone" = "Qwengram needs access to your microphone to send voice messages.\n\nPlease go to Settings > Privacy > Microphone and set Qwengram to ON.";
+"AccessDenied.VoiceMicrophone" = "SpaceGram needs access to your microphone to send voice messages.\n\nPlease go to Settings > Privacy > Microphone and set SpaceGram to ON.";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.VideoMicrophone" = "Qwengram needs access to your microphone to record sound in videos.\n\nPlease go to Settings > Privacy > Microphone and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.VideoMicrophone" = "SpaceGram needs access to your microphone to record sound in videos.\n\nPlease go to Settings > Privacy > Microphone and set SpaceGram to ON.";
 
-"AccessDenied.MicrophoneRestricted" = "Microphone access is restricted for Qwengram.\n\nPlease go to Settings > General > Restrictions > Microphone and set Qwengram to ON.";
+"AccessDenied.MicrophoneRestricted" = "Microphone access is restricted for SpaceGram.\n\nPlease go to Settings > General > Restrictions > Microphone and set SpaceGram to ON.";
 
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.Camera" = "Qwengram needs access to your camera to take photos and videos.\n\nPlease go to Settings > Privacy > Camera and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.Camera" = "SpaceGram needs access to your camera to take photos and videos.\n\nPlease go to Settings > Privacy > Camera and set SpaceGram to ON.";
 
-"AccessDenied.CameraRestricted" = "Camera access is restricted for Qwengram.\n\nPlease go to Settings > General > Restrictions > Camera and set Qwengram to ON.";
+"AccessDenied.CameraRestricted" = "Camera access is restricted for SpaceGram.\n\nPlease go to Settings > General > Restrictions > Camera and set SpaceGram to ON.";
 
 "AccessDenied.CameraDisabled" = "Camera access is globally restricted on your phone.\n\nPlease go to Settings > General > Restrictions and set Camera to ON";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.PhotosAndVideos" = "Qwengram needs access to your photo library to send photos and videos.\n\nPlease go to Settings > Privacy > Photos and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.PhotosAndVideos" = "SpaceGram needs access to your photo library to send photos and videos.\n\nPlease go to Settings > Privacy > Photos and set SpaceGram to ON.";
 
-"AccessDenied.SaveMedia" = "Qwengram needs access to your photo library to save photos and videos.\n\nPlease go to Settings > Privacy > Photos and set Qwengram to ON.";
+"AccessDenied.SaveMedia" = "SpaceGram needs access to your photo library to save photos and videos.\n\nPlease go to Settings > Privacy > Photos and set SpaceGram to ON.";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.PhotosRestricted" = "Photo access is restricted for Qwengram.\n\nPlease go to Settings > General > Restrictions > Photos and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.PhotosRestricted" = "Photo access is restricted for SpaceGram.\n\nPlease go to Settings > General > Restrictions > Photos and set SpaceGram to ON.";
 
-"AccessDenied.LocationDenied" = "Qwengram needs access to your location so you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set Qwengram to ON.";
+"AccessDenied.LocationDenied" = "SpaceGram needs access to your location so you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set SpaceGram to ON.";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.LocationDisabled" = "Qwengram needs access to your location so you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.LocationDisabled" = "SpaceGram needs access to your location so you can share it with your contacts.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
 
-"AccessDenied.LocationTracking" = "Qwengram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
+"AccessDenied.LocationTracking" = "SpaceGram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
 
 "AccessDenied.Settings" = "Settings";
 
@@ -1478,8 +1478,8 @@
 
 "ChangePhone.ErrorOccupied" = "The number %@ is already connected to a Telegram account. Please delete that account before migrating to the new number.";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.LocationTracking" = "Qwengram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.LocationTracking" = "SpaceGram needs access to your location to show you on the map.\n\nPlease go to Settings > Privacy > Location Services and set it to ON.";
 
 "PrivacySettings.AuthSessions" = "Active Sessions";
 "AuthSessions.Title" = "Active Sessions";
@@ -1837,10 +1837,10 @@
 "Watch.Stickers.StickerPacks" = "Sticker Sets";
 
 "Watch.Location.Current" = "Current Location";
-// MARK: NAGRAM - Qwengram product branding.
-"Watch.Location.Access" = "Allow Qwengram to access location on your phone";
+// MARK: NAGRAM - SpaceGram product branding.
+"Watch.Location.Access" = "Allow SpaceGram to access location on your phone";
 
-"Watch.AuthRequired" = "Log in to Qwengram on your phone to get started";
+"Watch.AuthRequired" = "Log in to SpaceGram on your phone to get started";
 
 "Watch.NoConnection" = "No Connection";
 "Watch.ConnectionDescription" = "Your Watch needs to be connected for the app to work";
@@ -2276,10 +2276,10 @@ Unused sets are archived when you add more.";
 
 "CloudStorage.Title" = "Cloud Storage";
 
-// MARK: NAGRAM - Qwengram product branding.
-"Widget.AuthRequired" = "Log in to Qwengram";
+// MARK: NAGRAM - SpaceGram product branding.
+"Widget.AuthRequired" = "Log in to SpaceGram";
 "Widget.NoUsers" = "Start messaging to see your friends here";
-"Widget.GalleryTitle" = "Qwengram";
+"Widget.GalleryTitle" = "SpaceGram";
 "Widget.GalleryDescription" = "Select chats";
 
 "ShareMenu.CopyShareLinkGame" = "Copy link to game";
@@ -2304,12 +2304,12 @@ Unused sets are archived when you add more.";
 "Conversation.JumpToDate" = "Jump To Date";
 "Conversation.AddToReadingList" = "Add to Reading List";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.CallMicrophone" = "Qwengram needs access to your microphone for voice calls.\n\nPlease go to Settings > Privacy > Microphone and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.CallMicrophone" = "SpaceGram needs access to your microphone for voice calls.\n\nPlease go to Settings > Privacy > Microphone and set SpaceGram to ON.";
 
 "Call.EncryptionKey.Title" = "Encryption Key";
 
-"Application.Name" = "Qwengram";
+"Application.Name" = "SpaceGram";
 "DialogList.Pin" = "Pin";
 "DialogList.Unpin" = "Unpin";
 "DialogList.PinLimitError" = "Sorry, you can pin no more than %@ chats to the top.";
@@ -2628,9 +2628,9 @@ Unused sets are archived when you add more.";
 "Conversation.HoldForAudio" = "Hold to record audio. Tap to switch to video.";
 "Conversation.HoldForVideo" = "Hold to record video. Tap to switch to audio.";
 
-// MARK: NAGRAM - Qwengram product branding.
-"UserInfo.TelegramCall" = "Qwengram Call";
-"UserInfo.TelegramVideoCall" = "Qwengram Video Call";
+// MARK: NAGRAM - SpaceGram product branding.
+"UserInfo.TelegramCall" = "SpaceGram Call";
+"UserInfo.TelegramVideoCall" = "SpaceGram Video Call";
 "UserInfo.PhoneCall" = "Phone Call";
 
 "SharedMedia.CategoryMedia" = "Media";
@@ -2638,9 +2638,9 @@ Unused sets are archived when you add more.";
 "SharedMedia.CategoryLinks" = "Links";
 "SharedMedia.CategoryOther" = "Audio";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.VideoMessageCamera" = "Qwengram needs access to your camera to send video messages.\n\nPlease go to Settings > Privacy > Camera and set Qwengram to ON.";
-"AccessDenied.VideoMessageMicrophone" = "Qwengram needs access to your microphone to send video messages.\n\nPlease go to Settings > Privacy > Microphone and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.VideoMessageCamera" = "SpaceGram needs access to your camera to send video messages.\n\nPlease go to Settings > Privacy > Camera and set SpaceGram to ON.";
+"AccessDenied.VideoMessageMicrophone" = "SpaceGram needs access to your microphone to send video messages.\n\nPlease go to Settings > Privacy > Microphone and set SpaceGram to ON.";
 
 "ChatSettings.AutomaticVideoMessageDownload" = "AUTOMATIC VIDEO MESSAGE DOWNLOAD";
 
@@ -3179,17 +3179,17 @@ Unused sets are archived when you add more.";
 "Privacy.PaymentsClearInfoDoneHelp" = "Payment & shipping info cleared.";
 
 // MARK: NAGRAM
-"InfoPlist.NSContactsUsageDescription" = "Qwengram can sync your contacts so you can find people you know across your devices.";
-"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you choose to send your location, Qwengram needs access to show and share it on a map.";
+"InfoPlist.NSContactsUsageDescription" = "SpaceGram can sync your contacts so you can find people you know across your devices.";
+"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you choose to send your location, SpaceGram needs access to show and share it on a map.";
 "InfoPlist.NSCameraUsageDescription" = "We need this so that you can take and share photos and videos, as well as make video calls.";
 "InfoPlist.NSPhotoLibraryUsageDescription" = "We need this so that you can share photos and videos from your photo library.";
 "InfoPlist.NSPhotoLibraryAddUsageDescription" = "We need this so that you can save photos and videos to your photo library.";
 "InfoPlist.NSMicrophoneUsageDescription" = "We need this so that you can record and share voice messages and videos with sound.";
 "InfoPlist.NSSiriUsageDescription" = "You can use Siri to send messages.";
-// MARK: NAGRAM - Qwengram product branding.
-"InfoPlist.NSLocationAlwaysAndWhenInUseUsageDescription" = "When you choose to share your live location, Qwengram needs background location access to keep it updated.";
-"InfoPlist.NSLocationAlwaysUsageDescription" = "When you choose to share your live location, Qwengram needs background location access to keep it updated. Apple Watch location sharing also requires this access.";
-"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you choose to send your location, Qwengram needs access to show and share it on a map.";
+// MARK: NAGRAM - SpaceGram product branding.
+"InfoPlist.NSLocationAlwaysAndWhenInUseUsageDescription" = "When you choose to share your live location, SpaceGram needs background location access to keep it updated.";
+"InfoPlist.NSLocationAlwaysUsageDescription" = "When you choose to share your live location, SpaceGram needs background location access to keep it updated. Apple Watch location sharing also requires this access.";
+"InfoPlist.NSLocationWhenInUseUsageDescription" = "When you choose to send your location, SpaceGram needs access to show and share it on a map.";
 "InfoPlist.NSFaceIDUsageDescription" = "You can use Face ID to unlock the app.";
 
 "Privacy.Calls.P2PNever" = "Never";
@@ -3804,9 +3804,9 @@ Unused sets are archived when you add more.";
 
 "SocksProxySetup.PasteFromClipboard" = "Paste From Clipboard";
 
-// MARK: NAGRAM - Qwengram product branding.
-"Share.AuthTitle" = "Log in to Qwengram";
-"Share.AuthDescription" = "Open Qwengram and log in to share.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Share.AuthTitle" = "Log in to SpaceGram";
+"Share.AuthDescription" = "Open SpaceGram and log in to share.";
 
 "Notifications.DisplayNamesOnLockScreen" = "Names on lock-screen";
 "Notifications.DisplayNamesOnLockScreenInfoWithLink" = "Display names in notifications when the device is locked. To disable, make sure that \"Show Previews\" is also set to \"When Unlocked\" or \"Never\" in [iOS Settings]";
@@ -4157,8 +4157,8 @@ Unused sets are archived when you add more.";
 "Undo.DeletedChannel" = "Deleted channel";
 "Undo.DeletedGroup" = "Deleted group";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.Wallpapers" = "Qwengram needs access to your photo library to set a custom chat background.\n\nPlease go to Settings > Privacy > Photos and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.Wallpapers" = "SpaceGram needs access to your photo library to set a custom chat background.\n\nPlease go to Settings > Privacy > Photos and set SpaceGram to ON.";
 
 "Conversation.ChatBackground" = "Chat Background";
 "Conversation.ViewBackground" = "VIEW BACKGROUND";
@@ -5721,8 +5721,8 @@ Sorry for the inconvenience.";
 "Call.Audio" = "audio";
 "Call.AudioRouteMute" = "Mute Yourself";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.VideoCallCamera" = "Qwengram needs access to your camera to make video calls.\n\nPlease go to Settings > Privacy > Camera and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.VideoCallCamera" = "SpaceGram needs access to your camera to make video calls.\n\nPlease go to Settings > Privacy > Camera and set SpaceGram to ON.";
 
 "Call.AccountIsLoggedOnCurrentDevice" = "Sorry, you can't call %@ because that account is logged in to Telegram on the device you're using for the call.";
 
@@ -6220,8 +6220,8 @@ Sorry for the inconvenience.";
 "Message.ImportedDateFormat" = "%1$@, %2$@ Imported %3$@";
 
 "ChatImportActivity.Title" = "Importing Chat";
-// MARK: NAGRAM - Qwengram product branding.
-"ChatImportActivity.OpenApp" = "Open Qwengram";
+// MARK: NAGRAM - SpaceGram product branding.
+"ChatImportActivity.OpenApp" = "Open SpaceGram";
 "ChatImportActivity.Retry" = "Retry";
 "ChatImportActivity.InProgress" = "Please keep this window open\nuntil the import is completed.";
 "ChatImportActivity.ErrorNotAdmin" = "You need to be an admin in the group to import messages.";
@@ -6373,8 +6373,8 @@ Sorry for the inconvenience.";
 "Widget.UpdatedAt" = "Updated {}";
 
 "Intents.ErrorLockedTitle" = "Locked";
-// MARK: NAGRAM - Qwengram product branding.
-"Intents.ErrorLockedText" = "Open Qwengram and enter passcode to edit widget.";
+// MARK: NAGRAM - SpaceGram product branding.
+"Intents.ErrorLockedText" = "Open SpaceGram and enter passcode to edit widget.";
 
 "Conversation.GigagroupDescription" = "Only admins can send messages in this group.";
 
@@ -7350,9 +7350,9 @@ Sorry for the inconvenience.";
 "Contacts.QrCode.MyCode" = "My QR Code";
 "Contacts.QrCode.NoCodeFound" = "No valid QR code found in the image. Please try again.";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.QrCode" = "Qwengram needs access to your photo library to scan QR codes.\n\nOpen your device's Settings > Privacy > Photos and set Qwengram to ON.";
-"AccessDenied.QrCamera" = "Qwengram needs access to your camera to scan QR codes.\n\nOpen your device's Settings > Privacy > Camera and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.QrCode" = "SpaceGram needs access to your photo library to scan QR codes.\n\nOpen your device's Settings > Privacy > Photos and set SpaceGram to ON.";
+"AccessDenied.QrCamera" = "SpaceGram needs access to your camera to scan QR codes.\n\nOpen your device's Settings > Privacy > Camera and set SpaceGram to ON.";
 
 "Share.ShareToInstagramStories" = "Share to Instagram Stories";
 
@@ -12701,8 +12701,8 @@ Sorry for the inconvenience.";
 
 "WebBrowser.Done" = "Done";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.LocationWeather" = "Qwengram needs access to your location so that you can add the weather widget to your stories.\n\nPlease go to Settings > Privacy > Location Services and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.LocationWeather" = "SpaceGram needs access to your location so that you can add the weather widget to your stories.\n\nPlease go to Settings > Privacy > Location Services and set SpaceGram to ON.";
 
 "Story.Editor.TooltipWeatherLimitText" = "You can't add more than one weather sticker to a story.";
 
@@ -14754,8 +14754,8 @@ Sorry for the inconvenience.";
 
 "Chat.SensitiveContentShort" = "18+";
 
-// MARK: NAGRAM - Qwengram product branding.
-"AccessDenied.AgeVerificationCamera" = "Qwengram needs access to your camera for age verification.\n\nOpen your device's Settings > Privacy > Camera and set Qwengram to ON.";
+// MARK: NAGRAM - SpaceGram product branding.
+"AccessDenied.AgeVerificationCamera" = "SpaceGram needs access to your camera for age verification.\n\nOpen your device's Settings > Privacy > Camera and set SpaceGram to ON.";
 
 "PeerInfo.Gifts.Collections.All" = "All Gifts";
 "PeerInfo.Gifts.Collections.Add" = "Add Collection";

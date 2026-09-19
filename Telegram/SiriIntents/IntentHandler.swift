@@ -986,8 +986,8 @@ private final class WidgetIntentHandler {
             
             let error = NSError(domain: "Locked", code: 1, userInfo: [
                 // MARK: NAGRAM
-                // MARK: NAGRAM - Qwengram product branding.
-                NSLocalizedDescriptionKey: "Open Qwengram and enter passcode to edit widget."
+                // MARK: NAGRAM - SpaceGram product branding.
+                NSLocalizedDescriptionKey: "Open SpaceGram and enter passcode to edit widget."
             ])
             
             completion(nil, error)

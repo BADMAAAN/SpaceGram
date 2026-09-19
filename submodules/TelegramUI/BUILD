@@ -68,23 +68,23 @@ swift_library(
         "//submodules/TelegramCallsUI:TelegramCallsUI",
         "//submodules/TelegramUIPreferences:TelegramUIPreferences",
         # MARK: NAGRAM — Nagram 增强开关模块
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
         # MARK: NAGRAM — offline screenshot fixtures.
-        "//Qwengram/Enhancements/Demo:NagramDemo",
-        "//Qwengram/Enhancements/LinkMetadata:NagramLinkMetadata",
-        "//Qwengram/Enhancements/SettingsSignal:NagramSettingsSignal",
-        "//Qwengram/Enhancements/TelegramSettingsCloudSync:NagramTelegramSettingsCloudSync",
-        "//Qwengram/Strings:QwengramStrings",
-        "//Qwengram/Enhancements/SettingsUI:NagramSettingsUI",
-        "//Qwengram/Enhancements/Translate:NagramTranslate",  # MARK: NAGRAM
-        # MARK: QWENGRAM
-        "//Qwengram/SettingsUI:QwengramSettingsUI",
-        # // MARK: NAGRAM — Qwengram master switch at message actions.
-        "//Qwengram/Settings:QwengramSettings",
+        "//SpaceGram/Enhancements/Demo:NagramDemo",
+        "//SpaceGram/Enhancements/LinkMetadata:NagramLinkMetadata",
+        "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//SpaceGram/Enhancements/TelegramSettingsCloudSync:NagramTelegramSettingsCloudSync",
+        "//SpaceGram/Strings:SpaceGramStrings",
+        "//SpaceGram/Enhancements/SettingsUI:NagramSettingsUI",
+        "//SpaceGram/Enhancements/Translate:NagramTranslate",  # MARK: NAGRAM
+        # MARK: SPACEGRAM
+        "//SpaceGram/SettingsUI:SpaceGramSettingsUI",
+        # // MARK: NAGRAM — SpaceGram master switch at message actions.
+        "//SpaceGram/Settings:SpaceGramSettings",
         # // MARK: NAGRAM — reactive automatic read policy.
-        "//Qwengram/SettingsSignal:QwengramSettingsSignal",
+        "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         # // MARK: NAGRAM
-        "//Qwengram/HistoryUI:QwengramHistoryUI",
+        "//SpaceGram/HistoryUI:SpaceGramHistoryUI",
         "//submodules/MediaPlayer:UniversalMediaPlayer",
         "//submodules/TelegramVoip:TelegramVoip",
         "//submodules/DeviceAccess:DeviceAccess",

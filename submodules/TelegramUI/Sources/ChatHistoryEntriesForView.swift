@@ -13,7 +13,7 @@ import Markdown
 import Display
 import TelegramStringFormatting
 import NagramSettings // MARK: NAGRAM
-import QwengramStrings // MARK: NAGRAM
+import SpaceGramStrings // MARK: NAGRAM
 
 struct ChatHistoryEntriesForViewState {
     private var messageStableIdToLocalId: [UInt32: Int64] = [:]

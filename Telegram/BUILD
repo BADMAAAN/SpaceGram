@@ -285,8 +285,8 @@ filegroup(
     ] + [
         "{}.lproj/Localizable.strings".format(language) for language in empty_languages
     ] + [
-        # MARK: QWENGRAM — Qwengram localizable strings are bundled with the app.
-        "//Qwengram/Strings:QwengramLocalizableStrings",
+        # MARK: SPACEGRAM — SpaceGram localizable strings are bundled with the app.
+        "//SpaceGram/Strings:SpaceGramLocalizableStrings",
     ],
 )
 
@@ -319,10 +319,17 @@ filegroup(
 )
 
 filegroup(
-    name = "DefaultAppIcon",
+    name = "SpaceGramAppIconResources",
     srcs = glob([
-        "Telegram-iOS/DefaultAppIcon.xcassets/**/*",
-    ], exclude = ["Telegram-iOS/DefaultAppIcon.xcassets/**/.*"]),
+        "Telegram-iOS/SpaceGramAppIcon.xcassets/**/*",
+    ], exclude = ["Telegram-iOS/SpaceGramAppIcon.xcassets/**/.*"]),
+)
+
+filegroup(
+    name = "SpaceGramAlternateAppIconResources",
+    srcs = glob([
+        "Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/**/*",
+    ], exclude = ["Telegram-iOS/SpaceGramAlternateAppIcon.xcassets/**/.*"]),
 )
 
 filegroup(
@@ -332,7 +339,7 @@ filegroup(
     ]),
 )
 
-# MARK: NAGRAM — Qwengram uses the existing Telegram asset catalog pending its own icon.
+# MARK: NAGRAM — SpaceGram primary and alternate product icons.
 
 filegroup(
     name = "LaunchScreen",
@@ -1586,11 +1593,11 @@ plist_fragment(
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Qwengram</string>
+    <string>SpaceGram</string>
     <key>CFBundleIdentifier</key>
     <string>{telegram_bundle_id}</string>
     <key>CFBundleName</key>
-    <string>Qwengram</string>
+    <string>SpaceGram</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -1649,19 +1656,19 @@ plist_fragment(
     <string>We need this so that you can take and share photos and videos.</string>
     <!-- MARK: NAGRAM -->
     <key>NSContactsUsageDescription</key>
-    <string>Qwengram can sync your contacts so you can find people you know across your devices.</string>
+    <string>SpaceGram can sync your contacts so you can find people you know across your devices.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>You can use Face ID to unlock the app.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>When you choose to share your live location, Qwengram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
+    <string>When you choose to share your live location, SpaceGram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>When you choose to share your live location, Qwengram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
+    <string>When you choose to share your live location, SpaceGram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>When you choose to send your location, Qwengram needs access to show and share it on a map.</string>
+    <string>When you choose to send your location, SpaceGram needs access to show and share it on a map.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>We need this so that you can record and share voice messages and videos with sound.</string>
     <key>NSMotionUsageDescription</key>
-    <string>Qwengram uses motion access only when needed to improve location sharing.</string>
+    <string>SpaceGram uses motion access only when needed to improve location sharing.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>We need this so that you can share photos and videos from your photo library.</string>
     <key>NSPhotoLibraryUsageDescription</key>
@@ -1795,9 +1802,12 @@ ios_application(
         ":RequiredDeviceCapabilitiesPlist",
         ":UrlTypesInfoPlist",
     ],
-    # MARK: NAGRAM — standard asset-catalog packaging for Qwengram.
-    primary_app_icon = "AppIconLLC",
-    app_icons = [":DefaultAppIcon"],
+    # MARK: NAGRAM — standard asset-catalog packaging for SpaceGram.
+    primary_app_icon = "SpaceGramAppIcon",
+    app_icons = [
+        ":SpaceGramAppIconResources",
+        ":SpaceGramAlternateAppIconResources",
+    ],
     resources = [":LaunchScreen"],
     frameworks = [
         ":MtProtoKitFramework",

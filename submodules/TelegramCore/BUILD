@@ -7,19 +7,19 @@ swift_library(
         "Sources/**/*.swift",
     ]) + [
         # // MARK: NAGRAM
-        "//Qwengram/HistoryIntegration:Sources",
+        "//SpaceGram/HistoryIntegration:Sources",
     ],
     copts = [
         "-warnings-as-errors",
     ],
     deps = [
         # // MARK: NAGRAM
-        "//Qwengram/HistoryStorage:QwengramHistoryStorage",
-        # // MARK: NAGRAM — independent Qwengram media storage.
-        "//Qwengram/MediaArchive:QwengramMediaArchive",
-        "//Qwengram/Settings:QwengramSettings",
-        # // MARK: NAGRAM — reactive Qwengram presence policy.
-        "//Qwengram/SettingsSignal:QwengramSettingsSignal",
+        "//SpaceGram/HistoryStorage:SpaceGramHistoryStorage",
+        # // MARK: NAGRAM — independent SpaceGram media storage.
+        "//SpaceGram/MediaArchive:SpaceGramMediaArchive",
+        "//SpaceGram/Settings:SpaceGramSettings",
+        # // MARK: NAGRAM — reactive SpaceGram presence policy.
+        "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         "//submodules/TelegramApi:TelegramApi",
         "//submodules/MtProtoKit:MtProtoKit",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
@@ -37,7 +37,7 @@ swift_library(
         "//submodules/TelegramCore/FlatSerialization",
         "//submodules/MurMurHash32",
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

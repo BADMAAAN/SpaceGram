@@ -34,7 +34,7 @@ private func generateBorderImage(theme: PresentationTheme, bordered: Bool, selec
     })?.stretchableImage(withLeftCapWidth: 15, topCapHeight: 15)
 }
 
-// MARK: NAGRAM — Qwengram uses standard asset-catalog previews.
+// MARK: NAGRAM — SpaceGram uses standard asset-catalog previews.
 private func loadThemeSettingsAppIconImage(_ icon: PresentationAppIcon) -> UIImage? {
     return UIImage(named: icon.imageName, in: getAppBundle(), compatibleWith: nil)
 }

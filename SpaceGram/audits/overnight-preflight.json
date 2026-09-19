@@ -1,0 +1,199 @@
+{
+  "plists": 32,
+  "plist_fragments": [
+    "Telegram/Telegram-iOS/AlternateIcons-iPad.plist",
+    "Telegram/Telegram-iOS/AlternateIcons.plist"
+  ],
+  "asset_catalog_json": 193,
+  "asset_files": 293,
+  "owned_source_paths": 74,
+  "swift_grammar": {
+    "files": 74,
+    "advisory_diagnostics": [
+      {
+        "file": "SpaceGram/AI/SpaceGramConversationStore.swift",
+        "line": 104,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/AI/SpaceGramConversationStore.swift",
+        "line": 116,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/AI/SpaceGramConversationStore.swift",
+        "line": 137,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/AI/SpaceGramQwenProvider.swift",
+        "line": 149,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/AI/SpaceGramQwenProvider.swift",
+        "line": 244,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/SettingsUI/SpaceGramHistorySettingsController.swift",
+        "line": 67,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/SettingsUI/SpaceGramMediaArchiveSettingsController.swift",
+        "line": 126,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/SettingsUI/SpaceGramPrivacySettingsController.swift",
+        "line": 226,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 375,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "true"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 379,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "true"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 380,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "true"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 434,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "false"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 435,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "false"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 436,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "false"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 437,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "false"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 438,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "false"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Settings/NagramBottomBarSettings.swift",
+        "line": 439,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "true"
+      },
+      {
+        "file": "SpaceGram/Enhancements/Translate/Sources/NagramLLMTranslateProvider.swift",
+        "line": 140,
+        "kind": "!",
+        "missing": true,
+        "text": ""
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 10,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "defaultValue"
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 10,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "defa"
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 10,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "ltVal"
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 10,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "e"
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 17,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "defaultValue"
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 17,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "defa"
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 17,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "ltVal"
+      },
+      {
+        "file": "SpaceGram/Enhancements/SettingsSignal/Sources/NagramSettingsSignal.swift",
+        "line": 17,
+        "kind": "ERROR",
+        "missing": false,
+        "text": "e"
+      }
+    ]
+  },
+  "yaml": 4,
+  "errors": []
+}

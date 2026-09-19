@@ -2,14 +2,14 @@
 
 This file provides guidance to AI assistants when working with code in this repository.
 
-## Qwengram conventions
+## SpaceGram conventions
 
-Qwengram builds on Telegram-iOS. Nagram is a historical code source, not the architectural upstream.
+SpaceGram builds on Telegram-iOS. `SpaceGram/` remains the compatibility source namespace. Nagram is a historical code source, not the architectural upstream. The current map is `SpaceGram/SPACEGRAM_ARCHITECTURE_AUDIT.md`.
 
-- New Qwengram code belongs under `Qwengram/`.
+- New SpaceGram code belongs under `SpaceGram/`.
 - Every necessary upstream-file modification must have a nearby `// MARK: NAGRAM`.
 - The retained enhancement settings entry is maintained in `PeerInfoSettingsItems.swift`.
-- The Qwengram app name and asset-catalog icon integration are maintained in `Telegram/BUILD`; extension names remain Telegram unless explicitly changed.
+- The SpaceGram app name and asset-catalog icon integration are maintained in `Telegram/BUILD`; extension names remain Telegram unless explicitly changed.
 
 ## Build
 
@@ -63,7 +63,7 @@ For physical-device work, first follow the signing-mode and preflight requiremen
 
 ## Project Structure
 
-- Qwengram code belongs in `Qwengram/`; reactive settings use `Qwengram/Enhancements/SettingsSignal`, and UI belongs in `Qwengram/Enhancements/SettingsUI`.
+- SpaceGram code belongs in `SpaceGram/`; reactive settings use `SpaceGram/Enhancements/SettingsSignal`, and UI belongs in `SpaceGram/Enhancements/SettingsUI`.
 - Main app and extension targets are in `Telegram/`.
 - Most upstream libraries are in `submodules/`; modifications there require a nearby `// MARK: NAGRAM`.
 - Vendored external code is in `third-party/`.

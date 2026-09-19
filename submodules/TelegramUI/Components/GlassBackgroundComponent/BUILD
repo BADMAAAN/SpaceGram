@@ -16,7 +16,7 @@ swift_library(
         "//submodules/UIKitRuntimeUtils",
         "//submodules/AppBundle",
         "//submodules/TelegramUI/Components/MeshTransform",
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

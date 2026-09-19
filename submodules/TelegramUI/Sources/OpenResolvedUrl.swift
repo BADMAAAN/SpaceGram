@@ -45,8 +45,8 @@ import AuthConfirmationScreen
 import OpenInExternalAppUI
 import CreateBotScreen
 import NagramSettingsUI // MARK: NAGRAM — open Nagram settings from nasettings deep links
-// MARK: NAGRAM - shared Qwengram localization.
-import QwengramStrings // MARK: NAGRAM — localize Nagram deep-link errors
+// MARK: NAGRAM - shared SpaceGram localization.
+import SpaceGramStrings // MARK: NAGRAM — localize Nagram deep-link errors
 
 private func defaultNavigationForPeerId(_ peerId: PeerId?, navigation: ChatControllerInteractionNavigateToPeer) -> ChatControllerInteractionNavigateToPeer {
     if case .default = navigation {

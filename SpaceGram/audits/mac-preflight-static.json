@@ -1,0 +1,86 @@
+{
+  "case_collisions": [],
+  "literal_local_dependency_labels": 31,
+  "labels_requiring_bazel_expansion": [],
+  "extensions": {
+    "ShareExtensionLib": {
+      "direct_glob_files": 1,
+      "build": "Telegram/BUILD"
+    },
+    "NotificationContentExtensionLib": {
+      "direct_glob_files": 1,
+      "build": "Telegram/BUILD"
+    },
+    "WidgetExtensionLib": {
+      "direct_glob_files": 2,
+      "build": "Telegram/BUILD"
+    },
+    "IntentsExtensionLib": {
+      "direct_glob_files": 3,
+      "build": "Telegram/BUILD"
+    },
+    "BroadcastUploadExtensionLib": {
+      "direct_glob_files": 1,
+      "build": "Telegram/BUILD"
+    },
+    "NotificationServiceExtensionLib": {
+      "direct_glob_files": 1,
+      "build": "Telegram/NotificationService/BUILD"
+    }
+  },
+  "plist_template_syntax_only": [
+    "BuildNumberInfoPlist",
+    "UrlTypesInfoPlist",
+    "RequiredDeviceCapabilitiesPlist",
+    "AppNameInfoPlist",
+    "MtProtoKitInfoPlist",
+    "SwiftSignalKitInfoPlist",
+    "PostboxInfoPlist",
+    "TelegramApiInfoPlist",
+    "TelegramCoreInfoPlist",
+    "AsyncDisplayKitInfoPlist",
+    "DisplayInfoPlist",
+    "TelegramUIInfoPlist",
+    "ShareInfoPlist",
+    "NotificationContentInfoPlist",
+    "WidgetInfoPlist",
+    "IntentsInfoPlist",
+    "BroadcastUploadInfoPlist",
+    "NotificationServiceInfoPlist",
+    "TelegramInfoPlist"
+  ],
+  "dynamic_plist_templates_not_evaluated": [
+    "TelegramEntitlements",
+    "NotificationFilteringInfoPlist",
+    "NotificationServiceEntitlements"
+  ],
+  "png_decode": "UNAVAILABLE: Pillow",
+  "tests": {
+    "SpaceGramConversationStoreTests.swift": 10,
+    "SpaceGramHistoryQueryTests.swift": 4,
+    "SpaceGramMediaArchiveTests.swift": 14,
+    "SpaceGramMigrationTests.swift": 15,
+    "SpaceGramPrivacyTests.swift": 4
+  },
+  "dependency_directories": {
+    "submodules/rlottie/rlottie": 21,
+    "build-system/bazel-rules/rules_apple": 23,
+    "build-system/bazel-rules/rules_swift": 25,
+    "build-system/bazel-rules/apple_support": 26,
+    "submodules/TgVoipWebrtc/tgcalls": 12,
+    "third-party/libvpx/libvpx": 70,
+    "third-party/webrtc/webrtc": 59,
+    "build-system/bazel-rules/rules_xcodeproj": 35,
+    "submodules/LottieCpp/lottiecpp": 5,
+    "third-party/dav1d/dav1d": 18,
+    "third-party/td/td": 32,
+    "third-party/XcodeGen": 21,
+    "build-system/bazel-rules/sourcekit-bazel-bsp": 32
+  },
+  "patch_sha256": "1a375a8973c3f8c9cdb6c15ad12b52d0d78681def9978f80c57232a6094af0e0",
+  "errors": [],
+  "png_stream_integrity": {
+    "images": 36,
+    "checks": "PNG chunk CRCs, IEND, zlib stream, RGB scanline lengths and filter bytes; not actool or visual QA"
+  }
+}

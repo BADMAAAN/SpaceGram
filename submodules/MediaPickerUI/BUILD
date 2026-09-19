@@ -61,7 +61,7 @@ swift_library(
         "//submodules/TelegramUI/Components/AlertComponent",
         "//submodules/Components/BundleIconComponent",
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

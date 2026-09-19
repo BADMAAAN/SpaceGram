@@ -38,7 +38,7 @@ swift_library(
         "//submodules/ComponentFlow",
         "//submodules/TelegramUI/Components/EmojiStatusComponent",
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

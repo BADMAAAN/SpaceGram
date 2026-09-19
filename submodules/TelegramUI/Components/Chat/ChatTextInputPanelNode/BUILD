@@ -68,7 +68,7 @@ swift_library(
         "//submodules/TelegramUI/Components/StarsParticleEffect",
         "//submodules/TelegramUI/Components/Calls/VideoChatMicButtonComponent",
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
         "//submodules/TelegramUI/Components/RichTextEditor:RichTextEditorUIKit",
     ],
     visibility = [

@@ -190,9 +190,9 @@ private struct PasscodeOptionsData: Equatable {
 
 private func autolockStringForTimeout(strings: PresentationStrings, timeout: Int32?) -> String {
     if let timeout = timeout {
-        // MARK: NAGRAM — Qwengram exposes an immediate background lock.
+        // MARK: NAGRAM — SpaceGram exposes an immediate background lock.
         if timeout == -1 {
-            return Bundle.main.localizedString(forKey: "Qwengram.Privacy.Immediately", value: "Immediately", table: "QwengramLocalizable")
+            return Bundle.main.localizedString(forKey: "SpaceGram.Privacy.Immediately", value: "Immediately", table: "SpaceGramLocalizable")
         } else if timeout == 10 {
             return "If away for 10 seconds"
         } else if timeout == 1 * 60 {
@@ -236,7 +236,7 @@ private func passcodeOptionsControllerEntries(presentationData: PresentationData
     return entries
 }
 
-// MARK: NAGRAM — Qwengram Privacy & Security reuses Telegram's single App Lock.
+// MARK: NAGRAM — SpaceGram Privacy & Security reuses Telegram's single App Lock.
 public func passcodeOptionsController(context: AccountContext, focusOnItemTag: PasscodeOptionsEntryTag? = nil) -> ViewController {
     let initialState = PasscodeOptionsControllerState()
     

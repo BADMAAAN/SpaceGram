@@ -22,8 +22,9 @@ enum SettingsSection: Int, CaseIterable {
     case accounts
     case myProfile
     case nagram
-    // MARK: QWENGRAM — product settings alongside inherited Telegram enhancements.
-    case qwengram
+    // MARK: NAGRAM / SpaceGram — product settings alongside inherited Telegram enhancements.
+    // MARK: NAGRAM
+    case spaceGram
     case proxy
     case apps
     case shortcuts
@@ -230,15 +231,15 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     }))
 
     // MARK: NAGRAM — 增强设置入口；长按可在隐藏底栏时进入 Debug Settings。
-    items[.nagram]!.append(PeerInfoScreenDisclosureItem(id: 50, text: "Qwengram · Telegram", icon: PresentationResourcesSettings.settings, longPressAction: {
+    items[.nagram]!.append(PeerInfoScreenDisclosureItem(id: 50, text: "SpaceGram · Telegram", icon: PresentationResourcesSettings.settings, longPressAction: {
         interaction.openSettings(.nagramDebug)
     }, action: {
         interaction.openSettings(.nagram)
     }))
 
-    // MARK: QWENGRAM — minimal Qwengram settings entry.
-    items[.qwengram]!.append(PeerInfoScreenDisclosureItem(id: 51, text: "Qwengram", icon: PresentationResourcesSettings.settings, action: {
-        interaction.openSettings(.qwengram)
+    // MARK: NAGRAM / SpaceGram — minimal SpaceGram settings entry.
+    items[.spaceGram]!.append(PeerInfoScreenDisclosureItem(id: 51, text: "SpaceGram", icon: PresentationResourcesSettings.settings, action: {
+        interaction.openSettings(.spaceGram)
     }))
 
     let notificationsWarning: Bool

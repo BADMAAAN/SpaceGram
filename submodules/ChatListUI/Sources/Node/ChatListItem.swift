@@ -29,8 +29,8 @@ import MultilineTextComponent
 import MultilineTextWithEntitiesComponent
 import ShimmerEffect
 import NagramSettings
-// MARK: NAGRAM - shared Qwengram localization.
-import QwengramStrings // MARK: NAGRAM
+// MARK: NAGRAM - shared SpaceGram localization.
+import SpaceGramStrings // MARK: NAGRAM
 import GlassBackgroundComponent
 
 public enum ChatListItemContent {

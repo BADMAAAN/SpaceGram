@@ -1,7 +1,7 @@
 import Foundation
-// MARK: NAGRAM — Qwengram automatic read policy.
-import QwengramSettings
-import QwengramSettingsSignal
+// MARK: NAGRAM — SpaceGram automatic read policy.
+import SpaceGramSettings
+import SpaceGramSettingsSignal
 import UIKit
 import SwiftSignalKit
 import Display
@@ -2548,7 +2548,7 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
         let previousMaxIncomingMessageIndexByNamespace = Atomic<[MessageId.Namespace: MessageIndex]>(value: [:])
         // MARK: NAGRAM — prevent read work from being queued, without marking local
         // state as synchronized. Explicit mark-as-read actions keep their native path.
-        let effectiveCanReadHistory = combineLatest(self.canReadHistory.get(), qwengramSuppressAutomaticReadsSignal())
+        let effectiveCanReadHistory = combineLatest(self.canReadHistory.get(), spaceGramSuppressAutomaticReadsSignal())
         |> map { canRead, suppressed in canRead && !suppressed }
         |> distinctUntilChanged
         let readHistory = combineLatest(self.maxVisibleIncomingMessageIndex.get(), effectiveCanReadHistory)
@@ -2561,7 +2561,7 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
                 return
             }
             // MARK: NAGRAM — recheck if a policy notification is still queued.
-            guard !QwengramGhostPolicy.suppressAutomaticReads else {
+            guard !SpaceGramGhostPolicy.suppressAutomaticReads else {
                 return
             }
             

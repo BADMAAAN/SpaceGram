@@ -969,8 +969,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             self.window?.rootViewController?.dismiss(animated: true, completion: nil)
         }, getAvailableAlternateIcons: {
             if #available(iOS 10.3, *) {
-                // MARK: NAGRAM — Qwengram no longer bundles inherited brand icons.
-                return [PresentationAppIcon(name: "BlueIcon", imageName: "BlueIcon", isDefault: true)]
+                // MARK: NAGRAM — SpaceGram product icons use the native iOS alternate-icon API.
+                return [
+                    PresentationAppIcon(name: "Default", imageName: "SpaceGramAppIcon", isDefault: true),
+                    PresentationAppIcon(name: "Alternate", imageName: "Alternate"),
+                ]
             } else {
                 return []
             }
@@ -2025,7 +2028,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // MARK: NAGRAM — reset a removed alternate icon after upgrading to Qwengram.
+        // MARK: NAGRAM — reset a removed alternate icon after upgrading to SpaceGram.
         // UIKit owns the selection; nil restores the primary asset-catalog icon.
         if let iconName = application.alternateIconName {
             application.setAlternateIconName(nil, completionHandler: { error in

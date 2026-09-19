@@ -1,6 +1,6 @@
 import Foundation
-// MARK: NAGRAM — Qwengram presence policy.
-import QwengramSettingsSignal
+// MARK: NAGRAM — SpaceGram presence policy.
+import SpaceGramSettingsSignal
 import TelegramApi
 import Postbox
 import SwiftSignalKit
@@ -25,7 +25,7 @@ private final class AccountPresenceManagerImpl {
         self.network = network
         
         // MARK: NAGRAM — preserve the connection; only change explicit presence.
-        self.shouldKeepOnlinePresenceDisposable = (combineLatest(shouldKeepOnlinePresence, qwengramSuppressOnlinePresenceSignal())
+        self.shouldKeepOnlinePresenceDisposable = (combineLatest(shouldKeepOnlinePresence, spaceGramSuppressOnlinePresenceSignal())
         |> map { online, suppressed in online && !suppressed }
         |> distinctUntilChanged
         |> deliverOn(self.queue)).start(next: { [weak self] value in

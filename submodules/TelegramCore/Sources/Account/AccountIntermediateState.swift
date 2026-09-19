@@ -80,7 +80,7 @@ enum AccountStateMutationOperation {
     case AddQuickReplyMessages([StoreMessage])
     case DeleteMessagesWithGlobalIds([Int32])
     // MARK: NAGRAM
-    case DeleteMessages([MessageId], QwengramHistoryServerDeleteSource?)
+    case DeleteMessages([MessageId], SpaceGramHistoryServerDeleteSource?)
     case EditMessage(MessageId, StoreMessage)
     case UpdateMessagePoll(MediaId, Api.Poll?, Api.PollResults)
     case UpdateMessageReactions(MessageId, Int64?, Api.MessageReactions, Int32?)
@@ -392,7 +392,7 @@ struct AccountMutableState {
     }
     
     // MARK: NAGRAM
-    mutating func deleteMessages(_ messageIds: [MessageId], serverDeleteSource: QwengramHistoryServerDeleteSource? = nil) {
+    mutating func deleteMessages(_ messageIds: [MessageId], serverDeleteSource: SpaceGramHistoryServerDeleteSource? = nil) {
         self.addOperation(.DeleteMessages(messageIds, serverDeleteSource))
     }
     

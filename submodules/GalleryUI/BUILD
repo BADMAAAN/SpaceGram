@@ -11,7 +11,7 @@ swift_library(
     ],
     deps = [
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/MediaMetadata:NagramMediaMetadata",
+        "//SpaceGram/Enhancements/MediaMetadata:NagramMediaMetadata",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Display:Display",
@@ -79,7 +79,7 @@ swift_library(
         "//submodules/TelegramUI/Components/VideoPlaybackControlsComponent",
         "//submodules/UIKitRuntimeUtils",
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [
         "//visibility:public",

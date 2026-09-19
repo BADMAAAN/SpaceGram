@@ -18,8 +18,8 @@ import PresentationDataUtils
 import UndoUI
 // MARK: NAGRAM
 import NagramSettings
-// MARK: NAGRAM - shared Qwengram localization.
-import QwengramStrings
+// MARK: NAGRAM - shared SpaceGram localization.
+import SpaceGramStrings
 import NagramTranslate
 
 extension ChatSendMessageEffect {

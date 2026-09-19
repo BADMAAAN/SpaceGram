@@ -18,8 +18,8 @@ import PeerNameColorItem
 import BoostLevelIconComponent
 import TranslateUI
 import NagramSettings
-// MARK: NAGRAM - shared Qwengram localization.
-import QwengramStrings
+// MARK: NAGRAM - shared SpaceGram localization.
+import SpaceGramStrings
 
 private let enabledPublicBioEntities: EnabledEntityTypes = [.allUrl, .mention, .hashtag]
 private let enabledPrivateBioEntities: EnabledEntityTypes = [.internalUrl, .mention, .hashtag]
@@ -37,11 +37,11 @@ private func nagramFormattedRegistrationDate(_ result: NagramRegistrationDateRes
     case .exact:
         return result.date
     case .approximately:
-        return QwengramLocalization.shared.localizedString("Nagram.RegDate.Approximately", languageCode, args: result.date)
+        return SpaceGramLocalization.shared.localizedString("Nagram.RegDate.Approximately", languageCode, args: result.date)
     case .newerThan:
-        return QwengramLocalization.shared.localizedString("Nagram.RegDate.Newer", languageCode, args: result.date)
+        return SpaceGramLocalization.shared.localizedString("Nagram.RegDate.Newer", languageCode, args: result.date)
     case .olderThan:
-        return QwengramLocalization.shared.localizedString("Nagram.RegDate.Older", languageCode, args: result.date)
+        return SpaceGramLocalization.shared.localizedString("Nagram.RegDate.Older", languageCode, args: result.date)
     }
 }
 
@@ -67,7 +67,7 @@ private func nagramRegistrationDateDisplayText(userId: Int64, fallbackRegistrati
         })
         if let fallbackText {
             return NagramRegistrationDateDisplayText(
-                displayText: QwengramLocalization.shared.localizedString("Nagram.RegDate.LoadFailedWithFallback", languageCode, args: fallbackText),
+                displayText: SpaceGramLocalization.shared.localizedString("Nagram.RegDate.LoadFailedWithFallback", languageCode, args: fallbackText),
                 copyText: fallbackText
             )
         } else {

@@ -1,10 +1,10 @@
-name: TestFlight (Qwengram)
+name: TestFlight (SpaceGram)
 
 # Signed release_arm64 build -> upload to TestFlight via altool.
 # Runs on GitHub-hosted macos-26 (Apple Silicon, Xcode 26.x, iOS 26 SDK).
 #
 # Required repository secrets:
-#   TELEGRAM_API_ID, TELEGRAM_API_HASH  - Telegram API credentials (my.telegram.org)
+#   SPACEGRAM_TELEGRAM_API_ID, SPACEGRAM_TELEGRAM_API_HASH - Telegram API credentials (my.telegram.org)
 #   APPLE_TEAM_ID                       - signing team (Kitta Ltd = 7P8CLHDH5G)
 #   ASC_KEY_ID, ASC_ISSUER_ID           - App Store Connect API key id + issuer
 #   ASC_KEY_P8_BASE64                   - base64 of AuthKey_<ASC_KEY_ID>.p8
@@ -31,8 +31,8 @@ jobs:
       LANG: en_US.UTF-8
       LC_ALL: en_US.UTF-8
       # --- from envvars (repository secrets) ---
-      TELEGRAM_API_ID:   ${{ secrets.TELEGRAM_API_ID }}
-      TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+      SPACEGRAM_TELEGRAM_API_ID:   ${{ secrets.SPACEGRAM_TELEGRAM_API_ID }}
+      SPACEGRAM_TELEGRAM_API_HASH: ${{ secrets.SPACEGRAM_TELEGRAM_API_HASH }}
       APPLE_TEAM_ID:     ${{ secrets.APPLE_TEAM_ID }}
       ASC_KEY_ID:        ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID:     ${{ secrets.ASC_ISSUER_ID }}
@@ -195,13 +195,13 @@ jobs:
       - name: Write build configuration
         run: |
           set -euo pipefail
-          : "${TELEGRAM_API_ID:?missing}" "${TELEGRAM_API_HASH:?missing}" "${APPLE_TEAM_ID:?missing}"
+          : "${SPACEGRAM_TELEGRAM_API_ID:?missing}" "${SPACEGRAM_TELEGRAM_API_HASH:?missing}" "${APPLE_TEAM_ID:?missing}"
           mkdir -p build-input
           cat > build-input/local-configuration.json <<JSON
           {
               "bundle_id": "${BUNDLE_ID}",
-              "api_id": "${TELEGRAM_API_ID}",
-              "api_hash": "${TELEGRAM_API_HASH}",
+              "api_id": "${SPACEGRAM_TELEGRAM_API_ID}",
+              "api_hash": "${SPACEGRAM_TELEGRAM_API_HASH}",
               "team_id": "${APPLE_TEAM_ID}",
               "app_center_id": "0",
               "is_internal_build": "false",

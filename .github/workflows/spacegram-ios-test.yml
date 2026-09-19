@@ -1,0 +1,134 @@
+name: SpaceGram iPhone Test Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build unsigned debug ARM64 IPA
+    runs-on: macos-26
+    timeout-minutes: 180
+    env:
+      BUNDLE_ID: com.badmaaan.qwengram
+      BUILD_NUMBER: "1"
+
+    steps:
+      - name: Check out SpaceGram sources and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Set temporary build paths
+        shell: bash
+        run: |
+          echo "BAZEL_CACHE=$RUNNER_TEMP/spacegram-bazel-cache" >> "$GITHUB_ENV"
+          echo "ARTIFACTS_DIR=$RUNNER_TEMP/spacegram-ios-artifacts" >> "$GITHUB_ENV"
+
+      - name: Select and verify the repository-pinned Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          REQUIRED_XCODE="$(python3 -c 'import json; print(json.load(open("versions.json"))["xcode"])')"
+          XCODE_PATH="/Applications/Xcode_${REQUIRED_XCODE}.app"
+          test -d "$XCODE_PATH"
+          sudo xcode-select --switch "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+          ACTUAL_XCODE="$(xcodebuild -version | awk '/Xcode/ { print $2; exit }')"
+          test "$ACTUAL_XCODE" = "$REQUIRED_XCODE"
+
+      - name: Write ephemeral test build configuration
+        shell: bash
+        env:
+          SPACEGRAM_TELEGRAM_API_ID: ${{ secrets.SPACEGRAM_TELEGRAM_API_ID }}
+          SPACEGRAM_TELEGRAM_API_HASH: ${{ secrets.SPACEGRAM_TELEGRAM_API_HASH }}
+        run: |
+          set -euo pipefail
+          : "${SPACEGRAM_TELEGRAM_API_ID:?SPACEGRAM_TELEGRAM_API_ID is required}"
+          : "${SPACEGRAM_TELEGRAM_API_HASH:?SPACEGRAM_TELEGRAM_API_HASH is required}"
+          mkdir -p build-input
+          python3 - <<'PY'
+          import json
+          import os
+
+          configuration = {
+              "bundle_id": "ph.telegra.Telegraph",
+              "api_id": os.environ["SPACEGRAM_TELEGRAM_API_ID"],
+              "api_hash": os.environ["SPACEGRAM_TELEGRAM_API_HASH"],
+              # Temporary identity matching the repository fake-signing profile.
+              # The resulting IPA is only an intermediate artifact for later re-signing.
+              "team_id": "C67CF9S4VU",
+              "app_center_id": "0",
+              "is_internal_build": "true",
+              "is_appstore_build": "false",
+              "appstore_id": "0",
+              "app_specific_url_scheme": "tg",
+              "premium_iap_product_id": "",
+              "enable_siri": False,
+              "enable_icloud": False,
+          }
+          with open("build-input/spacegram-test-configuration.json", "w") as output:
+              json.dump(configuration, output)
+          PY
+
+      - name: Prepare fake codesigning for resignable device build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > local.bazelrc <<'RC'
+          build --//Telegram:disableExtensions
+          RC
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+
+      - name: Build device debug ARM64 IPA
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACTS_DIR"
+          set +e
+          python3 -u build-system/Make/Make.py \
+            --cacheDir "$BAZEL_CACHE" \
+            build \
+            --configurationPath build-input/spacegram-test-configuration.json \
+            --codesigningInformationPath=build-system/fake-codesigning \
+            --buildNumber "$BUILD_NUMBER" \
+            --configuration=debug_arm64 \
+            --outputBuildArtifactsPath "$ARTIFACTS_DIR" \
+            2>&1 | tee "$ARTIFACTS_DIR/build.log"
+          build_status="${PIPESTATUS[0]}"
+          set -e
+          if [ "$build_status" -ne 0 ]; then
+            {
+              printf 'Target: Telegram/Telegram\nConfiguration: debug_arm64\n\n'
+              printf '%s\n' 'First matching actionable error:'
+              grep -m1 -E '(^ERROR:|^error:|^fatal error:|:[0-9]+:[0-9]+: (error|fatal error):)' "$ARTIFACTS_DIR/build.log" || true
+              printf '\nLast 200 build-log lines:\n'
+              tail -n 200 "$ARTIFACTS_DIR/build.log"
+            } > "$ARTIFACTS_DIR/build-failure-summary.txt"
+            exit "$build_status"
+          fi
+          test -f "$ARTIFACTS_DIR/Telegram.ipa"
+
+      - name: Upload iPhone test IPA
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpaceGram-iPhone-test
+          path: ${{ runner.temp }}/spacegram-ios-artifacts/Telegram.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build failure log
+        if: failure() && steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpaceGram-iPhone-test-build-failure-log
+          path: |
+            ${{ runner.temp }}/spacegram-ios-artifacts/build.log
+            ${{ runner.temp }}/spacegram-ios-artifacts/build-failure-summary.txt
+          if-no-files-found: warn
+          retention-days: 14

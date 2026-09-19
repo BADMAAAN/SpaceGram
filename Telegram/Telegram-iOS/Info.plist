@@ -18,70 +18,10 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>Black</key>
+			<key>Alternate</key>
 			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackIcon</string>
-					<string>BlackNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackClassicIcon</string>
-					<string>BlackClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackFilledIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>Blue</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueIcon</string>
-					<string>BlueNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueClassicIcon</string>
-					<string>BlueClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueFilledIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>WhiteFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>WhiteFilledIcon</string>
-				</array>
+				<key>CFBundleIconName</key>
+				<string>Alternate</string>
 				<key>UIPrerenderedIcon</key>
 				<true/>
 			</dict>
@@ -89,7 +29,7 @@
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
 			<key>CFBundleIconName</key>
-			<string>AppIconLLC</string>
+			<string>SpaceGramAppIcon</string>
 			<key>UIPrerenderedIcon</key>
 			<true/>
 		</dict>
@@ -98,76 +38,10 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>Black</key>
+			<key>Alternate</key>
 			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackIconIpad</string>
-					<string>BlackIconLargeIpad</string>
-					<string>BlackNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackClassicIconIpad</string>
-					<string>BlackClassicIconLargeIpad</string>
-					<string>BlackClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlackFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlackFilledIconIpad</string>
-					<string>BlackFilledIconLargeIpad</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>Blue</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueIconIpad</string>
-					<string>BlueIconLargeIpad</string>
-					<string>BlueNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueClassic</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueClassicIconIpad</string>
-					<string>BlueClassicIconLargeIpad</string>
-					<string>BlueClassicNotificationIcon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>BlueFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>BlueFilledIconIpad</string>
-					<string>BlueFilledIconLargeIpad</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<true/>
-			</dict>
-			<key>WhiteFilled</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>WhiteFilledIcon</string>
-				</array>
+				<key>CFBundleIconName</key>
+				<string>Alternate</string>
 				<key>UIPrerenderedIcon</key>
 				<true/>
 			</dict>
@@ -175,7 +49,7 @@
 		<key>CFBundlePrimaryIcon</key>
 		<dict>
 			<key>CFBundleIconName</key>
-			<string>AppIconLLC</string>
+			<string>SpaceGramAppIcon</string>
 			<key>UIPrerenderedIcon</key>
 			<true/>
 		</dict>
@@ -277,19 +151,19 @@
 	<string>We need this so that you can take and share photos and videos.</string>
 	<!-- MARK: NAGRAM -->
 	<key>NSContactsUsageDescription</key>
-	<string>Qwengram can sync your contacts so you can find people you know across your devices.</string>
+	<string>SpaceGram can sync your contacts so you can find people you know across your devices.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>You can use Face ID to unlock the app.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>When you choose to share your live location, Qwengram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
+	<string>When you choose to share your live location, SpaceGram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>When you choose to share your live location, Qwengram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
+	<string>When you choose to share your live location, SpaceGram needs background location access to keep it updated. Apple Watch location sharing also requires this access.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>When you choose to send your location, Qwengram needs access to show and share it on a map.</string>
+	<string>When you choose to send your location, SpaceGram needs access to show and share it on a map.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need this so that you can record and share voice messages and videos with sound.</string>
 	<key>NSMotionUsageDescription</key>
-	<string>Qwengram uses motion access only when needed to improve location sharing.</string>
+	<string>SpaceGram uses motion access only when needed to improve location sharing.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>We need this so that you can share photos and videos from your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

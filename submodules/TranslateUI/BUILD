@@ -11,8 +11,8 @@ swift_library(
     ],
     deps = [
         # MARK: NAGRAM — route Telegram translation through Nagram provider facade.
-        "//Qwengram/Enhancements/Translate:NagramTranslate",
-        "//Qwengram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//SpaceGram/Enhancements/Translate:NagramTranslate",
+        "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/AsyncDisplayKit:AsyncDisplayKit",
         "//submodules/Display:Display",

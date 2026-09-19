@@ -4443,7 +4443,7 @@ func replayFinalState(
                 }
             case let .DeleteMessagesWithGlobalIds(ids):
                 // MARK: NAGRAM
-                qwengramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: transaction.messageIdsForGlobalIds(ids), source: .updateDeleteMessages)
+                spaceGramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: transaction.messageIdsForGlobalIds(ids), source: .updateDeleteMessages)
                 var resourceIds: [MediaResourceId] = []
                 transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
                     addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
@@ -4455,7 +4455,7 @@ func replayFinalState(
             // MARK: NAGRAM
             case let .DeleteMessages(ids, serverDeleteSource):
                 if let serverDeleteSource = serverDeleteSource {
-                    qwengramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: ids, source: serverDeleteSource)
+                    spaceGramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: ids, source: serverDeleteSource)
                 }
                 _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: ids, manualAddMessageThreadStatsDifference: { id, add, remove in
                     addMessageThreadStatsDifference(threadKey: id, remove: remove, addedMessagePeer: nil, addedMessageId: nil, isOutgoing: false)

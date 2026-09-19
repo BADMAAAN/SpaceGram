@@ -1,6 +1,6 @@
 import Foundation
-// MARK: NAGRAM — Qwengram read metrics policy.
-import QwengramSettings
+// MARK: NAGRAM — SpaceGram read metrics policy.
+import SpaceGramSettings
 import SwiftSignalKit
 import Postbox
 import TelegramApi
@@ -1821,7 +1821,7 @@ public extension TelegramEngine {
                     return .complete()
                 }
                 // MARK: NAGRAM — block metrics at the request boundary as well as UI.
-                guard !QwengramGhostPolicy.suppressAutomaticReads else { return .complete() }
+                guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return .complete() }
                 return self.account.network.request(Api.functions.messages.reportReadMetrics(
                     peer: inputPeer,
                     metrics: metrics.map { metric in

@@ -58,7 +58,7 @@ swift_library(
         "//submodules/TelegramUI/Components/LiquidLens",
         "//submodules/TelegramUI/Components/TabSelectionRecognizer",
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
     ],
     visibility = [
         "//visibility:public",

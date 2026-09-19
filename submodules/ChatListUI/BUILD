@@ -133,9 +133,9 @@ swift_library(
         "//submodules/TelegramUI/Components/PeerManagement/OwnershipTransferController",
         "//submodules/TelegramUI/Components/GlassControls",
         # MARK: NAGRAM
-        "//Qwengram/Enhancements/SettingsSignal:NagramSettingsSignal",
-        "//Qwengram/Enhancements/Settings:NagramSettings",
-        "//Qwengram/Strings:QwengramStrings",
+        "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Strings:SpaceGramStrings",
     ],
     visibility = [
         "//visibility:public",

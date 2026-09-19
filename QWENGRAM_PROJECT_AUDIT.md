@@ -1,5 +1,10 @@
 # Qwengram — аудит рабочей директории
 
+> Исторический аудит первого этапа. Текущая архитектура **Telegram-iOS + SpaceGram**,
+> зависимости, очистка после ребрендинга и проверки описаны в
+> [SPACEGRAM_ARCHITECTURE_AUDIT.md](Qwengram/SPACEGRAM_ARCHITECTURE_AUDIT.md).
+> Прежние сведения об иконке, remotes и submodules ниже сохранены как история.
+
 Дата: 19 сентября 2026. Источник истины: `C:\Project\Qwengram`.
 Проверены фактическое дерево, Git-метаданные, BUILD-файлы, ссылки в исходниках,
 ресурсы и реализации ключевых функций. Это статический аудит на Windows,
@@ -147,7 +152,7 @@ Postbox→TelegramEngine migration и rich-text composer уже затрагив
 `ManagedSynchronizeViewStoriesOperations.swift` для privacy policies.
 TelegramEngine hooks находятся в `Messages/{InstallInteractiveReadMessagesAction,
 MarkMessageContentAsConsumedInteractively,Stories,TelegramEngineMessages}.swift`.
-Подробности сохранены в `Qwengram/QWENGRAM_HOOKS.md`.
+Подробности сохранены в `SpaceGram/SPACEGRAM_HOOKS.md`.
 
 ## 6. Implemented features
 
@@ -308,3 +313,9 @@ consistency обходит файловую систему напрямую.
 7. После build gate продолжить roadmap: archive UX/cleanup, AI persistent history,
    regression coverage privacy/TTL paths; не выдавать экспериментальные hooks за
    подтверждённую протокольную защиту.
+# Product naming note
+
+Qwengram is now branded as **SpaceGram**. This audit keeps historical source,
+module, and compatibility names intact; see
+[`Qwengram/SPACEGRAM_BRANDING_AUDIT.md`](Qwengram/SPACEGRAM_BRANDING_AUDIT.md)
+for the visible-brand migration.

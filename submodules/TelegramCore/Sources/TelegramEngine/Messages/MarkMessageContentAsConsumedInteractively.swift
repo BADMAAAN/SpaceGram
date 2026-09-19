@@ -1,6 +1,6 @@
 import Foundation
-// MARK: NAGRAM — Qwengram receipt policy and archive hooks.
-import QwengramSettings
+// MARK: NAGRAM — SpaceGram receipt policy and archive hooks.
+import SpaceGramSettings
 import Postbox
 import TelegramApi
 import SwiftSignalKit
@@ -11,8 +11,8 @@ func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messa
             // MARK: NAGRAM — preserve TTL/secret-chat lifecycle acknowledgements.
             let timed = message.attributes.contains { $0 is AutoremoveTimeoutMessageAttribute || $0 is AutoclearTimeoutMessageAttribute }
             if timed {
-                qwengramBeforeMediaExpiration(postbox: postbox, transaction: transaction, message: message, source: "timedMediaConsumption")
-            } else if QwengramGhostPolicy.suppressAutomaticReads {
+                spaceGramBeforeMediaExpiration(postbox: postbox, transaction: transaction, message: message, source: "timedMediaConsumption")
+            } else if SpaceGramGhostPolicy.suppressAutomaticReads {
                 return
             }
 
@@ -140,7 +140,7 @@ func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messa
 func _internal_markReactionsOrPollVotesAsSeenInteractively(postbox: Postbox, messageId: MessageId) -> Signal<Void, NoError> {
     return postbox.transaction { transaction -> Void in
         // MARK: NAGRAM — preserve unseen state rather than enqueue a suppressed receipt.
-        guard !QwengramGhostPolicy.suppressAutomaticReads else { return }
+        guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return }
         if let message = transaction.getMessage(messageId), (message.tags.contains(.unseenReaction) || message.tags.contains(.unseenPollVote)) {
             var updateMessage = false
             var updatedAttributes = message.attributes
@@ -266,7 +266,7 @@ func markMessageContentAsConsumedRemotely(postbox: Postbox? = nil, transaction: 
         
         // MARK: NAGRAM — pin completed media before replacing it with a tombstone.
         if let postbox = postbox, updatedMedia.contains(where: { $0 is TelegramMediaExpiredContent }), !message.media.contains(where: { $0 is TelegramMediaExpiredContent }) {
-            qwengramBeforeMediaExpiration(postbox: postbox, transaction: transaction, message: message, source: "remoteMediaExpiration")
+            spaceGramBeforeMediaExpiration(postbox: postbox, transaction: transaction, message: message, source: "remoteMediaExpiration")
         }
         if updateMessage {
             transaction.updateMessage(message.id, update: { currentMessage in

@@ -30,7 +30,7 @@ swift_library(
         "//submodules/StickerResources:StickerResources",
         "//submodules/TextFormat:TextFormat",
         # MARK: NAGRAM — caption 发送时盘古之白
-        "//Qwengram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
         "//submodules/DrawingUI:DrawingUI",
         "//submodules/SolidRoundedButtonNode:SolidRoundedButtonNode",
         "//submodules/TelegramUI/Components/MediaEditor",
