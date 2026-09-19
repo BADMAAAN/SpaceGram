@@ -39,8 +39,11 @@ This section supersedes the historical two-icon notes below.
   color mode/profile/metadata, suspiciously uniform outer edge fields,
   catalog manifests, 119 rendition files, plist keys, BUILD wiring, picker
   entries, dangling legacy catalog references, and the removed-primary guard.
-- Feature commit: `PENDING`.
-- GitHub Actions `SpaceGram iPhone Test Build`: `PENDING`.
+- Feature commit: `79c31826defd8bf9c18c481c0cffac1f4bf3d00e`.
+- GitHub Actions `SpaceGram iPhone Test Build`: run
+  [#9](https://github.com/BADMAAAN/SpaceGram/actions/runs/35474226545), queued
+  at 2026-09-20 01:45 GMT+3 for the feature commit. The already-running #8
+  was left untouched.
 
 > Historical pre-migration snapshot. The source namespace has since moved to
 > `SpaceGram/`; see [the overnight audit](../SPACEGRAM_OVERNIGHT_AUDIT.md) and
