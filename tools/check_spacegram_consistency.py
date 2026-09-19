@@ -117,9 +117,9 @@ check(not any(name in info_plist for name in ("BlackIcon", "BlackClassic", "Blac
       "Retired inherited alternate icon remains in Info.plist")
 plistlib.loads(info_plist.encode("utf-8"))
 app_delegate = (ROOT / "submodules/TelegramUI/Sources/AppDelegate.swift").read_text(encoding="utf-8")
-check('PresentationAppIcon(name: "Default", imageName: "SpaceGramAppIcon", isDefault: true)' in app_delegate,
+check('PresentationAppIcon(name: "Default", imageName: "SpaceGramIconPrimaryPreview", isDefault: true)' in app_delegate,
       "Default SpaceGram icon is not exposed to Appearance")
-check('PresentationAppIcon(name: "Alternate", imageName: "Alternate")' in app_delegate,
+check('PresentationAppIcon(name: "Alternate", imageName: "SpaceGramIconAlternatePreview")' in app_delegate,
       "Alternate SpaceGram icon is not exposed to Appearance")
 badge_source = ROOT / "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/NagramProfileBadge.swift"
 check(not badge_source.exists(), "Retired project-role badge source remains")

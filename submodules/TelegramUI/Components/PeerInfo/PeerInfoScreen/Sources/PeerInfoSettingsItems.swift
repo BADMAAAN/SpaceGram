@@ -14,6 +14,8 @@ import TelegramStringFormatting
 import PeerNameColorItem
 // MARK: NAGRAM
 import NagramSettings
+// MARK: NAGRAM — shared SpaceGram settings artwork.
+import SpaceGramSettingsUI
 
 // MARK: NAGRAM — nagram 为独立设置分组，排在「我的资料」之后
 enum SettingsSection: Int, CaseIterable {
@@ -21,7 +23,6 @@ enum SettingsSection: Int, CaseIterable {
     case phone
     case accounts
     case myProfile
-    case nagram
     // MARK: NAGRAM / SpaceGram — product settings alongside inherited Telegram enhancements.
     // MARK: NAGRAM
     case spaceGram
@@ -230,15 +231,10 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         interaction.openSettings(.chatFolders)
     }))
 
-    // MARK: NAGRAM — 增强设置入口；长按可在隐藏底栏时进入 Debug Settings。
-    items[.nagram]!.append(PeerInfoScreenDisclosureItem(id: 50, text: "SpaceGram · Telegram", icon: PresentationResourcesSettings.settings, longPressAction: {
+    // MARK: NAGRAM — one product entry; retained enhancements live inside it.
+    items[.spaceGram]!.append(PeerInfoScreenDisclosureItem(id: 51, text: "SpaceGram", icon: spaceGramSettingsIcon(), longPressAction: {
         interaction.openSettings(.nagramDebug)
     }, action: {
-        interaction.openSettings(.nagram)
-    }))
-
-    // MARK: NAGRAM / SpaceGram — minimal SpaceGram settings entry.
-    items[.spaceGram]!.append(PeerInfoScreenDisclosureItem(id: 51, text: "SpaceGram", icon: PresentationResourcesSettings.settings, action: {
         interaction.openSettings(.spaceGram)
     }))
 

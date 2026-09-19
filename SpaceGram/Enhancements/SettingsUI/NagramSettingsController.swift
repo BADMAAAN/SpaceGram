@@ -648,7 +648,7 @@ private enum NagramSettingsEntry: ItemListNodeEntry {
     }
 }
 
-public func nagramSettingsController(context: AccountContext, deepLinkPath: String? = nil) -> ViewController {
+public func nagramSettingsController(context: AccountContext, deepLinkPath: String? = nil, unified: Bool = false) -> ViewController {
     var currentShowCallsTab = CallListSettings.defaultSettings.showTab
     var currentContentSettingsConfiguration: ContentSettingsConfiguration?
     let contentSettingsConfigurationPromise = Promise<ContentSettingsConfiguration?>()
@@ -865,7 +865,7 @@ public func nagramSettingsController(context: AccountContext, deepLinkPath: Stri
         var stableId: Int32 = 0
         var globalRowIndex = 0
         for (groupIndex, group) in groups.enumerated() {
-            let isCurrent = group.tab.rawValue == selectedTab
+            let isCurrent = unified || group.tab.rawValue == selectedTab
             let sectionId = Int32(groupIndex)
 
             let headerStableId = stableId
@@ -915,7 +915,7 @@ public func nagramSettingsController(context: AccountContext, deepLinkPath: Stri
         }
 
         let tabTitles = NagramTab.allCases.map { ngI18n($0.titleKey, lang) }
-        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .sectionControl(tabTitles, Int(selectedTab)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: unified ? .text(ngI18n("SpaceGram.Advanced", lang)) : .sectionControl(tabTitles, Int(selectedTab)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: entries, style: .blocks, ensureVisibleItemTag: deepLinkTarget.rowIndex.map { NagramSettingsRowTag(index: $0) }, initialScrollToItem: initialScrollToItem, animateChanges: false)
 
         return (controllerState, (listState, arguments))

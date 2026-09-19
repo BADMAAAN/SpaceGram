@@ -10,6 +10,8 @@ swift_library(
         "-warnings-as-errors",
     ],
     deps = [
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/SettingsUI:NagramSettingsUI",
         "//SpaceGram/Appearance:SpaceGramAppearance",
         "//SpaceGram/Strings:SpaceGramStrings",
         "//SpaceGram/AI:SpaceGramAI",

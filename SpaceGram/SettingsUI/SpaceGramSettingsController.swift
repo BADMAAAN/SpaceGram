@@ -2,152 +2,158 @@ import AccountContext
 import Display
 import Foundation
 import ItemListUI
-import PresentationDataUtils
+import NagramSettings
+import NagramSettingsUI
+import SettingsUI
 import SpaceGramAppearance
+import SpaceGramHistoryUI
 import SpaceGramSettings
 import SpaceGramSettingsSignal
 import SpaceGramStrings
-import SettingsUI
 import SwiftSignalKit
 import TelegramPresentationData
+import UIKit
 
-private enum SpaceGramSettingsEntry: ItemListNodeEntry {
-    case header(Int32, Int32, String)
-    case toggle(Int32, Int32, String, Bool, (Bool) -> Void)
-    case navigation(Int32, Int32, String, Bool, () -> Void)
-    case placeholder(Int32, Int32, String, String)
-    case about(Int32, Int32, String)
+public func spaceGramSettingsIcon() -> UIImage? {
+    guard let path = Bundle.main.path(forResource: "SpaceGramSettings", ofType: "png"), let image = UIImage(contentsOfFile: path) else { return nil }
+    return UIGraphicsImageRenderer(size: CGSize(width: 29, height: 29)).image { _ in
+        UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 29, height: 29), cornerRadius: 7).addClip()
+        image.draw(in: CGRect(x: 0, y: 0, width: 29, height: 29))
+    }
+}
 
-    var section: ItemListSectionId {
-        switch self {
-        case let .header(_, section, _), let .toggle(_, section, _, _, _), let .navigation(_, section, _, _, _), let .placeholder(_, section, _, _), let .about(_, section, _):
-            return section
+private func spaceGramTile(_ symbol: String, section: Int32) -> UIImage? {
+    let colors: [UIColor] = [.systemBlue, .systemIndigo, .systemGreen, .systemPurple, .systemOrange, .systemTeal, .systemPink]
+    return UIGraphicsImageRenderer(size: CGSize(width: 29, height: 29)).image { _ in
+        colors[Int(section) % colors.count].setFill()
+        UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 29, height: 29), cornerRadius: 7).fill()
+        let configuration = UIImage.SymbolConfiguration(pointSize: 17, weight: .medium)
+        if let image = UIImage(systemName: symbol, withConfiguration: configuration)?.withTintColor(.white, renderingMode: .alwaysOriginal) {
+            image.draw(in: CGRect(x: (29 - image.size.width) / 2, y: (29 - image.size.height) / 2, width: image.size.width, height: image.size.height))
         }
     }
+}
 
-    var stableId: Int32 {
-        switch self {
-        case let .header(id, _, _), let .toggle(id, _, _, _, _), let .navigation(id, _, _, _, _), let .placeholder(id, _, _, _), let .about(id, _, _):
-            return id
-        }
+private struct SpaceGramHubEntry: ItemListNodeEntry {
+    let stableId: Int32
+    let section: ItemListSectionId
+    let title: String
+    var symbol: String = ""
+    var value: Bool? = nil
+    var header: Bool = false
+    var footer: Bool = false
+    var action: (() -> Void)? = nil
+    var updated: ((Bool) -> Void)? = nil
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.stableId == rhs.stableId && lhs.section == rhs.section && lhs.title == rhs.title && lhs.symbol == rhs.symbol && lhs.value == rhs.value && lhs.header == rhs.header && lhs.footer == rhs.footer
     }
 
-    static func == (lhs: SpaceGramSettingsEntry, rhs: SpaceGramSettingsEntry) -> Bool {
-        switch (lhs, rhs) {
-        case let (.header(lId, lSection, lText), .header(rId, rSection, rText)):
-            return lId == rId && lSection == rSection && lText == rText
-        case let (.toggle(lId, lSection, lTitle, lValue, _), .toggle(rId, rSection, rTitle, rValue, _)):
-            return lId == rId && lSection == rSection && lTitle == rTitle && lValue == rValue
-        case let (.navigation(lId, lSection, lTitle, lEnabled, _), .navigation(rId, rSection, rTitle, rEnabled, _)):
-            return lId == rId && lSection == rSection && lTitle == rTitle && lEnabled == rEnabled
-        case let (.placeholder(lId, lSection, lTitle, lLabel), .placeholder(rId, rSection, rTitle, rLabel)):
-            return lId == rId && lSection == rSection && lTitle == rTitle && lLabel == rLabel
-        case let (.about(lId, lSection, lText), .about(rId, rSection, rText)):
-            return lId == rId && lSection == rSection && lText == rText
-        default:
-            return false
-        }
-    }
-
-    static func < (lhs: SpaceGramSettingsEntry, rhs: SpaceGramSettingsEntry) -> Bool {
-        return lhs.stableId < rhs.stableId
-    }
+    static func < (lhs: Self, rhs: Self) -> Bool { lhs.stableId < rhs.stableId }
 
     func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
-        switch self {
-        case let .header(_, section, text):
-            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
-        case let .toggle(_, section, title, value, updated):
-            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: section, style: .blocks, updated: updated)
-        case let .navigation(_, section, title, enabled, action):
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: title, enabled: enabled, label: "", sectionId: section, style: .blocks, action: action)
-        case let .placeholder(_, section, title, label):
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: title, enabled: false, label: label, sectionId: section, style: .blocks, disclosureStyle: .none, action: nil)
-        case let .about(_, section, text):
-            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: section)
+        if header { return ItemListSectionHeaderItem(presentationData: presentationData, text: title, sectionId: section) }
+        if footer { return ItemListTextItem(presentationData: presentationData, text: .plain(title), sectionId: section) }
+        let icon = symbol == "spacegram" ? spaceGramSettingsIcon() : spaceGramTile(symbol, section: section)
+        if let value, let updated {
+            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, icon: icon, title: title, value: value, maximumNumberOfLines: 2, sectionId: section, style: .blocks, updated: updated)
         }
+        return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: icon, title: title, label: "", sectionId: section, style: .blocks, action: action)
     }
 }
 
-private final class SpaceGramSettingsArguments {
-    let openBotsHub: () -> Void
-    let openQwenProvider: () -> Void
-    let openPrivacySettings: () -> Void
-    let openHistorySettings: () -> Void
-    let openMediaSettings: () -> Void
-    let openAppearance: () -> Void
-
-    init(openBotsHub: @escaping () -> Void, openQwenProvider: @escaping () -> Void, openPrivacySettings: @escaping () -> Void, openHistorySettings: @escaping () -> Void, openMediaSettings: @escaping () -> Void, openAppearance: @escaping () -> Void) {
-        self.openBotsHub = openBotsHub
-        self.openQwenProvider = openQwenProvider
-        self.openPrivacySettings = openPrivacySettings
-        self.openHistorySettings = openHistorySettings
-        self.openMediaSettings = openMediaSettings
-        self.openAppearance = openAppearance
-    }
-}
-
-public func spaceGramSettingsController(context: AccountContext) -> ViewController {
-    var pushControllerImpl: ((ViewController) -> Void)?
-    let arguments = SpaceGramSettingsArguments(
-        openBotsHub: {
-            guard SpaceGramSettings.shared.toolsEnabled else { return }
-            pushControllerImpl?(spaceGramBotsController(context: context))
-        },
-        openQwenProvider: { pushControllerImpl?(spaceGramAISettingsController(context: context)) },
-        openPrivacySettings: { pushControllerImpl?(spaceGramPrivacySettingsController(context: context)) },
-        openHistorySettings: { pushControllerImpl?(spaceGramHistorySettingsController(context: context)) },
-        openMediaSettings: { pushControllerImpl?(spaceGramMediaArchiveSettingsController(context: context)) },
-        openAppearance: { pushControllerImpl?(themeSettingsController(context: context)) }
-    )
-    let signal = combineLatest(
-        context.sharedContext.presentationData,
-        spaceGramEnabledSignal(),
-        botsHubEnabledSignal(),
-        spaceGramGhostSettingsSignal(),
-        spaceGramAutomaticReadsSettingSignal()
-    )
+public func spaceGramSettingsController(context: AccountContext, openAccounts: ((ViewController) -> Void)? = nil) -> ViewController {
+    var push: ((ViewController) -> Void)?
+    var accounts: (() -> Void)?
+    let signal = combineLatest(context.sharedContext.presentationData, spaceGramSettingsChangesSignal())
     |> deliverOnMainQueue
-    |> map { presentationData, spaceGramEnabled, botsHubEnabled, ghost, suppressAutomaticReads -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let lang = presentationData.strings.baseLanguageCode
-        let entries: [SpaceGramSettingsEntry] = [
-            .header(0, 0, ngI18n("SpaceGram.General", lang)),
-            .toggle(1, 0, ngI18n("SpaceGram.Enabled", lang), spaceGramEnabled, {
-                SpaceGramSettings.shared.spaceGramEnabled = $0
-            }),
-            .about(2, 0, ngI18n(spaceGramEnabled ? "SpaceGram.Foundation" : "SpaceGram.Disabled", lang)),
-            .header(3, 1, ngI18n("SpaceGram.Ghost", lang)),
-            .toggle(4, 1, ngI18n("SpaceGram.Activity", lang), ghost.0, { SpaceGramSettings.shared.hideChatActivity = $0 }),
-            .toggle(5, 1, ngI18n("SpaceGram.Stories", lang), ghost.1, { SpaceGramSettings.shared.hideStoryViews = $0 }),
-            .toggle(6, 1, ngI18n("SpaceGram.Online", lang), ghost.2, { SpaceGramSettings.shared.hideOnlinePresence = $0 }),
-            .about(7, 1, ngI18n("SpaceGram.GhostInfo", lang)),
-            .header(8, 2, ngI18n("SpaceGram.Privacy", lang)),
-            .toggle(9, 2, ngI18n("SpaceGram.AutomaticReads", lang), suppressAutomaticReads, { SpaceGramSettings.shared.suppressAutomaticReads = $0 }),
-            .navigation(22, 2, ngI18n("SpaceGram.Privacy.Open", lang), true, arguments.openPrivacySettings),
-            .header(10, 3, ngI18n("SpaceGram.History", lang)),
-            .navigation(11, 3, ngI18n("SpaceGram.History", lang), true, arguments.openHistorySettings),
-            .header(12, 4, ngI18n("SpaceGram.Archive", lang)),
-            .navigation(13, 4, ngI18n("SpaceGram.Archive", lang), true, arguments.openMediaSettings),
-            .header(14, 5, ngI18n("SpaceGram.Tools", lang)),
-            .toggle(15, 5, ngI18n("SpaceGram.ToolsEnabled", lang), botsHubEnabled, { SpaceGramSettings.shared.botsHubEnabled = $0 }),
-            .navigation(16, 5, ngI18n("SpaceGram.OpenTools", lang), spaceGramEnabled && botsHubEnabled, arguments.openBotsHub),
-            .navigation(17, 5, ngI18n("SpaceGram.Provider", lang), true, arguments.openQwenProvider),
-            .header(18, 6, ngI18n("SpaceGram.Appearance", lang)),
-            .about(19, 6, ngI18n("SpaceGram.AppearanceInfo", lang)),
-            .navigation(23, 6, ngI18n("SpaceGram.AppearanceTelegramThemes", lang), true, arguments.openAppearance),
-            .header(20, 7, ngI18n("SpaceGram.Advanced", lang)),
-            .about(21, 7, ngI18n("SpaceGram.AdvancedInfo", lang))
-        ]
-        let listPresentationData = spaceGramItemListPresentationData(presentationData)
-        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("SpaceGram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
-        let listState = ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: true)
-        return (controllerState, (listState, arguments))
+        let settings = SpaceGramSettings.shared
+        let enhancements = NagramSettings.shared
+        var entries: [SpaceGramHubEntry] = []
+        // Fixed section/row identities. Optional rows never renumber other rows.
+        func header(_ section: Int32, _ key: String) {
+            entries.append(SpaceGramHubEntry(stableId: section * 100, section: section, title: ngI18n(key, lang), header: true))
+        }
+        func link(_ id: Int32, _ key: String, _ symbol: String, _ action: @escaping () -> Void) {
+            entries.append(SpaceGramHubEntry(stableId: id, section: id / 100, title: ngI18n(key, lang), symbol: symbol, action: action))
+        }
+        func toggle(_ id: Int32, _ key: String, _ symbol: String, _ value: Bool, _ updated: @escaping (Bool) -> Void) {
+            entries.append(SpaceGramHubEntry(stableId: id, section: id / 100, title: ngI18n(key, lang), symbol: symbol, value: value, updated: updated))
+        }
+        func footer(_ id: Int32, _ key: String) {
+            entries.append(SpaceGramHubEntry(stableId: id, section: id / 100, title: ngI18n(key, lang), footer: true))
+        }
+        header(0, "SpaceGram.Hub.Information")
+        link(1, "SpaceGram.Hub.About", "spacegram", { push?(spaceGramAboutController(context: context)) })
+        if openAccounts != nil {
+            header(1, "SpaceGram.Hub.Accounts")
+            link(101, "SpaceGram.Hub.AllAccounts", "person.2.fill", { accounts?() })
+        }
+        header(2, "SpaceGram.Hub.Chat")
+        link(201, "SpaceGram.Hub.Deleted", "trash.fill", { push?(spaceGramHistoryController(context: context, initialKind: .deleted)) })
+        link(202, "SpaceGram.Hub.Edits", "pencil", { push?(spaceGramHistoryController(context: context, initialKind: .edited)) })
+        footer(290, "SpaceGram.Hub.HistoryInfo")
+        header(3, "SpaceGram.Hub.Ghost")
+        toggle(302, "SpaceGram.AutomaticReads", "checkmark.message", settings.suppressAutomaticReads, { settings.suppressAutomaticReads = $0 })
+        toggle(303, "SpaceGram.Stories", "eye.slash", settings.hideStoryViews, { settings.hideStoryViews = $0 })
+        toggle(304, "SpaceGram.Online", "network", settings.hideOnlinePresence, { settings.hideOnlinePresence = $0 })
+        toggle(305, "SpaceGram.Activity", "ellipsis.bubble", settings.hideChatActivity, { settings.hideChatActivity = $0 })
+        footer(390, "SpaceGram.GhostInfo")
+        header(4, "SpaceGram.Privacy")
+        link(401, "SpaceGram.Privacy.Open", "lock.fill", { push?(spaceGramPrivacySettingsController(context: context)) })
+        link(402, "SpaceGram.Hub.Downloads", "arrow.down.circle", { push?(dataAndStorageController(context: context)) })
+        link(403, "SpaceGram.Hub.Proxy", "network", { push?(proxySettingsController(context: context)) })
+        header(5, "SpaceGram.Hub.Interface")
+        toggle(501, "SpaceGram.Hub.StoriesPanel", "rectangle.stack", !enhancements.hideStories, { enhancements.hideStories = !$0 })
+        toggle(502, "SpaceGram.Hub.CompactChats", "list.bullet", enhancements.chatListCompact, { enhancements.chatListCompact = $0 })
+        header(6, "SpaceGram.Hub.Messages")
+        toggle(601, "SpaceGram.Hub.Formatter", "textformat", enhancements.showTextStyleToolbar, { enhancements.showTextStyleToolbar = $0 })
+        toggle(602, "SpaceGram.Hub.TranslateBeforeSend", "character.bubble", enhancements.translateBeforeSend, { enhancements.translateBeforeSend = $0 })
+        link(603, "SpaceGram.Hub.Translation", "globe", { push?(nagramSettingsController(context: context, deepLinkPath: "https://t.me/nasettings/chat?p=ios&r=TranslationProvider", unified: true)) })
+        toggle(604, "SpaceGram.Hub.Seconds", "clock", enhancements.secondsInMessages, { enhancements.secondsInMessages = $0 })
+        header(7, "SpaceGram.Hub.HistoryMedia")
+        link(701, "SpaceGram.History", "clock.arrow.circlepath", { push?(spaceGramHistorySettingsController(context: context)) })
+        link(702, "SpaceGram.Archive", "archivebox.fill", { push?(spaceGramMediaArchiveSettingsController(context: context)) })
+        footer(790, "SpaceGram.ArchiveLimits")
+        header(8, "SpaceGram.Tools")
+        if settings.toolsEnabled {
+            link(801, "SpaceGram.Hub.Qwen", "sparkles", { push?(spaceGramQwenAssistantController(context: context)) })
+            link(802, "SpaceGram.Hub.Summarizer", "text.alignleft", { push?(spaceGramSummarizerController(context: context)) })
+            link(803, "SpaceGram.Hub.Translator", "character.bubble", { push?(spaceGramTranslatorController(context: context)) })
+            link(804, "SpaceGram.Hub.QR", "qrcode", { push?(spaceGramQRToolsController(context: context)) })
+        }
+        link(805, "SpaceGram.Provider", "slider.horizontal.3", { push?(spaceGramAISettingsController(context: context)) })
+        header(9, "SpaceGram.Appearance")
+        link(901, "SpaceGram.Hub.ThemeIcons", "paintpalette.fill", { push?(themeSettingsController(context: context)) })
+        header(10, "SpaceGram.Advanced")
+        link(1001, "SpaceGram.Hub.Enhancements", "slider.horizontal.3", { push?(nagramSettingsController(context: context, unified: true)) })
+        toggle(1002, "SpaceGram.Enabled", "power", settings.spaceGramEnabled, { settings.spaceGramEnabled = $0 })
+        toggle(1003, "SpaceGram.ToolsEnabled", "wrench.and.screwdriver", settings.botsHubEnabled, { settings.botsHubEnabled = $0 })
+        if !settings.spaceGramEnabled { footer(1090, "SpaceGram.Disabled") }
+        let data = spaceGramItemListPresentationData(presentationData)
+        let state = ItemListControllerState(presentationData: data, title: .text("SpaceGram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        // ItemList asserts strict ordering, including on its first transition.
+        return (state, (ItemListNodeState(presentationData: data, entries: entries.sorted(), style: .blocks, animateChanges: false), NSNull()))
     }
-
     let controller = ItemListController(context: context, state: signal)
     controller.navigationPresentation = .default
-    pushControllerImpl = { [weak controller] viewController in
-        (controller?.navigationController as? NavigationController)?.pushViewController(viewController, animated: true)
-    }
+    push = { [weak controller] in (controller?.navigationController as? NavigationController)?.pushViewController($0, animated: true) }
+    accounts = { [weak controller] in if let controller { openAccounts?(controller) } }
     return controller
+}
+
+private func spaceGramAboutController(context: AccountContext) -> ViewController {
+    let signal = context.sharedContext.presentationData |> map { presentationData -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let lang = presentationData.strings.baseLanguageCode
+        let keys = ["SpaceGram.Hub.AboutIntro", "SpaceGram.Hub.AboutGhost", "SpaceGram.Hub.AboutHistory", "SpaceGram.Hub.AboutMedia", "SpaceGram.Hub.AboutAI", "SpaceGram.Hub.AboutPrivacy"]
+        let entries = keys.enumerated().map { index, key in
+            SpaceGramHubEntry(stableId: Int32(index), section: Int32(index), title: ngI18n(key, lang), footer: true)
+        }
+        let data = spaceGramItemListPresentationData(presentationData)
+        let state = ItemListControllerState(presentationData: data, title: .text(ngI18n("SpaceGram.Hub.About", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        return (state, (ItemListNodeState(presentationData: data, entries: entries, style: .blocks), NSNull()))
+    }
+    return ItemListController(context: context, state: signal)
 }

@@ -971,8 +971,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             if #available(iOS 10.3, *) {
                 // MARK: NAGRAM — SpaceGram product icons use the native iOS alternate-icon API.
                 return [
-                    PresentationAppIcon(name: "Default", imageName: "SpaceGramAppIcon", isDefault: true),
-                    PresentationAppIcon(name: "Alternate", imageName: "Alternate"),
+                    PresentationAppIcon(name: "Default", imageName: "SpaceGramIconPrimaryPreview", isDefault: true),
+                    PresentationAppIcon(name: "Alternate", imageName: "SpaceGramIconAlternatePreview"),
                 ]
             } else {
                 return []

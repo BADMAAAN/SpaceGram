@@ -131,11 +131,13 @@ private func spaceGramHistoryDateFormatter() -> DateFormatter {
     return formatter
 }
 
-public func spaceGramHistoryController(context: AccountContext) -> ViewController {
+public func spaceGramHistoryController(context: AccountContext, initialKind: SpaceGramHistoryKind = .all, peerId: Int64? = nil) -> ViewController {
     var pushControllerImpl: ((ViewController) -> Void)?
     weak var presentingController: ItemListController?
     let formatter = spaceGramHistoryDateFormatter()
     var filterValue = SpaceGramHistoryFilter()
+    filterValue.kind = initialKind
+    filterValue.peerId = peerId
     let filterPromise = ValuePromise<SpaceGramHistoryFilter>(filterValue, ignoreRepeated: false)
     let updateFilter: (SpaceGramHistoryFilter) -> Void = { value in
         filterValue = value

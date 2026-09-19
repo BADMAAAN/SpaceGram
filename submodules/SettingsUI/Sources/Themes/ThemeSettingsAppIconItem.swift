@@ -36,6 +36,10 @@ private func generateBorderImage(theme: PresentationTheme, bordered: Bool, selec
 
 // MARK: NAGRAM — SpaceGram uses standard asset-catalog previews.
 private func loadThemeSettingsAppIconImage(_ icon: PresentationAppIcon) -> UIImage? {
+    // MARK: NAGRAM — regular preview files, separate from SpringBoard catalogs.
+    if let path = getAppBundle().path(forResource: icon.imageName, ofType: "png") {
+        return UIImage(contentsOfFile: path)
+    }
     return UIImage(named: icon.imageName, in: getAppBundle(), compatibleWith: nil)
 }
 
@@ -261,7 +265,9 @@ class ThemeSettingsAppIconItemNode: ListViewItemNode, ItemListItemNode {
             let separatorHeight = UIScreenPixel
             
             let nodeSize = CGSize(width: 74.0, height: 102.0)
-            let height: CGFloat = nodeSize.height * ceil(CGFloat(item.icons.count) / 4.0) + 12.0
+            // MARK: NAGRAM — adapt the grid to the actual count and available width.
+            let columns = max(1, min(item.icons.count, Int((params.width - params.leftInset - params.rightInset - 16.0) / nodeSize.width)))
+            let height: CGFloat = nodeSize.height * ceil(CGFloat(item.icons.count) / CGFloat(columns)) + 12.0
             
             contentSize = CGSize(width: params.width, height: height)
             insets = itemListNeighborsGroupedInsets(neighbors, params)
@@ -350,7 +356,8 @@ class ThemeSettingsAppIconItemNode: ListViewItemNode, ItemListItemNode {
                     strongSelf.containerNode.frame = CGRect(origin: CGPoint(x: params.leftInset, y: 2.0), size: CGSize(width: layoutSize.width - params.leftInset - params.rightInset, height: layoutSize.height))
                     
                     let sideInset: CGFloat = 8.0
-                    let spacing: CGFloat = floorToScreenPixels((params.width - sideInset * 2.0 - params.leftInset - params.rightInset - nodeSize.width * 4.0) / 3.0)
+                    // MARK: NAGRAM
+                    let spacing: CGFloat = columns > 1 ? floorToScreenPixels((params.width - sideInset * 2.0 - params.leftInset - params.rightInset - nodeSize.width * CGFloat(columns)) / CGFloat(columns - 1)) : 0.0
                     let verticalSpacing: CGFloat = 0.0
                     
                     var x: CGFloat = sideInset
@@ -358,7 +365,8 @@ class ThemeSettingsAppIconItemNode: ListViewItemNode, ItemListItemNode {
                     
                     var i = 0
                     for icon in item.icons {
-                        if i > 0 && i % 4 == 0 {
+                        // MARK: NAGRAM
+                        if i > 0 && i % columns == 0 {
                             x = sideInset
                             y += nodeSize.height + verticalSpacing
                         }

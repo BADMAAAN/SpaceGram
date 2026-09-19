@@ -54,6 +54,12 @@ public func spaceGramEnabledSignal() -> Signal<Bool, NoError> {
     return settingsSignal { SpaceGramSettings.shared.spaceGramEnabled } |> distinctUntilChanged
 }
 
+/// Refresh a settings screen for any preference change, including retained
+/// enhancement keys. Bootstrap/notification ordering stays in settingsSignal.
+public func spaceGramSettingsChangesSignal() -> Signal<Int, NoError> {
+    return settingsSignal { 0 }
+}
+
 public func botsHubEnabledSignal() -> Signal<Bool, NoError> {
     return settingsSignal { SpaceGramSettings.shared.botsHubEnabled } |> distinctUntilChanged
 }

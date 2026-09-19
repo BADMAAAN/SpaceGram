@@ -160,7 +160,9 @@ extension PeerInfoScreenNode {
             }
         // MARK: NAGRAM / SpaceGram — SpaceGram settings entry.
         case .spaceGram:
-            push(spaceGramSettingsController(context: self.context))
+            push(spaceGramSettingsController(context: self.context, openAccounts: { [weak self] source in
+                self?.controller?.presentAccountSwitcher(sourceView: source.view, gesture: ContextGesture(target: nil, action: nil))
+            }))
         case .appearance:
             push(themeSettingsController(context: self.context))
         case .language:

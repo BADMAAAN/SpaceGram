@@ -46,6 +46,11 @@ public final class SpaceGramLocalization {
         if result.hasSuffix(rawSuffix) {
             result = String(result.dropLast(rawSuffix.count))
         }
+        result = result.replacingOccurrences(of: "_", with: "-").lowercased()
+        // Telegram language packs may use region/variant suffixes. Never consult
+        // the keyboard language: UI language comes from PresentationData.
+        if result == "ru" || result.hasPrefix("ru-") { return "ru" }
+        if result == "en" || result.hasPrefix("en-") { return "en" }
         return result
     }
 
