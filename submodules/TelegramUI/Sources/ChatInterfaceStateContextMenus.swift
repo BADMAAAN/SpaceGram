@@ -1057,7 +1057,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         // MARK: NAGRAM
         if historyIndicators.hasHistory {
             let historyLanguage = chatPresentationInterfaceState.strings.baseLanguageCode
-            var historyTitle = ngI18n("SpaceGram.History", historyLanguage)
+            var historyTitle = ngI18n(historyIndicators.hasEdits ? "SpaceGram.Hub.Edits" : "SpaceGram.History", historyLanguage)
             if SpaceGramSettings.shared.showHistoryIndicator {
                 if historyIndicators.hasEdits && SpaceGramSettings.shared.showEditedIndicator { historyTitle += " · " + ngI18n("SpaceGram.History.Edited", historyLanguage) }
                 if historyIndicators.hasDeletes && SpaceGramSettings.shared.showDeletedIndicator { historyTitle += " · " + ngI18n("SpaceGram.History.Deleted", historyLanguage) }
@@ -1067,6 +1067,16 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             }, action: { _, f in
                 f(.dismissWithoutContent)
                 controllerInteraction.navigationController()?.pushViewController(spaceGramHistoryDetailController(context: context, messageId: messages[0].id))
+            })))
+        }
+
+        // MARK: NAGRAM — browse local deleted records even if this message has no history.
+        if messages.count == 1 && message.id.namespace == Namespaces.Message.Cloud {
+            actions.append(.action(ContextMenuActionItem(text: ngI18n("SpaceGram.Hub.Deleted", chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.actionSheet.primaryTextColor)
+            }, action: { _, f in
+                f(.dismissWithoutContent)
+                controllerInteraction.navigationController()?.pushViewController(spaceGramHistoryController(context: context, initialKind: .deleted, peerId: message.id.peerId.toInt64()))
             })))
         }
 

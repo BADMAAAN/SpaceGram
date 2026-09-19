@@ -14,11 +14,11 @@ struct SpaceGramHistoryTimelineItem {
 func spaceGramHistoryEventTitle(_ event: SpaceGramHistoryEvent, detail: Bool, lang: String = "en") -> String {
     switch event.type {
     case .edit:
-        return detail ? "Edit" : "Edited"
+        return ngI18n(detail ? "SpaceGram.History.EditEvent" : "SpaceGram.History.Edited", lang)
     case .delete:
-        return event.reason == .serverDelete ? "Deleted on server" : "Deleted"
+        return "🗑 " + ngI18n(event.reason == .serverDelete ? "SpaceGram.History.ServerDeleted" : "SpaceGram.History.Deleted", lang)
     case .cleanup:
-        return event.reason == .mediaArchive ? ngI18n("SpaceGram.MediaCaptured", lang) : "Cleanup"
+        return ngI18n(event.reason == .mediaArchive ? "SpaceGram.MediaCaptured" : "SpaceGram.History.Cleanup", lang)
     }
 }
 
@@ -44,40 +44,30 @@ func spaceGramHistoryNewestFirst(_ records: [SpaceGramHistoryRecord]) -> [SpaceG
     }.map { $0.element }
 }
 
-func spaceGramHistoryText(_ revision: SpaceGramHistoryRevision?) -> String {
+func spaceGramHistoryText(_ revision: SpaceGramHistoryRevision?, lang: String) -> String {
     guard let revision = revision else {
-        return "Saved text is no longer available."
+        return ngI18n("SpaceGram.History.TextMissing", lang)
     }
-    return revision.snapshot.text.isEmpty ? "No text (media or empty message)." : revision.snapshot.text
+    return revision.snapshot.text.isEmpty ? ngI18n("SpaceGram.History.NoText", lang) : revision.snapshot.text
 }
 
-func spaceGramHistoryPreview(_ record: SpaceGramHistoryRecord, event: SpaceGramHistoryEvent? = nil) -> String {
+func spaceGramHistoryPreview(_ record: SpaceGramHistoryRecord, event: SpaceGramHistoryEvent? = nil, lang: String) -> String {
     let event = event ?? spaceGramHistoryLatestEvent(record)
-    let revision = record.revisions.first { $0.number == event?.revisionNumber } ?? record.revisions.last
-    return String(spaceGramHistoryText(revision).split(whereSeparator: { $0.isWhitespace }).joined(separator: " ").prefix(180))
+    let revision = event == nil ? record.revisions.last : record.revisions.first { $0.number == event?.revisionNumber }
+    return String(spaceGramHistoryText(revision, lang: lang).split(whereSeparator: { $0.isWhitespace }).joined(separator: " ").prefix(180))
 }
 
 func spaceGramHistoryTimeline(_ record: SpaceGramHistoryRecord, lang: String = "en") -> [SpaceGramHistoryTimelineItem] {
-    var items = record.events.enumerated().map { index, event in
-        let revision = record.revisions.first { $0.number == event.revisionNumber }
+    return SpaceGramHistoryPresentationModel.timeline(record).map { item in
         return SpaceGramHistoryTimelineItem(
-            timestamp: event.observedTimestamp,
-            title: spaceGramHistoryEventTitle(event, detail: true, lang: lang),
-            text: spaceGramHistoryText(revision),
-            eventIndex: index,
-            revisionNumber: revision?.number,
-            snapshot: revision?.snapshot
+            timestamp: item.timestamp,
+            title: item.event.map { spaceGramHistoryEventTitle($0, detail: true, lang: lang) } ?? ngI18n("SpaceGram.History.SavedRevision", lang),
+            text: spaceGramHistoryText(item.revision, lang: lang),
+            eventIndex: item.eventIndex,
+            revisionNumber: item.revision?.number,
+            snapshot: item.revision?.snapshot
         )
     }
-    // Revisions and events have independent retention limits. Show unpaired
-    // snapshots too, and never invent an event type when the event is absent.
-    let referencedRevisions = Set(record.events.compactMap { $0.revisionNumber })
-    for revision in record.revisions where !referencedRevisions.contains(revision.number) {
-        items.append(SpaceGramHistoryTimelineItem(timestamp: revision.observedTimestamp, title: "Saved revision", text: spaceGramHistoryText(revision), eventIndex: nil, revisionNumber: revision.number, snapshot: revision.snapshot))
-    }
-    return items.enumerated().sorted {
-        return $0.element.timestamp == $1.element.timestamp ? $0.offset < $1.offset : $0.element.timestamp < $1.element.timestamp
-    }.map { $0.element }
 }
 
 func spaceGramHistoryDate(_ timestamp: Int64, formatter: DateFormatter) -> String {

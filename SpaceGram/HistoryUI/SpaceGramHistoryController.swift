@@ -121,7 +121,7 @@ private func spaceGramHistoryPeer(transaction: Transaction, packedId: Int64) -> 
 
 private func spaceGramHistoryPeerTitle(_ peer: EnginePeer?, presentationData: PresentationData) -> String {
     let title = peer?.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder).trimmingCharacters(in: .whitespacesAndNewlines)
-    return title.flatMap { $0.isEmpty ? nil : $0 } ?? "Unknown or deleted peer"
+    return title.flatMap { $0.isEmpty ? nil : $0 } ?? ngI18n("SpaceGram.History.UnknownPeer", presentationData.strings.baseLanguageCode)
 }
 
 private func spaceGramHistoryDateFormatter() -> DateFormatter {
@@ -236,14 +236,14 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
                 }
             }
             if unreadableCount > 0 {
-                entries.append(SpaceGramHistoryEntry(stableId: 2000, section: 3, title: "Some history could not be read", text: "\(unreadableCount) saved records are damaged or unsupported. Other records remain available."))
+                entries.append(SpaceGramHistoryEntry(stableId: 2000, section: 3, title: ngI18n("SpaceGram.History.SomeUnreadable", lang), text: "\(unreadableCount) saved records are damaged or unsupported. Other records remain available."))
             }
             if rows.isEmpty {
                 entries.append(SpaceGramHistoryEntry(stableId: 2001, section: 3, title: ngI18n("SpaceGram.History.NoMatches", lang), text: ngI18n("SpaceGram.History.TryFilters", lang)))
             }
             for (index, row) in rows.enumerated() {
                 let event = spaceGramHistoryDisplayedEvent(row.record, kind: filterValue.kind)
-                let status = event.map { spaceGramHistoryEventTitle($0, detail: false, lang: presentationData.strings.baseLanguageCode) } ?? "Saved revision"
+                let status = event.map { spaceGramHistoryEventTitle($0, detail: false, lang: presentationData.strings.baseLanguageCode) } ?? ngI18n("SpaceGram.History.SavedRevision", lang)
                 let mediaLabel = row.record.events.contains(where: { event in (event.mediaAssetIds ?? []).contains(where: { archive.availableAssetIds.contains($0) }) }) ? " · " + ngI18n("SpaceGram.Archive", presentationData.strings.baseLanguageCode) : ""
                 let time = spaceGramHistoryDate(event?.observedTimestamp ?? spaceGramHistoryLatestTimestamp(row.record), formatter: formatter)
                 let revision = row.record.revisions.first { $0.number == event?.revisionNumber } ?? row.record.revisions.last
@@ -252,7 +252,7 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
                     stableId: Int32(index + 2002),
                     section: 3,
                     title: spaceGramHistoryPeerTitle(row.peer, presentationData: presentationData),
-                    text: "\(status)\(mediaLabel) · \(time)\(author.map { " · " + $0 } ?? "")\n\(spaceGramHistoryPreview(row.record, event: event))",
+                    text: "\(status)\(mediaLabel) · \(time)\(author.map { " · " + $0 } ?? "")\n\(spaceGramHistoryPreview(row.record, event: event, lang: lang))",
                     action: { pushControllerImpl?(spaceGramHistoryDetailController(context: context, key: row.record.key)) }
                 ))
             }
@@ -265,7 +265,7 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
             }
             if let peerId = filterValue.peerId {
                 entries.append(SpaceGramHistoryEntry(stableId: 4000, section: 4, title: ngI18n("SpaceGram.History.DeleteChat", lang), text: "", action: {
-                    confirm("Delete chat history?", "Saved history and linked media for this chat will be removed from this device.", {
+                    confirm(ngI18n("SpaceGram.History.DeleteChatConfirm", lang), "Saved history and linked media for this chat will be removed from this device.", {
                         let _ = context.account.postbox.transaction { transaction -> [String] in
                             SpaceGramHistoryStore.removePeer(transaction: transaction, peerId: peerId)
                         }.start(next: { ids in SpaceGramMediaArchive.remove(root: root, ids: ids) })
@@ -273,7 +273,7 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
                 }))
             }
             entries.append(SpaceGramHistoryEntry(stableId: 4001, section: 4, title: ngI18n("SpaceGram.History.ClearAll", lang), text: "", action: {
-                confirm("Clear Message History?", "All saved history and linked media for this account will be removed from this device.", {
+                confirm(ngI18n("SpaceGram.History.ClearConfirm", lang), ngI18n("SpaceGram.History.ClearInfo", lang), {
                     let _ = context.account.postbox.transaction { transaction -> [String] in
                         SpaceGramHistoryStore.clearArchiveWithAssets(transaction: transaction)
                     }.start(next: { ids in SpaceGramMediaArchive.remove(root: root, ids: ids) })
@@ -292,10 +292,10 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
                 })
             }))
         } else {
-            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: "", text: "Loading history…"))
+            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: "", text: ngI18n("SpaceGram.History.Loading", lang)))
         }
         let listPresentationData = spaceGramItemListPresentationData(presentationData)
-        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("History"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text(ngI18n(initialKind == .deleted ? "SpaceGram.Hub.Deleted" : initialKind == .edited ? "SpaceGram.Hub.Edits" : "SpaceGram.History", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (controllerState, (ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: false), context))
     }
     let controller = ItemListController(context: context, state: signal)
@@ -421,16 +421,16 @@ private func spaceGramHistoryDetailController(context: AccountContext, key: Spac
         var entries: [SpaceGramHistoryEntry] = []
         switch state {
         case .loading:
-            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: "", text: "Loading history…"))
+            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: "", text: ngI18n("SpaceGram.History.Loading", lang)))
         case .missing:
-            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: "History no longer available", text: "This record may have reached the archive retention limit."))
+            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: ngI18n("SpaceGram.History.Missing", lang), text: ngI18n("SpaceGram.History.RetentionMissing", lang)))
         case .unreadable:
-            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: "Unable to read history", text: "This saved record is damaged or unsupported."))
+            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: ngI18n("SpaceGram.History.Unreadable", lang), text: ngI18n("SpaceGram.History.Damaged", lang)))
         case let .loaded(row):
-            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: spaceGramHistoryPeerTitle(row.peer, presentationData: presentationData), text: "Saved history · Oldest first"))
+            entries.append(SpaceGramHistoryEntry(stableId: 0, section: 0, title: spaceGramHistoryPeerTitle(row.peer, presentationData: presentationData), text: ngI18n("SpaceGram.History.OldestFirst", lang)))
             let timeline = spaceGramHistoryTimeline(row.record, lang: lang)
             if timeline.isEmpty {
-                entries.append(SpaceGramHistoryEntry(stableId: 1, section: 1, title: "No saved revisions or events", text: "This record has no saved content."))
+                entries.append(SpaceGramHistoryEntry(stableId: 1, section: 1, title: ngI18n("SpaceGram.History.NoEvents", lang), text: ngI18n("SpaceGram.History.EmptyRecord", lang)))
             }
             var nextId: Int32 = 1
             for (index, item) in timeline.enumerated() {
@@ -439,16 +439,16 @@ private func spaceGramHistoryDetailController(context: AccountContext, key: Spac
                 if let snapshot = item.snapshot {
                     if let authorId = snapshot.authorPeerId {
                         let author = row.authors[authorId].map { spaceGramHistoryPeerTitle($0, presentationData: presentationData) } ?? "Peer \(authorId)"
-                        details.append("Author: \(author)")
+                        details.append(ngI18n("SpaceGram.History.Author", lang) + ": " + author)
                     }
                     if !snapshot.entities.isEmpty {
-                        details.append("Formatting: " + snapshot.entities.map { entity in
+                        details.append(ngI18n("SpaceGram.History.Formatting", lang) + ": " + snapshot.entities.map { entity in
                             let attributes = entity.attributes.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ", ")
                             return "\(entity.type) [\(entity.offset), \(entity.length)]" + (attributes.isEmpty ? "" : " (\(attributes))")
                         }.joined(separator: "; "))
                     }
                     if !snapshot.media.isEmpty {
-                        details.append("Media: " + snapshot.media.map { $0.filename ?? $0.type }.joined(separator: ", "))
+                        details.append(ngI18n("SpaceGram.History.Media", lang) + ": " + snapshot.media.map { $0.filename ?? $0.type }.joined(separator: ", "))
                     }
                 }
                 entries.append(SpaceGramHistoryEntry(stableId: nextId, section: section, title: "\(item.title) · \(spaceGramHistoryDate(item.timestamp, formatter: formatter))", text: details.joined(separator: "\n"), snapshot: item.snapshot))
@@ -486,7 +486,7 @@ private func spaceGramHistoryDetailController(context: AccountContext, key: Spac
                         nextId += 1
                     }
                     entries.append(SpaceGramHistoryEntry(stableId: nextId, section: section, title: ngI18n("SpaceGram.History.DeleteEvent", lang), text: "", action: {
-                        confirm("Delete saved event?", "This event, its saved revision and linked media will be removed from this device.", {
+                        confirm(ngI18n("SpaceGram.History.DeleteEventConfirm", lang), ngI18n("SpaceGram.History.DeleteEventInfo", lang), {
                             let _ = context.account.postbox.transaction { transaction -> [String] in
                                 do { return try SpaceGramHistoryStore.removeEvent(transaction: transaction, key: key, index: eventIndex, expected: event) }
                                 catch { showRemovalError(); return [] }
@@ -499,7 +499,7 @@ private func spaceGramHistoryDetailController(context: AccountContext, key: Spac
                         nextId += 1
                     }
                     entries.append(SpaceGramHistoryEntry(stableId: nextId, section: section, title: ngI18n("SpaceGram.History.DeleteRevision", lang), text: "", action: {
-                        confirm("Delete saved revision?", "This saved revision will be removed from this device.", {
+                        confirm(ngI18n("SpaceGram.History.DeleteRevisionConfirm", lang), ngI18n("SpaceGram.History.DeleteRevisionInfo", lang), {
                             let _ = context.account.postbox.transaction { transaction -> Void in
                                 do { try SpaceGramHistoryStore.removeRevision(transaction: transaction, key: key, number: number) }
                                 catch { showRemovalError() }
@@ -510,7 +510,7 @@ private func spaceGramHistoryDetailController(context: AccountContext, key: Spac
                 nextId += 1
             }
             entries.append(SpaceGramHistoryEntry(stableId: nextId, section: Int32(timeline.count + 1), title: ngI18n("SpaceGram.History.DeleteMessage", lang), text: "", action: {
-                confirm("Delete message history?", "All saved revisions, events and linked media for this message will be removed from this device.", {
+                confirm(ngI18n("SpaceGram.History.DeleteMessageConfirm", lang), ngI18n("SpaceGram.History.DeleteMessageInfo", lang), {
                     let _ = context.account.postbox.transaction { transaction -> [String] in
                         do { return try SpaceGramHistoryStore.removeMessage(transaction: transaction, key: key) }
                         catch { showRemovalError(); return [] }
@@ -519,7 +519,7 @@ private func spaceGramHistoryDetailController(context: AccountContext, key: Spac
             }))
         }
         let listPresentationData = spaceGramItemListPresentationData(presentationData)
-        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("Message History"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text(ngI18n("SpaceGram.History", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (controllerState, (ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: false), context))
     }
     let controller = ItemListController(context: context, state: signal)
