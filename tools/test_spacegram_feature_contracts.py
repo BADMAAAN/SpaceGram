@@ -29,11 +29,22 @@ class SpaceGramFeatureContracts(unittest.TestCase):
                     self.assertRegex(entries[key], "[А-Яа-яЁё]", key)
 
     def test_preview_resources_are_packaged(self):
-        for name in ("SpaceGramSettings", "SpaceGramIconPrimaryPreview", "SpaceGramIconAlternatePreview"):
+        preview_names = ("Default", "Moon", "Earth", "Mars", "Sun", "Saturn", "Neptune")
+        for name in ("SpaceGramSettings",) + tuple(f"SpaceGramIcon{icon}Preview" for icon in preview_names):
             path = ROOT / f"Telegram/Telegram-iOS/Resources/{name}.png"
             self.assertEqual(path.read_bytes()[:8], b"\x89PNG\r\n\x1a\n")
         build = (ROOT / "Telegram/BUILD").read_text(encoding="utf-8")
         self.assertIn("Telegram-iOS/Resources/**", build)
+
+    def test_spacegram_icon_collection_contract(self):
+        app_delegate = (ROOT / "submodules/TelegramUI/Sources/AppDelegate.swift").read_text(encoding="utf-8")
+        info_plist = (ROOT / "Telegram/Telegram-iOS/Info.plist").read_text(encoding="utf-8")
+        for name in ("Moon", "Earth", "Mars", "Sun", "Saturn", "Neptune"):
+            self.assertIn(f'PresentationAppIcon(name: "{name}"', app_delegate)
+            self.assertEqual(info_plist.count(f"<key>{name}</key>"), 2)
+        self.assertIn('PresentationAppIcon(name: "Default"', app_delegate)
+        self.assertNotIn('PresentationAppIcon(name: "Alternate"', app_delegate)
+        self.assertNotIn("<key>Alternate</key>", info_plist)
 
     def test_startup_order_is_preserved(self):
         source = (ROOT / "SpaceGram/SettingsSignal/Sources/SpaceGramSettingsSignal.swift").read_text(encoding="utf-8")

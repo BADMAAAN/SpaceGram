@@ -394,9 +394,9 @@ class ThemeSettingsAppIconItemNode: ListViewItemNode, ItemListItemNode {
                                 switch icon.name {
                                     // MARK: NAGRAM
                                     case "Default":
-                                        name = item.strings.Appearance_AppIconDefault
-                                    case "Alternate":
-                                        name = ngI18n("SpaceGram.Hub.AlternateIcon", item.strings.baseLanguageCode)
+                                        name = ngI18n("SpaceGram.AppIcon.Default", item.strings.baseLanguageCode)
+                                    case "Moon", "Earth", "Mars", "Sun", "Saturn", "Neptune":
+                                        name = ngI18n("SpaceGram.AppIcon.\(icon.name)", item.strings.baseLanguageCode)
                                     case "BlueIcon":
                                         name = item.strings.Appearance_AppIconDefault
                                     case "BlackIcon":

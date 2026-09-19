@@ -112,15 +112,29 @@ check('":SpaceGramAppIconResources"' in app and '":SpaceGramAlternateAppIconReso
 info_plist = (ROOT / "Telegram/Telegram-iOS/Info.plist").read_text(encoding="utf-8")
 check("Qwengram" not in info_plist, "Legacy product name in permission prompts")
 check(info_plist.count("<string>SpaceGramAppIcon</string>") == 2, "Info.plist primary icon wiring changed")
-check(info_plist.count("<key>Alternate</key>") == 2, "Info.plist alternate icon wiring changed")
+spacegram_icon_names = ("Moon", "Earth", "Mars", "Sun", "Saturn", "Neptune")
+for icon_name in spacegram_icon_names:
+    check(info_plist.count(f"<key>{icon_name}</key>") == 2, f"Info.plist {icon_name} icon wiring changed")
+    check(info_plist.count(f"<string>{icon_name}</string>") == 2, f"Info.plist {icon_name} catalog wiring changed")
+check("<key>Alternate</key>" not in info_plist, "Removed Alternate icon remains in Info.plist")
 check(not any(name in info_plist for name in ("BlackIcon", "BlackClassic", "BlackFilled", "BlueClassic", "BlueFilled", "WhiteFilled")),
       "Retired inherited alternate icon remains in Info.plist")
 plistlib.loads(info_plist.encode("utf-8"))
+for fragment_name in ("AlternateIcons.plist", "AlternateIcons-iPad.plist"):
+    fragment = (ROOT / "Telegram/Telegram-iOS" / fragment_name).read_text(encoding="utf-8")
+    parsed_fragment = plistlib.loads(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                                      "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
+                                      "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">"
+                                      f"<plist version=\"1.0\">{fragment}</plist>").encode("utf-8"))
+    check(set(parsed_fragment) == set(spacegram_icon_names), f"Unexpected icon keys in {fragment_name}")
 app_delegate = (ROOT / "submodules/TelegramUI/Sources/AppDelegate.swift").read_text(encoding="utf-8")
-check('PresentationAppIcon(name: "Default", imageName: "SpaceGramIconPrimaryPreview", isDefault: true)' in app_delegate,
+check('PresentationAppIcon(name: "Default", imageName: "SpaceGramIconDefaultPreview", isDefault: true)' in app_delegate,
       "Default SpaceGram icon is not exposed to Appearance")
-check('PresentationAppIcon(name: "Alternate", imageName: "SpaceGramIconAlternatePreview")' in app_delegate,
-      "Alternate SpaceGram icon is not exposed to Appearance")
+for icon_name in spacegram_icon_names:
+    check(f'PresentationAppIcon(name: "{icon_name}", imageName: "SpaceGramIcon{icon_name}Preview")' in app_delegate,
+          f"{icon_name} SpaceGram icon is not exposed to Appearance")
+check("!availableAlternateIconNames.contains(iconName)" in app_delegate,
+      "Known SpaceGram alternate icons would be reset on activation")
 badge_source = ROOT / "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/NagramProfileBadge.swift"
 check(not badge_source.exists(), "Retired project-role badge source remains")
 for path in badge_source.parent.glob("*.swift"):
@@ -155,11 +169,15 @@ icon_catalogs = [
     ROOT / "Telegram/Telegram-iOS/SpaceGramAlternateAppIcon.xcassets",
 ]
 check((icon_catalogs[0] / "SpaceGramAppIcon.appiconset/Contents.json").is_file(), "Primary icon catalog missing")
-check((icon_catalogs[1] / "Alternate.appiconset/Contents.json").is_file(), "Alternate icon catalog missing")
+for icon_name in spacegram_icon_names:
+    check((icon_catalogs[1] / f"{icon_name}.appiconset/Contents.json").is_file(), f"{icon_name} icon catalog missing")
+check(not (icon_catalogs[1] / "Alternate.appiconset").exists(), "Removed Alternate icon catalog remains")
+rendition_count = 0
 for icon_catalog in icon_catalogs:
     for path in icon_catalog.rglob("Contents.json"):
         for item in json.loads(path.read_text(encoding="utf-8")).get("images", []):
             if "filename" in item:
+                rendition_count += 1
                 asset = path.parent / item["filename"]
                 check(asset.is_file(), f"Missing icon asset: {path}: {item['filename']}")
                 if asset.is_file():
@@ -170,6 +188,44 @@ for icon_catalog in icon_catalogs:
                         expected = tuple(round(float(value) * float(item["scale"].rstrip("x"))) for value in item["size"].split("x"))
                         check(struct.unpack(">II", png[16:24]) == expected, f"Incorrect icon dimensions: {asset}")
                         check(png[24:26] == bytes((8, 2)), f"Icon must be 8-bit RGB: {asset}")
+                        check(b"iCCP" in png, f"Icon lacks an embedded color profile: {asset}")
+                        check(b"eXIf" not in png, f"Icon contains EXIF metadata: {asset}")
+check(rendition_count == 119, f"Expected 119 app-icon renditions, found {rendition_count}")
+
+prepared_directory = ROOT / "Branding/SpaceGram/PreparedIcons"
+prepared_names = ("SpaceGram-Alternate",) + spacegram_icon_names
+source_directory = ROOT / "Branding/SpaceGram/IconSources"
+source_pngs = {path.stem for path in source_directory.glob("*.png")}
+check(source_pngs == set(prepared_names), f"Unexpected SpaceGram icon sources: {sorted(source_pngs)}")
+check(not (source_directory / "SpaceGram-Primary.png").exists(), "Removed SpaceGram-Primary source was restored")
+try:
+    from PIL import Image, ImageStat
+except ImportError:
+    print("SKIP prepared-icon pixel checks: Pillow unavailable")
+else:
+    for icon_name in prepared_names:
+        path = prepared_directory / f"{icon_name}.png"
+        check(path.is_file(), f"Prepared master missing: {path}")
+        if not path.is_file():
+            continue
+        with Image.open(path) as image:
+            check(image.size == (1024, 1024), f"Prepared master dimensions: {path}: {image.size}")
+            check(image.mode == "RGB", f"Prepared master must be RGB: {path}: {image.mode}")
+            check(bool(image.info.get("icc_profile")), f"Prepared master lacks sRGB profile: {path}")
+            check("exif" not in image.info, f"Prepared master contains EXIF: {path}")
+            edge_bands = (
+                image.crop((0, 0, 1024, 32)),
+                image.crop((0, 992, 1024, 1024)),
+                image.crop((0, 0, 32, 1024)),
+                image.crop((992, 0, 1024, 1024)),
+            )
+            # A still-inset mockup has broad, nearly uniform black strips on
+            # all four sides. Real full-canvas artwork (including a retained
+            # thin tile-edge highlight) has visible variation in every band.
+            for edge_index, band in enumerate(edge_bands):
+                extrema = ImageStat.Stat(band.convert("L")).extrema[0]
+                check(extrema[1] - extrema[0] >= 12,
+                      f"Suspiciously uniform outer field ({edge_index}) in {path}")
 
 try:
     import yaml

@@ -50,6 +50,17 @@ import ContextUI
 import ContextControllerImpl
 import ProxyServerPreviewScreen
 
+// MARK: NAGRAM — data-driven SpaceGram icon collection.
+private let spaceGramAppIcons: [PresentationAppIcon] = [
+    PresentationAppIcon(name: "Default", imageName: "SpaceGramIconDefaultPreview", isDefault: true),
+    PresentationAppIcon(name: "Moon", imageName: "SpaceGramIconMoonPreview"),
+    PresentationAppIcon(name: "Earth", imageName: "SpaceGramIconEarthPreview"),
+    PresentationAppIcon(name: "Mars", imageName: "SpaceGramIconMarsPreview"),
+    PresentationAppIcon(name: "Sun", imageName: "SpaceGramIconSunPreview"),
+    PresentationAppIcon(name: "Saturn", imageName: "SpaceGramIconSaturnPreview"),
+    PresentationAppIcon(name: "Neptune", imageName: "SpaceGramIconNeptunePreview"),
+]
+
 #if canImport(AppCenter)
 import AppCenter
 import AppCenterCrashes
@@ -970,10 +981,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }, getAvailableAlternateIcons: {
             if #available(iOS 10.3, *) {
                 // MARK: NAGRAM — SpaceGram product icons use the native iOS alternate-icon API.
-                return [
-                    PresentationAppIcon(name: "Default", imageName: "SpaceGramIconPrimaryPreview", isDefault: true),
-                    PresentationAppIcon(name: "Alternate", imageName: "SpaceGramIconAlternatePreview"),
-                ]
+                return application.supportsAlternateIcons ? spaceGramAppIcons : []
             } else {
                 return []
             }
@@ -2028,9 +2036,10 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // MARK: NAGRAM — reset a removed alternate icon after upgrading to SpaceGram.
+        // MARK: NAGRAM — reset only removed/unknown icon names after an upgrade.
         // UIKit owns the selection; nil restores the primary asset-catalog icon.
-        if let iconName = application.alternateIconName {
+        let availableAlternateIconNames = Set(spaceGramAppIcons.filter { !$0.isDefault }.map(\.name))
+        if let iconName = application.alternateIconName, !availableAlternateIconNames.contains(iconName) {
             application.setAlternateIconName(nil, completionHandler: { error in
                 if let error = error {
                     Logger.shared.log("App \(self.episodeId)", "failed to reset removed app icon \(iconName): \(error.localizedDescription)")

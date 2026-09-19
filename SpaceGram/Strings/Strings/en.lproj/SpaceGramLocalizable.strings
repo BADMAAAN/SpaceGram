@@ -963,6 +963,13 @@
 "SpaceGram.Hub.JumpToFirst" = "Jump to first message";
 "SpaceGram.Hub.DisableAutoDownload" = "Disable auto-download";
 "SpaceGram.Hub.AlternateIcon" = "Alternate";
+"SpaceGram.AppIcon.Default" = "Default";
+"SpaceGram.AppIcon.Moon" = "Moon";
+"SpaceGram.AppIcon.Earth" = "Earth";
+"SpaceGram.AppIcon.Mars" = "Mars";
+"SpaceGram.AppIcon.Sun" = "Sun";
+"SpaceGram.AppIcon.Saturn" = "Saturn";
+"SpaceGram.AppIcon.Neptune" = "Neptune";
 "SpaceGram.Hub.ForwardWithoutName" = "Forward without sender name";
 "SpaceGram.UI.APIKey" = "API Key";
 "SpaceGram.UI.EnterAPIKey" = "Enter API key";

@@ -352,6 +352,13 @@
 "SpaceGram.Hub.JumpToFirst" = "К первому сообщению";
 "SpaceGram.Hub.DisableAutoDownload" = "Отключить автозагрузку";
 "SpaceGram.Hub.AlternateIcon" = "Альтернативный";
+"SpaceGram.AppIcon.Default" = "По умолчанию";
+"SpaceGram.AppIcon.Moon" = "Луна";
+"SpaceGram.AppIcon.Earth" = "Земля";
+"SpaceGram.AppIcon.Mars" = "Марс";
+"SpaceGram.AppIcon.Sun" = "Солнце";
+"SpaceGram.AppIcon.Saturn" = "Сатурн";
+"SpaceGram.AppIcon.Neptune" = "Нептун";
 "SpaceGram.Hub.ForwardWithoutName" = "Переслать без имени";
 "SpaceGram.UI.APIKey" = "Ключ API";
 "SpaceGram.UI.EnterAPIKey" = "Введите ключ API";

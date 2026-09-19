@@ -18,10 +18,45 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>Alternate</key>
+			<key>Earth</key>
 			<dict>
 				<key>CFBundleIconName</key>
-				<string>Alternate</string>
+				<string>Earth</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Mars</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Mars</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Moon</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Moon</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Neptune</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Neptune</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Saturn</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Saturn</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Sun</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Sun</string>
 				<key>UIPrerenderedIcon</key>
 				<true/>
 			</dict>
@@ -38,10 +73,45 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>Alternate</key>
+			<key>Earth</key>
 			<dict>
 				<key>CFBundleIconName</key>
-				<string>Alternate</string>
+				<string>Earth</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Mars</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Mars</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Moon</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Moon</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Neptune</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Neptune</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Saturn</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Saturn</string>
+				<key>UIPrerenderedIcon</key>
+				<true/>
+			</dict>
+			<key>Sun</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>Sun</string>
 				<key>UIPrerenderedIcon</key>
 				<true/>
 			</dict>

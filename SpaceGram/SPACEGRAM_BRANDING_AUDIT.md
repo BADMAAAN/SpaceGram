@@ -1,5 +1,47 @@
 # SpaceGram Branding Audit
 
+## Current cosmic app-icon collection — 2026-09-20
+
+This section supersedes the historical two-icon notes below.
+
+- Default source: `Branding/SpaceGram/IconSources/SpaceGram-Alternate.png`.
+- Alternate sources found and connected: `Moon.png`, `Earth.png`, `Mars.png`,
+  `Sun.png`, `Saturn.png`, and `Neptune.png`.
+- `SpaceGram-Primary.png` was intentionally removed by the product owner and
+  was not restored or recovered from history.
+- Source files were not edited. Prepared 1024 × 1024 masters are under
+  `Branding/SpaceGram/PreparedIcons/`; only crop, proportional Lanczos resize,
+  RGB/sRGB normalization, and metadata cleanup were applied.
+- Crop bounds in the original 1254 × 1254 pixel coordinates (`left, top,
+  right, bottom`) are: Default full canvas `(0, 0, 1254, 1254)`; Moon
+  `(130, 117, 1122, 1109)`; Earth `(127, 111, 1122, 1106)`; Mars
+  `(130, 118, 1122, 1110)`; Sun `(130, 117, 1121, 1108)`; Saturn
+  `(129, 117, 1121, 1109)`; Neptune `(130, 118, 1122, 1110)`.
+- Large external black margins were found in all six planet sources and
+  removed. The Default source was already full-bleed. The source tile's thin
+  edge highlight was retained as artwork; no new mask, rounded rectangle,
+  frame, border, inpainting, or generative edit was introduced.
+- The generated contact sheet is
+  `Branding/SpaceGram/PreparedIcons/SpaceGram-Icon-Contact-Sheet.png`. It is an
+  audit-only file and is not packaged by `Telegram/BUILD`.
+- Seven catalogs contain 17 current slots each, for 119 app-icon renditions.
+  The obsolete iPad `76x76@1x` slot is absent. All generated app-icon PNGs are
+  opaque 8-bit RGB with embedded sRGB profiles, exact manifest dimensions, no
+  EXIF, and no transparent outer fringe.
+- `SpaceGramAppIcon` is the primary catalog and is rendered from
+  `SpaceGram-Alternate`. Moon, Earth, Mars, Sun, Saturn, and Neptune remain
+  native iOS alternate icons selected through `UIApplication.setAlternateIconName`.
+  Returning to Default passes `nil`, so `UIApplication.alternateIconName`
+  correctly reflects the selection.
+- The existing Appearance picker is data-driven, shows real preview resources,
+  has no premium locks, and uses explicit English/Russian product names.
+- The consistency checker validates source inventory, prepared master size,
+  color mode/profile/metadata, suspiciously uniform outer edge fields,
+  catalog manifests, 119 rendition files, plist keys, BUILD wiring, picker
+  entries, dangling legacy catalog references, and the removed-primary guard.
+- Feature commit: `PENDING`.
+- GitHub Actions `SpaceGram iPhone Test Build`: `PENDING`.
+
 > Historical pre-migration snapshot. The source namespace has since moved to
 > `SpaceGram/`; see [the overnight audit](../SPACEGRAM_OVERNIGHT_AUDIT.md) and
 > [migration contracts](../SPACEGRAM_INTERNAL_MIGRATION_AUDIT.md).
