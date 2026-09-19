@@ -1080,6 +1080,17 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             })))
         }
 
+        // MARK: NAGRAM — reuse native history navigation; no full-history scan.
+        if SpaceGramSettings.shared.spaceGramEnabled && SpaceGramSettings.shared.showJumpToFirst,
+           message.id.namespace == Namespaces.Message.Cloud && !isScheduled {
+            actions.append(.action(ContextMenuActionItem(text: ngI18n("SpaceGram.Hub.JumpToFirst", chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/GoToMessage"), color: theme.actionSheet.primaryTextColor)
+            }, action: { _, f in
+                f(.dismissWithoutContent)
+                controllerInteraction.navigateToFirstDateMessage(1, false)
+            })))
+        }
+
         if isSharedMediaPolls && messages.count == 1 {
             actions.append(.viewInChat, .action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.SharedMedia_ViewInChat, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/GoToMessage"), color: theme.actionSheet.primaryTextColor)

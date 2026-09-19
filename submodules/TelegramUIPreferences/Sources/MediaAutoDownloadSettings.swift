@@ -1,4 +1,6 @@
 import Foundation
+// MARK: NAGRAM
+import SpaceGramSettings
 import UIKit
 import Postbox
 import SwiftSignalKit
@@ -565,6 +567,8 @@ public func isAutodownloadEnabledForAnyPeerType(category: MediaAutoDownloadCateg
 }
 
 public func shouldDownloadMediaAutomatically(settings: MediaAutoDownloadSettings, peerType: MediaAutoDownloadPeerType, networkType: MediaAutoDownloadNetworkType, authorPeerId: PeerId? = nil, contactsPeerIds: Set<PeerId> = Set(), media: Media?, isStory: Bool = false, isAd: Bool = false) -> Bool {
+    // MARK: NAGRAM — preserve native per-network choices and manual downloads.
+    if SpaceGramSettings.shared.spaceGramEnabled && SpaceGramSettings.shared.disableAutoDownload { return false }
     if isAd {
         return true
     }
@@ -602,6 +606,8 @@ public func shouldDownloadMediaAutomatically(settings: MediaAutoDownloadSettings
 }
 
 public func shouldPredownloadMedia(settings: MediaAutoDownloadSettings, peerType: MediaAutoDownloadPeerType, networkType: MediaAutoDownloadNetworkType, media: Media) -> Bool {
+    // MARK: NAGRAM
+    if SpaceGramSettings.shared.spaceGramEnabled && SpaceGramSettings.shared.disableAutoDownload { return false }
     if #available(iOSApplicationExtension 10.3, *) {
         if (networkType == .cellular && !settings.cellular.enabled) || (networkType == .wifi && !settings.wifi.enabled) {
             return false

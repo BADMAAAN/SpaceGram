@@ -7418,11 +7418,12 @@ public final class PeerInfoScreenImpl: ViewController, PeerInfoScreen, KeyShortc
     }
 
     // MARK: NAGRAM — expose the existing account switcher for the chat-list header settings button.
-    public func presentAccountSwitcher(sourceView: UIView, gesture: ContextGesture, addAccount: (() -> Void)? = nil) {
+    public func presentAccountSwitcher(sourceView: UIView, gesture: ContextGesture?, addAccount: (() -> Void)? = nil) {
         self.presentAccountSwitcher(source: .reference(SettingsHeaderContextReferenceContentSource(controller: self, sourceView: sourceView)), gesture: gesture, addAccount: addAccount)
     }
 
-    private func presentAccountSwitcher(source: ContextContentSource, gesture: ContextGesture, addAccount: (() -> Void)? = nil) {
+    // MARK: NAGRAM — support a normal settings-row tap without a synthetic gesture.
+    private func presentAccountSwitcher(source: ContextContentSource, gesture: ContextGesture?, addAccount: (() -> Void)? = nil) {
         guard let (maybePrimary, other) = self.accountsAndPeersValue, let primary = maybePrimary else {
             return
         }

@@ -39,6 +39,32 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         source = (ROOT / "SpaceGram/SettingsSignal/Sources/SpaceGramSettingsSignal.swift").read_text(encoding="utf-8")
         self.assertLess(source.index("_ = SpaceGramSettings.shared"), source.index("NotificationCenter.default.addObserver"))
 
+    def test_formatter_default_and_legacy_key_are_preserved(self):
+        source = (ROOT / "SpaceGram/Enhancements/Settings/NagramSettings.swift").read_text(encoding="utf-8")
+        self.assertIn('@NagramDefault("nagram.showTextStyleToolbar", false)', source)
+        wrapper = source[:source.index("public enum")]
+        self.assertIn("object(forKey:", wrapper)
+
+    def test_advanced_screen_russian_labels(self):
+        source = (ROOT / "SpaceGram/Enhancements/SettingsUI/NagramSettingsController.swift").read_text(encoding="utf-8")
+        keys = set(re.findall(r'(?:titleKey|headerKey|footerKey): "([^"]+)"', source))
+        catalog = (ROOT / "SpaceGram/Strings/Strings/ru.lproj/SpaceGramLocalizable.strings").read_text(encoding="utf-8")
+        translated = set(re.findall(r'^"([^"]+)"\s*=', catalog, re.M))
+        self.assertFalse(keys - translated, keys - translated)
+
+    def test_delayed_send_preserves_native_schedule_and_call_exception(self):
+        source = (ROOT / "submodules/TelegramUI/Sources/ChatController.swift").read_text(encoding="utf-8")
+        hook = source[source.index("func spaceGramDelayedMessages"):source.index("func sendMessages(_ messages:")]
+        self.assertIn("OutgoingScheduleInfoMessageAttribute", hook)
+        self.assertIn("!attributes.contains", hook)
+        self.assertNotIn("Timer(", hook)
+        composer = (ROOT / "submodules/TelegramUI/Sources/Chat/ChatControllerLoadDisplayNode.swift").read_text(encoding="utf-8")
+        self.assertIn("spaceGramDelayedMessages(strongSelf.transformEnqueueMessages", composer)
+        self.assertIn("var shouldOpenScheduledMessages = delayedMessages.1", composer)
+        self.assertIn("strongSelf.openScheduledMessages(force: true", composer)
+        activity = (ROOT / "submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift").read_text(encoding="utf-8")
+        self.assertIn("if !isSpeakingInGroupCall(activity)", activity)
+
 
 if __name__ == "__main__":
     unittest.main()

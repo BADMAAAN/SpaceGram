@@ -321,7 +321,7 @@
 
 "Nagram.MessageMenu.Item.forward" = "Forward";
 
-"Nagram.MessageMenu.Item.forwardWithoutQuote" = "Forward Without Quote";
+"Nagram.MessageMenu.Item.forwardWithoutQuote" = "Forward Without Sender Name";
 
 "Nagram.MessageMenu.Item.report" = "Report";
 
@@ -960,3 +960,31 @@
 "SpaceGram.Hub.DelayedSendInfo" = "Sends messages after a short delay to reduce the chance of appearing online. Requires all four Ghost controls. Text: 12 seconds; media: based on size. Pending messages open in Telegram’s Scheduled Messages, where you can edit or cancel them. Slow uploads or an expired schedule can still reveal activity. Does not apply to secret chats, bots, forwards, paid messages or story replies.";
 "SpaceGram.Hub.GhostOn" = "Ghost Mode on";
 "SpaceGram.Hub.GhostOff" = "Ghost Mode off";
+"SpaceGram.Hub.JumpToFirst" = "Jump to first message";
+"SpaceGram.Hub.DisableAutoDownload" = "Disable auto-download";
+"SpaceGram.Hub.AlternateIcon" = "Alternate";
+"SpaceGram.Hub.ForwardWithoutName" = "Forward without sender name";
+"SpaceGram.UI.APIKey" = "API Key";
+"SpaceGram.UI.EnterAPIKey" = "Enter API key";
+"SpaceGram.UI.Model" = "Model";
+"SpaceGram.UI.ModelIdentifier" = "Model identifier";
+"SpaceGram.UI.Save" = "Save";
+"SpaceGram.UI.RemoveKey" = "Remove API Key";
+"SpaceGram.UI.KeyError" = "Unable to update the API key.";
+"SpaceGram.UI.ModelError" = "Enter a model identifier.";
+"SpaceGram.UI.Status" = "Status";
+"SpaceGram.UI.Configured" = "Configured";
+"SpaceGram.UI.NotConfigured" = "Not configured";
+"SpaceGram.UI.Provider" = "Qwen Provider";
+"SpaceGram.UI.MediaUsageError" = "Unable to read Media Archive usage on this device.";
+"SpaceGram.UI.MediaSettingsError" = "Unable to update Media Archive settings.";
+"SpaceGram.UI.MediaCleanError" = "Unable to clean expired media.";
+"SpaceGram.UI.MediaClearInfo" = "All saved media for this account will be removed. History text remains.";
+"SpaceGram.UI.MediaClearError" = "Unable to clear Media Archive.";
+"SpaceGram.UI.ChatClearInfo" = "Saved history and linked media for this chat will be removed from this device.";
+"SpaceGram.UI.MediaClearConfirm" = "Clear Media Archive?";
+"SpaceGram.UI.MediaHistoryClearInfo" = "All locally saved media for this account will be removed. History text and events will remain.";
+"SpaceGram.UI.MediaArchive" = "Media Archive";
+"SpaceGram.UI.MediaClearRetry" = "Unable to clear saved media. Try again.";
+"SpaceGram.UI.MessageHistory" = "Message History";
+"SpaceGram.UI.HistoryRemoveRetry" = "Unable to remove saved history. Try again.";

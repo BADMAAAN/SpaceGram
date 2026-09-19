@@ -51,15 +51,15 @@ private enum SpaceGramAISettingsEntry: ItemListNodeEntry {
         case let .header(_, section, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
         case let .apiKey(_, section, text):
-            return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: "API Key", textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: "Enter API key", type: .password, clearType: .onFocus, sectionId: section, textUpdated: arguments.updateAPIKey, action: {})
+            return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: ngI18n("SpaceGram.UI.APIKey", presentationData.strings.baseLanguageCode), textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: ngI18n("SpaceGram.UI.EnterAPIKey", presentationData.strings.baseLanguageCode), type: .password, clearType: .onFocus, sectionId: section, textUpdated: arguments.updateAPIKey, action: {})
         case let .model(_, section, text):
-            return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: "Model", textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: "Model identifier", type: .regular(capitalization: false, autocorrection: false), clearType: .onFocus, sectionId: section, textUpdated: arguments.updateModel, action: {})
+            return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: ngI18n("SpaceGram.UI.Model", presentationData.strings.baseLanguageCode), textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: ngI18n("SpaceGram.UI.ModelIdentifier", presentationData.strings.baseLanguageCode), type: .regular(capitalization: false, autocorrection: false), clearType: .onFocus, sectionId: section, textUpdated: arguments.updateModel, action: {})
         case let .status(_, section, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: section)
         case let .save(_, section):
-            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Save", kind: .generic, alignment: .natural, sectionId: section, style: .blocks, action: arguments.save)
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: ngI18n("SpaceGram.UI.Save", presentationData.strings.baseLanguageCode), kind: .generic, alignment: .natural, sectionId: section, style: .blocks, action: arguments.save)
         case let .removeKey(_, section):
-            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Remove API Key", kind: .destructive, alignment: .natural, sectionId: section, style: .blocks, action: arguments.removeAPIKey)
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: ngI18n("SpaceGram.UI.RemoveKey", presentationData.strings.baseLanguageCode), kind: .destructive, alignment: .natural, sectionId: section, style: .blocks, action: arguments.removeAPIKey)
         case let .context(_, section, value):
             return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: ngI18n("SpaceGram.AI.ContextLimit", presentationData.strings.baseLanguageCode), label: String(value), sectionId: section, style: .blocks, action: arguments.cycleContext)
         }
@@ -96,12 +96,12 @@ public func spaceGramAISettingsController(context: AccountContext) -> ViewContro
     }
     let showError: () -> Void = {
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-        controller?.present(textAlertController(context: context, title: "Qwen", text: "Unable to update the API key.", actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+        controller?.present(textAlertController(context: context, title: "Qwen", text: ngI18n("SpaceGram.UI.KeyError", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
     }
     let arguments = SpaceGramAISettingsArguments(updateAPIKey: { apiKey = $0 }, updateModel: { model = $0 }, save: {
         guard !model.isEmpty else {
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            controller?.present(textAlertController(context: context, title: "Qwen", text: "Enter a model identifier.", actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+            controller?.present(textAlertController(context: context, title: "Qwen", text: ngI18n("SpaceGram.UI.ModelError", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
             return
         }
         do {
@@ -138,14 +138,14 @@ public func spaceGramAISettingsController(context: AccountContext) -> ViewContro
             .header(0, 0, "Qwen"),
             .apiKey(1, 0, apiKey),
             .model(2, 0, model),
-            .header(3, 1, "Status"),
-            .status(4, 1, isConfigured ? "Configured" : "Not configured"),
+            .header(3, 1, ngI18n("SpaceGram.UI.Status", presentationData.strings.baseLanguageCode)),
+            .status(4, 1, isConfigured ? ngI18n("SpaceGram.UI.Configured", presentationData.strings.baseLanguageCode) : ngI18n("SpaceGram.UI.NotConfigured", presentationData.strings.baseLanguageCode)),
             .save(5, 2),
             .removeKey(6, 2),
             .context(7, 3, SpaceGramSettings.shared.aiContextCharacters),
             .status(8, 3, ngI18n("SpaceGram.AI.ContextHelp", presentationData.strings.baseLanguageCode)),
         ]
-        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("Qwen Provider"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text(ngI18n("SpaceGram.UI.Provider", presentationData.strings.baseLanguageCode)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (controllerState, (ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: true), arguments))
     }
     let itemListController = ItemListController(context: context, state: signal)

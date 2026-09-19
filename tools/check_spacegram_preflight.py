@@ -4,6 +4,7 @@ Run python tools/check_spacegram_preflight.py; optionally reuse installed
 tree-sitter, tree-sitter-swift and PyYAML. No packages are installed by this tool.
 """
 import ast
+import argparse
 import json
 from pathlib import Path
 import re
@@ -12,6 +13,9 @@ import sys
 import plistlib
 
 ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--report", type=Path, default=ROOT / "SpaceGram/audits/overnight-preflight.json")
+args = parser.parse_args()
 errors = []
 report = {}
 
@@ -123,7 +127,7 @@ else:
     report["yaml"] = len(workflows)
 
 report["errors"] = errors
-out = ROOT / "SpaceGram/audits/overnight-preflight.json"
+out = args.report
 out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 for error in errors:
     print("FAIL", error)

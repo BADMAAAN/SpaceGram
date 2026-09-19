@@ -154,6 +154,12 @@ public final class SpaceGramSettings {
     @SpaceGramDefault("spacegram.settings.showGhostButton", false)
     public var showGhostButton: Bool
 
+    @SpaceGramDefault("spacegram.settings.disableAutoDownload", false)
+    public var disableAutoDownload: Bool
+
+    @SpaceGramDefault("spacegram.settings.showJumpToFirst", false)
+    public var showJumpToFirst: Bool
+
     @SpaceGramDefault("spacegram.settings.mediaArchiveEnabled", false)
     public var mediaArchiveEnabled: Bool
 

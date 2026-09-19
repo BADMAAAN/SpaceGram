@@ -445,7 +445,7 @@ public final class NagramSettings {
     @NagramDefault("nagram.sendWithReturnKey", false)
     public var sendWithReturnKey: Bool
     /// 选中文本时显示文字样式工具栏
-    @NagramDefault("nagram.showTextStyleToolbar", true)
+    @NagramDefault("nagram.showTextStyleToolbar", false)
     public var showTextStyleToolbar: Bool
     /// 发送时自动插入中英文空格
     @NagramDefault("nagram.enablePanguOnSending", false)

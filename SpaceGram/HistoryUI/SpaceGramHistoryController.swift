@@ -236,7 +236,7 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
                 }
             }
             if unreadableCount > 0 {
-                entries.append(SpaceGramHistoryEntry(stableId: 2000, section: 3, title: ngI18n("SpaceGram.History.SomeUnreadable", lang), text: "\(unreadableCount) saved records are damaged or unsupported. Other records remain available."))
+                entries.append(SpaceGramHistoryEntry(stableId: 2000, section: 3, title: ngI18n("SpaceGram.History.SomeUnreadable", lang), text: "\(unreadableCount) · " + ngI18n("SpaceGram.History.Damaged", lang)))
             }
             if rows.isEmpty {
                 entries.append(SpaceGramHistoryEntry(stableId: 2001, section: 3, title: ngI18n("SpaceGram.History.NoMatches", lang), text: ngI18n("SpaceGram.History.TryFilters", lang)))
@@ -246,7 +246,7 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
                 let status = event.map { spaceGramHistoryEventTitle($0, detail: false, lang: presentationData.strings.baseLanguageCode) } ?? ngI18n("SpaceGram.History.SavedRevision", lang)
                 let mediaLabel = row.record.events.contains(where: { event in (event.mediaAssetIds ?? []).contains(where: { archive.availableAssetIds.contains($0) }) }) ? " · " + ngI18n("SpaceGram.Archive", presentationData.strings.baseLanguageCode) : ""
                 let time = spaceGramHistoryDate(event?.observedTimestamp ?? spaceGramHistoryLatestTimestamp(row.record), formatter: formatter)
-                let revision = row.record.revisions.first { $0.number == event?.revisionNumber } ?? row.record.revisions.last
+                let revision = event == nil ? row.record.revisions.last : row.record.revisions.first { $0.number == event?.revisionNumber }
                 let author = revision?.snapshot.authorPeerId.flatMap { row.authors[$0] }.map { spaceGramHistoryPeerTitle($0, presentationData: presentationData) }
                 entries.append(SpaceGramHistoryEntry(
                     stableId: Int32(index + 2002),
@@ -265,7 +265,7 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
             }
             if let peerId = filterValue.peerId {
                 entries.append(SpaceGramHistoryEntry(stableId: 4000, section: 4, title: ngI18n("SpaceGram.History.DeleteChat", lang), text: "", action: {
-                    confirm(ngI18n("SpaceGram.History.DeleteChatConfirm", lang), "Saved history and linked media for this chat will be removed from this device.", {
+                    confirm(ngI18n("SpaceGram.History.DeleteChatConfirm", lang), ngI18n("SpaceGram.UI.ChatClearInfo", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), {
                         let _ = context.account.postbox.transaction { transaction -> [String] in
                             SpaceGramHistoryStore.removePeer(transaction: transaction, peerId: peerId)
                         }.start(next: { ids in SpaceGramMediaArchive.remove(root: root, ids: ids) })
@@ -280,12 +280,12 @@ public func spaceGramHistoryController(context: AccountContext, initialKind: Spa
                 })
             }))
             entries.append(SpaceGramHistoryEntry(stableId: 4002, section: 4, title: ngI18n("SpaceGram.History.ClearMedia", lang), text: "", action: {
-                confirm("Clear Media Archive?", "All locally saved media for this account will be removed. History text and events will remain.", {
+                confirm(ngI18n("SpaceGram.UI.MediaClearConfirm", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), ngI18n("SpaceGram.UI.MediaHistoryClearInfo", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), {
                     SpaceGramMediaArchive.clear(root: root) { success in
                         if !success {
                             Queue.mainQueue().async {
                                 let data = context.sharedContext.currentPresentationData.with { $0 }
-                                presentingController?.present(textAlertController(context: context, title: "Media Archive", text: "Unable to clear saved media. Try again.", actions: [TextAlertAction(type: .defaultAction, title: data.strings.Common_OK, action: {})]), in: .window(.root))
+                                presentingController?.present(textAlertController(context: context, title: ngI18n("SpaceGram.UI.MediaArchive", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), text: ngI18n("SpaceGram.UI.MediaClearRetry", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: data.strings.Common_OK, action: {})]), in: .window(.root))
                             }
                         }
                     }
@@ -379,7 +379,7 @@ private func spaceGramHistoryDetailController(context: AccountContext, key: Spac
     let showRemovalError: () -> Void = {
         Queue.mainQueue().async {
             let data = context.sharedContext.currentPresentationData.with { $0 }
-            presentingController?.present(textAlertController(context: context, title: "Message History", text: "Unable to remove saved history. Try again.", actions: [TextAlertAction(type: .defaultAction, title: data.strings.Common_OK, action: {})]), in: .window(.root))
+            presentingController?.present(textAlertController(context: context, title: ngI18n("SpaceGram.UI.MessageHistory", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), text: ngI18n("SpaceGram.UI.HistoryRemoveRetry", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: data.strings.Common_OK, action: {})]), in: .window(.root))
         }
     }
     let record: Signal<SpaceGramHistoryDetailState, NoError> = .single(.loading)

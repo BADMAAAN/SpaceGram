@@ -45,7 +45,7 @@ def main():
             if variant == "Primary":
                 # 148-point welcome logo at 3x, loaded by RMIntro via AppResources.
                 render(source, APP / "Resources/SpaceGramWelcome.png", (444, 444))
-    print(f"Rendered {count} app-icon renditions and SpaceGramWelcome.png")
+    print("Rendered settings and icon previews" if "--previews-only" in sys.argv else f"Rendered {count} app-icon renditions, welcome and previews")
 
 
 if __name__ == "__main__":

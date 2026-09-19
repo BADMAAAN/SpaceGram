@@ -58,7 +58,7 @@ public func spaceGramMediaArchiveSettingsController(context: AccountContext) -> 
                     if case .migrationConflict = error {
                         alert(ngI18n("SpaceGram.StorageMigrationConflict", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode))
                     } else {
-                        alert("Unable to read Media Archive usage on this device.")
+                        alert(ngI18n("SpaceGram.UI.MediaUsageError", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode))
                     }
                 }
                 refresh()
@@ -69,7 +69,7 @@ public func spaceGramMediaArchiveSettingsController(context: AccountContext) -> 
         SpaceGramMediaArchive.setPolicy(root: root, policy: next) { success in
             Queue.mainQueue().async {
                 if success { policy = next; reload() }
-                else { alert("Unable to update Media Archive settings.") }
+                else { alert(ngI18n("SpaceGram.UI.MediaSettingsError", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode)) }
             }
         }
     }
@@ -110,14 +110,14 @@ public func spaceGramMediaArchiveSettingsController(context: AccountContext) -> 
                 return (references.ids, references.complete)
             }.start(next: { references in
                 SpaceGramMediaArchive.cleanExpired(root: root, referencedIds: references.0, referencesComplete: references.1) { success in
-                    Queue.mainQueue().async { if success { reload() } else { alert("Unable to clean expired media.") } }
+                    Queue.mainQueue().async { if success { reload() } else { alert(ngI18n("SpaceGram.UI.MediaCleanError", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode)) } }
                 }
             })
         }))
         entries.append(SpaceGramMediaSettingsEntry(stableId: 12, section: 5, title: ngI18n("SpaceGram.History.ClearMedia", lang), detail: "", action: {
-            confirm(ngI18n("SpaceGram.History.ClearMedia", lang), "All saved media for this account will be removed. History text remains.", {
+            confirm(ngI18n("SpaceGram.History.ClearMedia", lang), ngI18n("SpaceGram.UI.MediaClearInfo", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), {
                 SpaceGramMediaArchive.clear(root: root) { success in
-                    Queue.mainQueue().async { if success { reload() } else { alert("Unable to clear Media Archive.") } }
+                    Queue.mainQueue().async { if success { reload() } else { alert(ngI18n("SpaceGram.UI.MediaClearError", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode)) } }
                 }
             })
         }))

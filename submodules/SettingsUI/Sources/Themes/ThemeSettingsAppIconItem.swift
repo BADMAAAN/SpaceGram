@@ -8,6 +8,8 @@ import TelegramPresentationData
 import ItemListUI
 import PresentationDataUtils
 import AppBundle
+// MARK: NAGRAM
+import SpaceGramStrings
 
 private func generateBorderImage(theme: PresentationTheme, bordered: Bool, selected: Bool) -> UIImage? {
     return generateImage(CGSize(width: 30.0, height: 30.0), rotatedContext: { size, context in
@@ -390,6 +392,11 @@ class ThemeSettingsAppIconItemNode: ListViewItemNode, ItemListItemNode {
                             var bordered = true
                             do {
                                 switch icon.name {
+                                    // MARK: NAGRAM
+                                    case "Default":
+                                        name = item.strings.Appearance_AppIconDefault
+                                    case "Alternate":
+                                        name = ngI18n("SpaceGram.Hub.AlternateIcon", item.strings.baseLanguageCode)
                                     case "BlueIcon":
                                         name = item.strings.Appearance_AppIconDefault
                                     case "BlackIcon":
