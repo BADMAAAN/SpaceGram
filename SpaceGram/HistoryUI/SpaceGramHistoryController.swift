@@ -68,7 +68,7 @@ private extension SpaceGramHistoryKind {
     }
 }
 
-private struct SpaceGramHistoryFilter {
+private struct SpaceGramHistoryFilter: Equatable {
     var query = ""
     var kind: SpaceGramHistoryKind = .all
     var peerId: Int64?

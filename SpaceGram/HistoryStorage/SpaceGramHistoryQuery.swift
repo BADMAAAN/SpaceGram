@@ -1,6 +1,6 @@
 import Foundation
 
-public enum SpaceGramHistoryKind: Int, CaseIterable {
+public enum SpaceGramHistoryKind: Int, CaseIterable, Equatable {
     case all, edited, deleted, media
 }
 
