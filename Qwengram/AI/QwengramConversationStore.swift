@@ -116,6 +116,28 @@ public final class QwengramConversationStore {
         }
     }
 
+    public func clear(completion: @escaping (Result<Void, Error>) -> Void) {
+        Self.queue.async {
+            do {
+                let parent = self.root.deletingLastPathComponent()
+                var isDirectory: ObjCBool = false
+                guard FileManager.default.fileExists(atPath: parent.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+                    throw QwengramConversationStoreError.unavailable
+                }
+                if FileManager.default.fileExists(atPath: self.root.path) {
+                    let state = try self.root.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+                    guard state.isDirectory == true, state.isSymbolicLink != true else {
+                        throw QwengramConversationStoreError.unavailable
+                    }
+                    try FileManager.default.removeItem(at: self.root)
+                }
+                completion(.success(()))
+            } catch {
+                completion(.failure(error))
+            }
+        }
+    }
+
     // Keep complete messages in chronological order and never split text.
     public static func requestContext(_ messages: [QwengramAIMessage], characterBudget: Int = QwengramConversationStore.maxContextCharacters) -> [QwengramAIMessage] {
         let systemMessages = messages.filter { $0.role == .system }

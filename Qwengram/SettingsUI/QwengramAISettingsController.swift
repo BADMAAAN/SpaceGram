@@ -74,11 +74,12 @@ private final class QwengramAISettingsArguments {
 }
 
 public func qwengramAISettingsController(context: AccountContext) -> ViewController {
+    let accountId = context.account.id.int64
     let updatePromise = ValuePromise<Int32>(0, ignoreRepeated: false)
     var updateValue: Int32 = 0
     var apiKey = ""
     var model = QwengramSettings.shared.qwenModel
-    var isConfigured = (try? QwengramAIKeychain.loadQwenAPIKey()) != nil
+    var isConfigured = (try? QwengramAIKeychain.loadQwenAPIKey(accountId: accountId)) != nil
     var controller: ItemListController?
     let refresh: () -> Void = {
         updateValue += 1
@@ -96,18 +97,18 @@ public func qwengramAISettingsController(context: AccountContext) -> ViewControl
         }
         do {
             if !apiKey.isEmpty {
-                try QwengramAIKeychain.saveQwenAPIKey(apiKey)
+                try QwengramAIKeychain.saveQwenAPIKey(apiKey, accountId: accountId)
                 apiKey = ""
             }
             QwengramSettings.shared.qwenModel = model
-            isConfigured = (try QwengramAIKeychain.loadQwenAPIKey()) != nil
+            isConfigured = (try QwengramAIKeychain.loadQwenAPIKey(accountId: accountId)) != nil
             refresh()
         } catch {
             showError()
         }
     }, removeAPIKey: {
         do {
-            try QwengramAIKeychain.deleteQwenAPIKey()
+            try QwengramAIKeychain.deleteQwenAPIKey(accountId: accountId)
             apiKey = ""
             isConfigured = false
             refresh()

@@ -8,6 +8,7 @@ swift_library(
     ]),
     deps = [
         "//Qwengram/Enhancements/Settings:NagramSettings", # MARK: NAGRAM — 后台通知复用消息屏蔽规则。
+        "//Qwengram/Privacy:QwengramPrivacy", # MARK: NAGRAM — per-account notification privacy.
         "//submodules/Postbox:Postbox",
         "//submodules/TelegramCore:TelegramCore",
         "//submodules/BuildConfig:BuildConfig",

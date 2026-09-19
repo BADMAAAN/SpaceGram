@@ -245,6 +245,39 @@ remain unavailable without macOS/Xcode. No Actions are used.
 
 ## Other upstream hooks
 
+- **File:** `submodules/AppLock/Sources/AppLock.swift`
+  **Section:** lock-state evaluation
+  **Reason:** Extends Telegram's existing App Lock timeout with the `-1` persisted
+  value for immediate locking after background and after a process relaunch. This
+  keeps the native PIN/biometric overlay, fallback and lifecycle handling.
+  **Rebase note:** Preserve `isInitialEvaluation` and `immediateLockPending`; a
+  live settings change must not lock the foreground app, while a background or
+  first evaluation after launch must stay locked until successful unlock.
+
+- **File:** `submodules/SettingsUI/Sources/Privacy and Security/PasscodeOptionsController.swift`
+  **Section:** public controller entry point and autolock values
+  **Reason:** Lets Qwengram Privacy & Security open Telegram's single passcode
+  settings screen and adds the immediate timeout choice. No second passcode store
+  or overlay is introduced.
+  **Rebase note:** Keep `nil` as Disabled and `-1` as Immediately. Positive values
+  retain Telegram's native timeout semantics.
+
+- **File:** `submodules/TelegramUI/Components/TelegramAccountAuxiliaryMethods/Sources/TelegramAccountAuxiliaryMethods.swift`
+  **Section:** `PhotoLibraryMediaResource` fetch
+  **Reason:** Reads the selected account's Qwengram metadata policy off the main
+  thread. When enabled, the normal photo-library result is re-encoded without
+  EXIF/GPS before upload.
+  **Rebase note:** Apply only to complete, ordinary still-image results. Original
+  files/documents, animated images and videos must keep their bytes.
+
+- **File:** `Telegram/NotificationService/Sources/NotificationService.swift`
+  **Section:** account discovery and `NotificationContent.generate`
+  **Reason:** Loads the account-scoped redaction policy only after the encrypted
+  notification key resolves its account, then hides configured identity, preview,
+  rich-body and attachment presentation without changing delivery metadata.
+  **Rebase note:** Preserve sound, badge, category, thread and `userInfo`. Error and
+  control notifications before account resolution retain native content.
+
 - **File:** `submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoSettingsItems.swift`
   **Section:** `SettingsSection` and `settingsItems`
   **Reason:** Adds the Qwengram settings entry.

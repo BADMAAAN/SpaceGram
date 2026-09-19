@@ -16,6 +16,7 @@ import FetchVideoMediaResource
 import FetchAudioMediaResource
 import Display
 import UIKit
+import QwengramPrivacy // MARK: NAGRAM — outgoing photo metadata policy.
 
 public func makeTelegramAccountAuxiliaryMethods(uploadInBackground: ((Postbox, MediaResource) -> Signal<String?, NoError>)?) -> AccountAuxiliaryMethods {
     return AccountAuxiliaryMethods(fetchResource: { postbox, resource, ranges, _ in
@@ -50,17 +51,28 @@ public func makeTelegramAccountAuxiliaryMethods(uploadInBackground: ((Postbox, M
         } else if let resource = resource as? LocalFileGifMediaResource {
             return fetchLocalFileGifMediaResource(resource: resource)
         } else if let photoLibraryResource = resource as? PhotoLibraryMediaResource {
-            return postbox.transaction { transaction -> Bool in
+            return postbox.transaction { transaction -> (Bool, Bool) in
                 var useExif = true
                 let appConfig = currentAppConfiguration(transaction: transaction)
                 if let data = appConfig.data, let _ = data["ios_killswitch_disable_use_photo_exif"] {
                     useExif = false
                 }
-                return useExif
+                let stripMetadata = QwengramPrivacyPolicyStore.loadAccountPolicy(mediaBoxPath: postbox.mediaBox.basePath).stripPhotoMetadata
+                return (stripMetadata ? false : useExif, stripMetadata)
             }
             |> castError(MediaResourceDataFetchError.self)
-            |> mapToSignal { useExif -> Signal<MediaResourceDataFetchResult, MediaResourceDataFetchError> in
-                return fetchPhotoLibraryResource(localIdentifier: photoLibraryResource.localIdentifier, width: photoLibraryResource.width, height: photoLibraryResource.height, format: photoLibraryResource.format, quality: photoLibraryResource.quality, hd: photoLibraryResource.forceHd, useExif: useExif)
+            |> mapToSignal { useExif, stripMetadata -> Signal<MediaResourceDataFetchResult, MediaResourceDataFetchError> in
+                let signal = fetchPhotoLibraryResource(localIdentifier: photoLibraryResource.localIdentifier, width: photoLibraryResource.width, height: photoLibraryResource.height, format: photoLibraryResource.format, quality: photoLibraryResource.quality, hd: photoLibraryResource.forceHd, useExif: useExif)
+                guard stripMetadata else { return signal }
+                return signal |> map { result in
+                    guard case let .dataPart(resourceOffset, data, range, complete) = result, complete,
+                          let sanitized = QwengramMetadataSanitizer.sanitizeStillImage(data) else {
+                        // The native photo path has already re-encoded pixel data,
+                        // so fallback data contains no original EXIF/GPS blocks.
+                        return result
+                    }
+                    return .dataPart(resourceOffset: resourceOffset, data: sanitized, range: 0 ..< Int64(sanitized.count), complete: true)
+                }
             }
         } else if let resource = resource as? ICloudFileResource {
             return fetchICloudFileResource(resource: resource)

@@ -148,4 +148,44 @@ final class QwengramConversationStoreTests: XCTestCase {
         }
         wait(for: [rejected], timeout: 10)
     }
+
+    func testClearRemovesOnlySelectedAccountConversations() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let firstAccount = directory.appendingPathComponent("account-one")
+        let secondAccount = directory.appendingPathComponent("account-two")
+        try FileManager.default.createDirectory(at: firstAccount, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: secondAccount, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let first = QwengramConversationStore(mediaBoxPath: firstAccount.appendingPathComponent("media").path)
+        let second = QwengramConversationStore(mediaBoxPath: secondAccount.appendingPathComponent("media").path)
+        for (store, title) in [(first, "First"), (second, "Second")] {
+            let saved = expectation(description: "saved \(title)")
+            store.save(QwengramAIConversation(title: title)) { result in
+                if case .failure = result { XCTFail("Save failed") }
+                saved.fulfill()
+            }
+            wait(for: [saved], timeout: 10)
+        }
+
+        let cleared = expectation(description: "cleared")
+        first.clear { result in
+            if case .failure = result { XCTFail("Clear failed") }
+            cleared.fulfill()
+        }
+        wait(for: [cleared], timeout: 10)
+
+        let firstList = expectation(description: "first list")
+        first.list { result in
+            guard case let .success(values) = result else { XCTFail("First account unreadable"); firstList.fulfill(); return }
+            XCTAssertTrue(values.isEmpty)
+            firstList.fulfill()
+        }
+        let secondList = expectation(description: "second list")
+        second.list { result in
+            guard case let .success(values) = result else { XCTFail("Second account unreadable"); secondList.fulfill(); return }
+            XCTAssertEqual(values.map(\.title), ["Second"])
+            secondList.fulfill()
+        }
+        wait(for: [firstList, secondList], timeout: 10)
+    }
 }

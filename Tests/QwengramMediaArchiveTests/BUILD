@@ -10,6 +10,7 @@ swift_library(
         "//Qwengram/AI:QwengramAI",
         "//Qwengram/HistoryStorage:QwengramHistoryStorage",
         "//Qwengram/MediaArchive:QwengramMediaArchive",
+        "//Qwengram/Privacy:QwengramPrivacy",
     ],
 )
 

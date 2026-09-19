@@ -137,7 +137,7 @@ public func qwengramTranslatorController(context: AccountContext, initialText: S
         }
         let apiKey: String
         do {
-            guard let storedKey = try QwengramAIKeychain.loadQwenAPIKey(), !storedKey.isEmpty else {
+            guard let storedKey = try QwengramAIKeychain.loadQwenAPIKey(accountId: context.account.id.int64), !storedKey.isEmpty else {
                 showError("Configure Qwen Provider in Qwengram Settings → AI before translating.")
                 return
             }

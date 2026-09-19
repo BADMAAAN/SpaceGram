@@ -70,12 +70,14 @@ private enum QwengramSettingsEntry: ItemListNodeEntry {
 private final class QwengramSettingsArguments {
     let openBotsHub: () -> Void
     let openQwenProvider: () -> Void
+    let openPrivacySettings: () -> Void
     let openHistorySettings: () -> Void
     let openMediaSettings: () -> Void
 
-    init(openBotsHub: @escaping () -> Void, openQwenProvider: @escaping () -> Void, openHistorySettings: @escaping () -> Void, openMediaSettings: @escaping () -> Void) {
+    init(openBotsHub: @escaping () -> Void, openQwenProvider: @escaping () -> Void, openPrivacySettings: @escaping () -> Void, openHistorySettings: @escaping () -> Void, openMediaSettings: @escaping () -> Void) {
         self.openBotsHub = openBotsHub
         self.openQwenProvider = openQwenProvider
+        self.openPrivacySettings = openPrivacySettings
         self.openHistorySettings = openHistorySettings
         self.openMediaSettings = openMediaSettings
     }
@@ -89,6 +91,7 @@ public func qwengramSettingsController(context: AccountContext) -> ViewControlle
             pushControllerImpl?(qwengramBotsController(context: context))
         },
         openQwenProvider: { pushControllerImpl?(qwengramAISettingsController(context: context)) },
+        openPrivacySettings: { pushControllerImpl?(qwengramPrivacySettingsController(context: context)) },
         openHistorySettings: { pushControllerImpl?(qwengramHistorySettingsController(context: context)) },
         openMediaSettings: { pushControllerImpl?(qwengramMediaArchiveSettingsController(context: context)) }
     )
@@ -115,6 +118,7 @@ public func qwengramSettingsController(context: AccountContext) -> ViewControlle
             .about(7, 1, ngI18n("Qwengram.GhostInfo", lang)),
             .header(8, 2, ngI18n("Qwengram.Privacy", lang)),
             .toggle(9, 2, ngI18n("Qwengram.AutomaticReads", lang), suppressAutomaticReads, { QwengramSettings.shared.suppressAutomaticReads = $0 }),
+            .navigation(22, 2, ngI18n("Qwengram.Privacy.Open", lang), true, arguments.openPrivacySettings),
             .header(10, 3, ngI18n("Qwengram.History", lang)),
             .navigation(11, 3, ngI18n("Qwengram.History", lang), true, arguments.openHistorySettings),
             .header(12, 4, ngI18n("Qwengram.Archive", lang)),

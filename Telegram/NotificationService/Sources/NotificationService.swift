@@ -21,6 +21,7 @@ import CoreServices
 import ImageIO
 import UniformTypeIdentifiers
 import NagramSettings // MARK: NAGRAM
+import QwengramPrivacy // MARK: NAGRAM — account-scoped notification privacy.
 
 // MARK: NAGRAM
 private let canFilterEmptyControlNotifications = (Bundle.main.object(forInfoDictionaryKey: "NagramNotificationFilteringEnabled") as? Bool) == true
@@ -534,6 +535,7 @@ private struct NotificationContent: CustomStringConvertible {
     var senderImage: INImage?
     
     var isLockedMessage: String?
+    var qwengramPrivacyPolicy: QwengramPrivacyPolicy = .default
     
     init(isLockedMessage: String?) {
         self.isLockedMessage = isLockedMessage
@@ -596,10 +598,11 @@ private struct NotificationContent: CustomStringConvertible {
 
     func generate() -> UNNotificationContent {
         var content = UNMutableNotificationContent()
+        let privacy = self.qwengramPrivacyPolicy.notificationPresentation(title: self.title, subtitle: self.subtitle, body: self.body, appLocked: self.isLockedMessage != nil)
         
         //Logger.shared.log("NotificationService", "Generating final content: \(self.description)")
 
-        if let title = self.title {
+        if let title = privacy.title {
             if self.silent {
                 content.title = "\(title) 🔕"
             } else {
@@ -607,12 +610,12 @@ private struct NotificationContent: CustomStringConvertible {
             }
         }
         
-        if let subtitle = self.subtitle {
+        if let subtitle = privacy.subtitle {
             content.subtitle = subtitle
         }
-        if let body = self.body {
+        if let body = privacy.body {
             if #available(iOS 18.0, *) {
-                if !self.resolvedEmojiFiles.isEmpty {
+                if privacy.allowsRichBody && !self.resolvedEmojiFiles.isEmpty {
                     let attributedString = NSMutableAttributedString(string: body)
                     
                     let sortedEmoji = self.customEmoji.sorted(by: { $0.range.lowerBound < $1.range.lowerBound })
@@ -674,14 +677,14 @@ private struct NotificationContent: CustomStringConvertible {
         if !self.userInfo.isEmpty {
             content.userInfo = self.userInfo
         }
-        if self.isLockedMessage == nil {
+        if self.isLockedMessage == nil && privacy.allowsAttachments {
             if !self.attachments.isEmpty {
                 content.attachments = self.attachments
             }
         }
 
         if #available(iOS 15.0, *) {
-            if self.isLockedMessage == nil, let senderPerson = self.senderPerson, let customIdentifier = senderPerson.customIdentifier {
+            if self.isLockedMessage == nil, privacy.allowsSender, let senderPerson = self.senderPerson, let customIdentifier = senderPerson.customIdentifier {
                 let mePerson = INPerson(
                     personHandle: INPersonHandle(value: "0", type: .unknown),
                     nameComponents: nil,
@@ -885,6 +888,15 @@ private final class NotificationServiceHandler {
         }
 
         let baseAppBundleId = String(appBundleIdentifier[..<lastDotRange.lowerBound])
+        // MARK: NAGRAM — sanitize only after the notification key identifies
+        // the target account. Error/control notifications keep native content.
+        let currentPrivacyPolicy = Atomic<QwengramPrivacyPolicy>(value: .default)
+        let rawUpdateCurrentContent = updateCurrentContent
+        let updateCurrentContent: (NotificationContent) -> Void = { value in
+            var value = value
+            value.qwengramPrivacyPolicy = currentPrivacyPolicy.with { $0 }
+            rawUpdateCurrentContent(value)
+        }
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
 
         let apiId: Int32 = buildConfig.apiId
@@ -1035,6 +1047,8 @@ private final class NotificationServiceHandler {
 
                 return
             }
+
+            let _ = currentPrivacyPolicy.swap(QwengramPrivacyPolicyStore.loadNotificationPolicy(accountId: recordId.int64, baseBundleId: baseAppBundleId))
 
             let _ = (standaloneStateManagerWithRetry(
                 queue: strongSelf.queue,

@@ -190,7 +190,10 @@ private struct PasscodeOptionsData: Equatable {
 
 private func autolockStringForTimeout(strings: PresentationStrings, timeout: Int32?) -> String {
     if let timeout = timeout {
-        if timeout == 10 {
+        // MARK: NAGRAM — Qwengram exposes an immediate background lock.
+        if timeout == -1 {
+            return Bundle.main.localizedString(forKey: "Qwengram.Privacy.Immediately", value: "Immediately", table: "QwengramLocalizable")
+        } else if timeout == 10 {
             return "If away for 10 seconds"
         } else if timeout == 1 * 60 {
             return strings.PasscodeSettings_AutoLock_IfAwayFor_1minute
@@ -233,7 +236,8 @@ private func passcodeOptionsControllerEntries(presentationData: PresentationData
     return entries
 }
 
-func passcodeOptionsController(context: AccountContext, focusOnItemTag: PasscodeOptionsEntryTag? = nil) -> ViewController {
+// MARK: NAGRAM — Qwengram Privacy & Security reuses Telegram's single App Lock.
+public func passcodeOptionsController(context: AccountContext, focusOnItemTag: PasscodeOptionsEntryTag? = nil) -> ViewController {
     let initialState = PasscodeOptionsControllerState()
     
     let statePromise = ValuePromise(initialState, ignoreRepeated: true)
@@ -349,28 +353,24 @@ func passcodeOptionsController(context: AccountContext, focusOnItemTag: Passcode
                 }).start()
             })
         }
-        var values: [Int32] = [0, 1 * 60, 5 * 60, 1 * 60 * 60, 5 * 60 * 60]
+        // MARK: NAGRAM — nil disables autolock; -1 locks on background/relaunch.
+        var values: [Int32?] = [-1, 1 * 60, 5 * 60, 1 * 60 * 60, 5 * 60 * 60, nil]
         
         #if DEBUG
-            values.append(10)
-            values.sort()
+            values.insert(10, at: 1)
         #endif
         
         var items: [ContextMenuItem] = []
         for value in values {
-            var t: Int32?
-            if value != 0 {
-                t = value
-            }
-            items.append(.action(ContextMenuActionItem(text: autolockStringForTimeout(strings: presentationData.strings, timeout: t), icon: { theme in
-                if currentAutolockTimeout == t {
+            items.append(.action(ContextMenuActionItem(text: autolockStringForTimeout(strings: presentationData.strings, timeout: value), icon: { theme in
+                if currentAutolockTimeout == value {
                     return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Check"), color: theme.contextMenu.primaryColor)
                 } else {
                     return UIImage()
                 }
             }, action: { _, f in
                 f(.default)
-                setAction(t)
+                setAction(value)
             })))
         }
         

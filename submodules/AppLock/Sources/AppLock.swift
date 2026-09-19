@@ -13,10 +13,14 @@ import FastBlur
 import AppLockState
 import PassKit
 
-private func isLocked(passcodeSettings: PresentationPasscodeSettings, state: LockState, isApplicationActive: Bool) -> Bool {
+private func isLocked(passcodeSettings: PresentationPasscodeSettings, state: LockState, immediateLockPending: Bool) -> Bool {
     if state.isManuallyLocked {
         return true
     } else if let autolockTimeout = passcodeSettings.autolockTimeout {
+        // MARK: NAGRAM — -1 is Qwengram's immediate-after-background policy.
+        if autolockTimeout == -1 {
+            return immediateLockPending
+        }
         var bootTimestamp: Int32 = 0
         let uptime = getDeviceUptimeSeconds(&bootTimestamp)
         let timestamp = MonotonicTimestamp(bootTimestamp: bootTimestamp, uptime: uptime)
@@ -97,6 +101,9 @@ public final class AppLockContextImpl: AppLockContext {
     
     private var lastActiveTimestamp: Double?
     private var lastActiveValue: Bool = false
+    // MARK: NAGRAM — distinguishes a relaunch from a live timeout change.
+    private var hasEvaluatedApplicationState = false
+    private var immediateLockPending = false
     
     public init(rootPath: String, window: Window1?, rootController: UIViewController?, applicationBindings: TelegramApplicationBindings, accountManager: AccountManager<TelegramAccountManagerTypes>, presentationDataSignal: Signal<PresentationData, NoError>, lockIconInitialFrame: @escaping () -> CGRect?) {
         assert(Queue.mainQueue().isCurrent())
@@ -126,8 +133,19 @@ public final class AppLockContextImpl: AppLockContext {
             guard let strongSelf = self else {
                 return
             }
+            let isInitialEvaluation = !strongSelf.hasEvaluatedApplicationState
+            strongSelf.hasEvaluatedApplicationState = true
             
             let passcodeSettings: PresentationPasscodeSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.presentationPasscodeSettings]?.get(PresentationPasscodeSettings.self) ?? .defaultSettings
+            // MARK: NAGRAM — persist an immediate background/relaunch decision
+            // until the existing passcode controller successfully unlocks.
+            if passcodeSettings.autolockTimeout == -1 {
+                if isInitialEvaluation || !appInForeground {
+                    strongSelf.immediateLockPending = true
+                }
+            } else {
+                strongSelf.immediateLockPending = false
+            }
             
             let timestamp = CFAbsoluteTimeGetCurrent()
             var becameActiveRecently = false
@@ -154,6 +172,7 @@ public final class AppLockContextImpl: AppLockContext {
             var isCurrentlyLocked = false
             
             if !accessChallengeData.data.isLockable {
+                strongSelf.immediateLockPending = false
                 if let passcodeController = strongSelf.passcodeController {
                     strongSelf.passcodeController = nil
                     passcodeController.dismiss()
@@ -180,7 +199,7 @@ public final class AppLockContextImpl: AppLockContext {
                 
                 strongSelf.autolockTimeout.set(passcodeSettings.autolockTimeout)
                 
-                if isLocked(passcodeSettings: passcodeSettings, state: state, isApplicationActive: appInForeground) {
+                if isLocked(passcodeSettings: passcodeSettings, state: state, immediateLockPending: strongSelf.immediateLockPending) {
                     isCurrentlyLocked = true
                     
                     let biometrics: PasscodeEntryControllerBiometricsMode
@@ -351,6 +370,7 @@ public final class AppLockContextImpl: AppLockContext {
     }
     
     public func unlock() {
+        self.immediateLockPending = false
         self.updateLockState { state in
             var state = state
             
