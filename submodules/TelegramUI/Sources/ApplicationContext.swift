@@ -242,6 +242,10 @@ final class AuthorizedApplicationContext {
     private var enablePostboxTransactionsDiposable: Disposable?
     
     init(sharedApplicationContext: SharedApplicationContext, mainWindow: Window1, context: AccountContextImpl, accountManager: AccountManager<TelegramAccountManagerTypes>, showCallsTab: Bool, reinitializedNotificationSettings: @escaping () -> Void) {
+        // MARK: NAGRAM — stage-only diagnostics, without account IDs or content.
+        #if DEBUG
+        NSLog("SpaceGramStartup: authorized UI begin")
+        #endif
         self.sharedApplicationContext = sharedApplicationContext
         
         setupLegacyComponents(context: context)
@@ -289,7 +293,9 @@ final class AuthorizedApplicationContext {
                         guard !locked else {
                             return
                         }
-                        if let tabController = strongSelf.rootController.rootTabController {
+                        // MARK: NAGRAM — tabs can change during account switching.
+                        if let tabController = strongSelf.rootController.rootTabController,
+                           tabController.controllers.indices.contains(tabController.selectedIndex) {
                             let selectedController = tabController.controllers[tabController.selectedIndex]
                             
                             if let index = strongSelf.rootController.viewControllers.lastIndex(where: { controller in
@@ -337,12 +343,23 @@ final class AuthorizedApplicationContext {
         if self.rootController.rootTabController == nil {
             self.rootController.addRootControllers(showCallsTab: self.showCallsTab)
         }
-        if let tabsController = self.rootController.viewControllers.first as? TabBarController, !tabsController.controllers.isEmpty, tabsController.selectedIndex >= 0 {
+        // MARK: NAGRAM — validate both bounds after restoring custom tab settings.
+        #if DEBUG
+        NSLog("SpaceGramStartup: root controllers created")
+        #endif
+        if let tabsController = self.rootController.viewControllers.first as? TabBarController, tabsController.controllers.indices.contains(tabsController.selectedIndex) {
             let controller = tabsController.controllers[tabsController.selectedIndex]
             let combinedReady = combineLatest(tabsController.ready.get(), controller.ready.get())
             |> map { $0 && $1 }
             |> filter { $0 }
             |> take(1)
+            // MARK: NAGRAM — identify whether the first authenticated UI became ready.
+            |> map { ready -> Bool in
+                #if DEBUG
+                NSLog("SpaceGramStartup: authorized UI ready")
+                #endif
+                return ready
+            }
             self.isReady.set(combinedReady)
         } else {
             self.isReady.set(.single(true))

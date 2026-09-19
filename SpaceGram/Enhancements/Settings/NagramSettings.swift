@@ -24,7 +24,14 @@ public struct NagramDefault<T> {
             case is Bool.Type:
                 return defaults.bool(forKey: key) as! T
             case is Int32.Type:
-                return Int32(defaults.integer(forKey: key)) as! T
+                // Corrupt/imported preferences must not trap during account UI setup.
+                guard let value = Int32(exactly: defaults.integer(forKey: key)) else {
+                    #if DEBUG
+                    NSLog("SpaceGramStartup: out-of-range enhancement preference; using default")
+                    #endif
+                    return defaultValue
+                }
+                return value as! T
             case is String.Type:
                 return (defaults.string(forKey: key) ?? (defaultValue as! String)) as! T
             default:

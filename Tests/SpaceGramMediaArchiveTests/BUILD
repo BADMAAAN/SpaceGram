@@ -8,11 +8,14 @@ swift_library(
     srcs = glob(["*.swift"]),
     deps = [
         "//SpaceGram/AI:SpaceGramAI",
+        "//SpaceGram/Enhancements/Settings:NagramSettings",
         "//SpaceGram/HistoryStorage:SpaceGramHistoryStorage",
         "//SpaceGram/MediaArchive:SpaceGramMediaArchive",
         "//SpaceGram/Migration:SpaceGramMigration",
         "//SpaceGram/Privacy:SpaceGramPrivacy",
         "//SpaceGram/Settings:SpaceGramSettings",
+        "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
+        "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
     ],
 )
 

@@ -2,10 +2,14 @@ import Foundation
 import SpaceGramSettings
 import SwiftSignalKit
 
-// Register before reading so a change cannot fall between the initial value and
-// subscription. Serialize reads and emissions from arbitrary notification threads.
+// Bootstrap first, then observe before reading the initial value so subsequent
+// changes cannot be missed. Serialize reads/emissions from notification threads.
 private func settingsSignal<T>(_ read: @escaping () -> T) -> Signal<T, NoError> {
     return Signal { subscriber in
+        // Migration writes UserDefaults synchronously. Finish the singleton's
+        // initialization before installing any observer that reads it again.
+        // Otherwise the notification can re-enter Swift's once initialization.
+        _ = SpaceGramSettings.shared
         let lock = NSRecursiveLock()
         let emit = {
             lock.lock()

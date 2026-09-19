@@ -49,10 +49,16 @@ public final class SpaceGramSettings {
     public static let shared = SpaceGramSettings()
 
     private init() {
+        #if DEBUG
+        NSLog("SpaceGramStartup: settings bootstrap begin")
+        #endif
         if !SpaceGramMigrationCoordinator.migrateDefaults(UserDefaults.standard) {
             NSLog("SpaceGram: settings migration incomplete; legacy preferences retained")
         }
         self.publishEnabledForExtensions()
+        #if DEBUG
+        NSLog("SpaceGramStartup: settings bootstrap complete")
+        #endif
     }
 
     @SpaceGramDefault("spacegram.settings.enabled", true)

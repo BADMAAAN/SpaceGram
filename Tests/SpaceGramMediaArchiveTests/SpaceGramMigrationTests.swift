@@ -142,6 +142,23 @@ final class SpaceGramMigrationTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: root.deletingLastPathComponent().path))
     }
 
+    func testFreshAccountWithoutLegacyStorageDoesNotRequireAnArchive() throws {
+        let root = directory.appendingPathComponent("spacegram-media-v1")
+        try SpaceGramMigrationCoordinator.migrateDirectory(to: root, legacyName: "qwengram-media-v1")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.path))
+        // The owning store can create its root after the no-op migration.
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
+        try SpaceGramMigrationCoordinator.migrateDirectory(to: root, legacyName: "qwengram-media-v1")
+    }
+
+    func testFileInPlaceOfLegacyDirectoryFailsWithoutRemovingData() throws {
+        let legacy = directory.appendingPathComponent("qwengram-media-v1")
+        let data = Data("unreadable archive fixture".utf8)
+        try data.write(to: legacy)
+        XCTAssertThrowsError(try SpaceGramMigrationCoordinator.migrateDirectory(to: directory.appendingPathComponent("spacegram-media-v1"), legacyName: legacy.lastPathComponent))
+        XCTAssertEqual(try Data(contentsOf: legacy), data)
+    }
+
     func testSymlinkRootIsRejectedWithoutMovingTarget() throws {
         let real = directory.appendingPathComponent("real")
         try FileManager.default.createDirectory(at: real, withIntermediateDirectories: false)

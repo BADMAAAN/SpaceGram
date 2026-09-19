@@ -40,7 +40,9 @@ public enum SpaceGramMigrationCoordinator {
                 }
             }
         }
-        if verified { defaults.set(version, forKey: "spacegram.migration.defaults.version") }
+        if verified && defaults.integer(forKey: "spacegram.migration.defaults.version") != version {
+            defaults.set(version, forKey: "spacegram.migration.defaults.version")
+        }
         return verified
     }
 
