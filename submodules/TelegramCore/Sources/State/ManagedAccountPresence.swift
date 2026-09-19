@@ -18,7 +18,8 @@ private final class AccountPresenceManagerImpl {
     private let currentRequestDisposable = MetaDisposable()
     private var onlineTimer: SignalKitTimer?
     
-    private var wasOnline: Bool = false
+    // MARK: NAGRAM — also publish offline on the first suppressed subscription.
+    private var wasOnline: Bool?
     
     init(queue: Queue, shouldKeepOnlinePresence: Signal<Bool, NoError>, network: Network) {
         self.queue = queue

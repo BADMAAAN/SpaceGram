@@ -32,20 +32,26 @@ public final class NavigationButtonComponent: Component {
     }
     
     public let content: Content
+    // MARK: NAGRAM — accessible product quick actions without changing native content.
+    public let accessibilityLabel: String?
     public let pressed: (UIView) -> Void
     public let contextAction: ((UIView, ContextGesture?) -> Void)?
     
     public init(
         content: Content,
+        accessibilityLabel: String? = nil,
         pressed: @escaping (UIView) -> Void,
         contextAction: ((UIView, ContextGesture?) -> Void)? = nil
     ) {
         self.content = content
+        self.accessibilityLabel = accessibilityLabel
         self.pressed = pressed
         self.contextAction = contextAction
     }
     
     public static func ==(lhs: NavigationButtonComponent, rhs: NavigationButtonComponent) -> Bool {
+        // MARK: NAGRAM
+        if lhs.accessibilityLabel != rhs.accessibilityLabel { return false }
         if lhs.content != rhs.content {
             return false
         }
@@ -100,6 +106,8 @@ public final class NavigationButtonComponent: Component {
         }
         
         func update(component: NavigationButtonComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<NavigationButtonComponentEnvironment>, transition: ComponentTransition) -> CGSize {
+            // MARK: NAGRAM
+            self.accessibilityLabel = component.accessibilityLabel
             self.component = component
             
             let theme = environment[NavigationButtonComponentEnvironment.self].value.theme

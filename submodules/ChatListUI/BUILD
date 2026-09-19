@@ -136,6 +136,9 @@ swift_library(
         "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
         "//SpaceGram/Enhancements/Settings:NagramSettings",
         "//SpaceGram/Strings:SpaceGramStrings",
+        # MARK: NAGRAM — one reactive Ghost state for the quick button.
+        "//SpaceGram/Settings:SpaceGramSettings",
+        "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
     ],
     visibility = [
         "//visibility:public",

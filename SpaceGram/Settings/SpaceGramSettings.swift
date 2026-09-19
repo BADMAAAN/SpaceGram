@@ -136,6 +136,24 @@ public final class SpaceGramSettings {
     @SpaceGramDefault("spacegram.settings.hideOnlinePresence", false)
     public var hideOnlinePresence: Bool
 
+    public var ghostMode: SpaceGramGhostMode {
+        return SpaceGramGhostMode(enabled: spaceGramEnabled, reads: suppressAutomaticReads, stories: hideStoryViews, presence: hideOnlinePresence, activity: hideChatActivity)
+    }
+
+    public func setGhostMode(_ enabled: Bool) {
+        // Explicit user action only. Initialization never replaces legacy values.
+        suppressAutomaticReads = enabled
+        hideStoryViews = enabled
+        hideOnlinePresence = enabled
+        hideChatActivity = enabled
+    }
+
+    @SpaceGramDefault("spacegram.settings.delayedSend", false)
+    public var delayedSend: Bool
+
+    @SpaceGramDefault("spacegram.settings.showGhostButton", false)
+    public var showGhostButton: Bool
+
     @SpaceGramDefault("spacegram.settings.mediaArchiveEnabled", false)
     public var mediaArchiveEnabled: Bool
 

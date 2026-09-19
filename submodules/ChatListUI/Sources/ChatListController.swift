@@ -12,6 +12,10 @@ import OverlayStatusController
 import AccountContext
 import NagramSettingsSignal
 import NagramSettings
+// MARK: NAGRAM — product Ghost quick toggle.
+import SpaceGramSettings
+import SpaceGramSettingsSignal
+import SpaceGramStrings
 import AlertUI
 import PresentationDataUtils
 import UndoUI
@@ -6970,6 +6974,8 @@ private final class ChatListLocationContext {
     var proxyButton: AnyComponentWithIdentity<NavigationButtonComponentEnvironment>?
     var storyButton: AnyComponentWithIdentity<NavigationButtonComponentEnvironment>?
     var settingsButton: AnyComponentWithIdentity<NavigationButtonComponentEnvironment>? // MARK: NAGRAM — hideTabBar 时的 header 设置入口
+    // MARK: NAGRAM
+    var ghostButton: AnyComponentWithIdentity<NavigationButtonComponentEnvironment>?
 
     var rightButtons: [AnyComponentWithIdentity<NavigationButtonComponentEnvironment>] {
         var result: [AnyComponentWithIdentity<NavigationButtonComponentEnvironment>] = []
@@ -6978,6 +6984,10 @@ private final class ChatListLocationContext {
         }
         if let settingsButton = self.settingsButton { // MARK: NAGRAM
             result.append(settingsButton)
+        }
+        // MARK: NAGRAM
+        if let ghostButton = self.ghostButton {
+            result.append(ghostButton)
         }
         if let storyButton = self.storyButton {
             result.append(storyButton)
@@ -7098,7 +7108,7 @@ private final class ChatListLocationContext {
                     peerStatus,
                     parentController.updatedPresentationData.1,
                     // MARK: NAGRAM — 合并 Nagram 设置 signal，使 header 入口显隐即时重算。
-                    combineLatest(storyPostingAvailable, nagramBoolSignal("nagram.hideStories", defaultValue: false), nagramBottomBarSettingsSignal())
+                    combineLatest(storyPostingAvailable, nagramBoolSignal("nagram.hideStories", defaultValue: false), nagramBottomBarSettingsSignal(), spaceGramSettingsChangesSignal())
                 ).startStrict(next: { [weak self] networkState, proxy, passcode, stateAndFilterId, isReorderingTabs, peerStatus, presentationData, storyPostingAvailableAndHideStories in
                     guard let self else {
                         return
@@ -7358,6 +7368,19 @@ private final class ChatListLocationContext {
         let previousEditingAndNetworkState = self.previousEditingAndNetworkStateValue.swap((stateAndFilterId.state.editing, networkState))
         
         var titleContent: NetworkStatusTitle
+        // MARK: NAGRAM — opt-in, main list only; reflects the same persisted controls.
+        self.ghostButton = nil
+        if case .chatList(.root) = self.location, !stateAndFilterId.state.editing,
+           SpaceGramSettings.shared.spaceGramEnabled, SpaceGramSettings.shared.showGhostButton {
+            let active = SpaceGramSettings.shared.ghostMode.isFull
+            self.ghostButton = AnyComponentWithIdentity(id: "spacegram-ghost", component: AnyComponent(NavigationButtonComponent(
+                content: .text(title: active ? "👻" : "◌", isBold: active),
+                accessibilityLabel: ngI18n(active ? "SpaceGram.Hub.GhostOn" : "SpaceGram.Hub.GhostOff", presentationData.strings.baseLanguageCode),
+                pressed: { _ in
+                    SpaceGramSettings.shared.setGhostMode(!SpaceGramSettings.shared.ghostMode.isFull)
+                }
+            )))
+        }
         
         if stateAndFilterId.state.editing {
             if case .chatList(.root) = self.location {

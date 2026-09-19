@@ -16,6 +16,8 @@ import TextFormat
 import TelegramBaseController
 import AccountContext
 import NagramSettings // MARK: NAGRAM
+// MARK: NAGRAM — native scheduled sends while full Ghost Mode is active.
+import SpaceGramSettings
 import TelegramStringFormatting
 import OverlayStatusController
 import DeviceLocationManager
@@ -8995,6 +8997,40 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         return .single(false)
     }
     
+    // MARK: NAGRAM — apply once, at the shared text/media enqueue boundary.
+    private func spaceGramDelayedMessages(_ messages: [EnqueueMessage]) -> ([EnqueueMessage], Bool) {
+        let settings = SpaceGramSettings.shared
+        guard settings.ghostMode.isFull, settings.delayedSend,
+              let peer = self.presentationInterfaceState.renderedPeer?.peer,
+              peer.id.namespace != Namespaces.Peer.SecretChat,
+              self.presentationInterfaceState.sendPaidMessageStars == nil,
+              self.presentationInterfaceState.interfaceState.postSuggestionState == nil,
+              !messages.isEmpty else { return (messages, false) }
+        if let user = peer as? TelegramUser, user.botInfo != nil { return (messages, false) }
+        var mediaBytes: Int64?
+        for message in messages {
+            guard case let .message(_, attributes, _, mediaReference, _, _, replyToStoryId, _, _, _) = message,
+                  replyToStoryId == nil,
+                  !attributes.contains(where: { $0 is OutgoingScheduleInfoMessageAttribute || $0 is AutoremoveTimeoutMessageAttribute }) else { return (messages, false) }
+            if let media = mediaReference?.media {
+                let size: Int64?
+                if let file = media as? TelegramMediaFile {
+                    size = file.size
+                } else if let image = media as? TelegramMediaImage {
+                    size = image.representations.compactMap { $0.resource.size }.max()
+                } else {
+                    return (messages, false)
+                }
+                // An unknown size uses the text fallback. Album members share one date.
+                mediaBytes = max(mediaBytes ?? 0, size ?? 3 * 1_048_576)
+            }
+        }
+        guard let timestamp = SpaceGramDelayedSendPolicy.timestamp(now: Int64(Date().timeIntervalSince1970), ghost: settings.ghostMode, enabled: settings.delayedSend, mediaBytes: mediaBytes) else { return (messages, false) }
+        return (messages.map { message in
+            message.withUpdatedAttributes { $0 + [OutgoingScheduleInfoMessageAttribute(scheduleTime: timestamp, repeatPeriod: nil)] }
+        }, true)
+    }
+
     func sendMessages(_ messages: [EnqueueMessage], media: Bool = false, postpone: Bool = false, commit: Bool = false) {
         if case let .customChatContents(customChatContents) = self.subject {
             customChatContents.enqueueMessages(messages: messages)
@@ -9032,6 +9068,12 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             }
             
             if commit || !isScheduledMessages {
+                // MARK: NAGRAM — explicit schedules are preserved by the policy guard.
+                if !isScheduledMessages {
+                    let delayed = self.spaceGramDelayedMessages(messages)
+                    messages = delayed.0
+                    shouldOpenScheduledMessages = shouldOpenScheduledMessages || delayed.1
+                }
                 self.commitPurposefulAction()
                 
                 let _ = (enqueueMessages(account: self.context.account, peerId: peerId, messages: self.transformEnqueueMessages(messages, postpone: postpone))
