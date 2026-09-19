@@ -128,7 +128,7 @@ else:
 
 report["errors"] = errors
 out = args.report
-out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 for error in errors:
     print("FAIL", error)
 print(f"Preflight: {len(plists)} plists, {len(catalogs)} asset JSONs, {assets} asset files; {len(errors)} errors")
