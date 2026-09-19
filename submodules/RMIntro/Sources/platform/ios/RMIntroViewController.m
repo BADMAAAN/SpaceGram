@@ -116,11 +116,8 @@ typedef enum {
 
 // MARK: NAGRAM
 static bool RMIntroUseStaticLogoFallback() {
-#if TARGET_OS_SIMULATOR && defined(__aarch64__)
+    // SpaceGram uses the same branded welcome artwork on device and simulator.
     return true;
-#else
-    return false;
-#endif
 }
 
 @implementation RMIntroViewController
@@ -224,6 +221,10 @@ static bool RMIntroUseStaticLogoFallback() {
 
 - (void)startTimer
 {
+    // MARK: NAGRAM — a static welcome screen needs no OpenGL render loop.
+    if (RMIntroUseStaticLogoFallback()) {
+        return;
+    }
     if (_updateAndRenderTimer == nil)
     {
         _updateAndRenderTimer = [NSTimer timerWithTimeInterval:1.0f / 60.0f target:self selector:@selector(updateAndRender) userInfo:nil repeats:true];
@@ -312,16 +313,8 @@ static bool RMIntroUseStaticLogoFallback() {
     shadowView.layer.shadowRadius = 16.0;
     shadowView.layer.shadowOffset = CGSizeMake(0.0, 8.0);
     
-    UIImage *logoImage = nil;
-    for (NSString *fileName in @[@"Nagram@3x", @"Nagram@2x", @"Nagram60x60@2x"]) {
-        NSString *path = [[NSBundle mainBundle] pathForResource:fileName ofType:@"png"];
-        if (path != nil) {
-            logoImage = [UIImage imageWithContentsOfFile:path];
-            if (logoImage != nil) {
-                break;
-            }
-        }
-    }
+    // MARK: NAGRAM — packaged independently of app-icon catalog renditions.
+    UIImage *logoImage = [UIImage imageNamed:@"SpaceGramWelcome"];
     
     UIView *iconView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, logoFrame.size.width, logoFrame.size.height)];
     iconView.layer.cornerRadius = 34.0;
@@ -332,24 +325,23 @@ static bool RMIntroUseStaticLogoFallback() {
     logoImageView.frame = iconView.bounds;
     [iconView addSubview:logoImageView];
     
-    UIView *shineView = [[UIView alloc] initWithFrame:CGRectMake(-70.0, -28.0, 52.0, 204.0)];
-    shineView.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.18];
-    shineView.transform = CGAffineTransformMakeRotation(0.42);
-    [iconView addSubview:shineView];
+    // MARK: NAGRAM — retain a recognizable mark if packaging is incomplete.
+    logoImageView.isAccessibilityElement = true;
+    logoImageView.accessibilityLabel = @"SpaceGram";
+    if (logoImage == nil) {
+        UILabel *fallback = [[UILabel alloc] initWithFrame:iconView.bounds];
+        fallback.text = @"S";
+        fallback.font = [UIFont systemFontOfSize:96.0 weight:UIFontWeightMedium];
+        fallback.textColor = _primaryColor;
+        fallback.textAlignment = NSTextAlignmentCenter;
+        [iconView addSubview:fallback];
+#if DEBUG
+        NSLog(@"SpaceGramStartup: welcome artwork missing; showing letter mark");
+#endif
+    }
     
     [shadowView addSubview:iconView];
     [logoView addSubview:shadowView];
-    
-    NSTimeInterval now = CACurrentMediaTime();
-    
-    CAKeyframeAnimation *shine = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
-    shine.values = @[@0.0, @0.0, @270.0, @270.0];
-    shine.keyTimes = @[@0.0, @0.24, @0.56, @1.0];
-    shine.duration = 3.2;
-    shine.beginTime = now;
-    shine.repeatCount = HUGE_VALF;
-    shine.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-    [shineView.layer addAnimation:shine forKey:@"nagram.shine"];
     
     [self.view addSubview:logoView];
     _fallbackLogoView = logoView;
@@ -397,6 +389,8 @@ static bool RMIntroUseStaticLogoFallback() {
 
 - (void)freeGL
 {
+    // MARK: NAGRAM — stop rendering even when no GL context was created.
+    [self stopTimer];
     if (_fallbackLogoView != nil) { // MARK: NAGRAM
         [_fallbackLogoView removeFromSuperview];
         _fallbackLogoView = nil;

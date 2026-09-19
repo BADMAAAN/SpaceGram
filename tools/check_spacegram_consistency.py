@@ -120,6 +120,24 @@ for path in badge_source.parent.glob("*.swift"):
           f"Dangling project-role badge reference: {path}")
 check(not list((ROOT / "Telegram/Telegram-iOS").glob("Nagram*")), "Retired brand assets remain")
 check(not (ROOT / "Nagram").exists(), "Old top-level source tree remains")
+# The tour bypasses the device-only Telegram GL animation and loads a separate
+# regular image: app-icon catalog names are not a reliable welcome resource.
+intro = (ROOT / "submodules/RMIntro/Sources/platform/ios/RMIntroViewController.m").read_text(encoding="utf-8")
+static_logo = re.search(r'static bool RMIntroUseStaticLogoFallback\(\)\s*\{([^}]+)\}', intro)
+check(static_logo is not None and "return true;" in static_logo[1] and "#if" not in static_logo[1],
+      "SpaceGram welcome must use static branding on physical devices too")
+check('imageNamed:@"SpaceGramWelcome"' in intro and 'Nagram@' not in intro,
+      "Welcome still references retired brand artwork")
+welcome = ROOT / "Telegram/Telegram-iOS/Resources/SpaceGramWelcome.png"
+check(welcome.is_file(), "SpaceGram welcome artwork missing")
+if welcome.is_file():
+    check(welcome.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n", "Invalid welcome PNG")
+tour = dict(re.findall(r'^"(Tour\.[^"]+)"\s*=\s*"([^"]*)";',
+                      (ROOT / "Telegram/Telegram-iOS/en.lproj/Localizable.strings").read_text(encoding="utf-8"), re.M))
+check(tour.get("Tour.Title1") == "SpaceGram" and "SpaceGram" in tour.get("Tour.StartButton", ""),
+      "Welcome title/button must name SpaceGram")
+check(len(tour) == 13 and all("Telegram" not in value for value in tour.values()),
+      "Welcome pages must use SpaceGram copy")
 for path in (ROOT / "Telegram").rglob("*.strings"):
     for line in path.read_text(encoding="utf-8-sig").splitlines():
         if "=" in line and not line.lstrip().startswith("//"):
