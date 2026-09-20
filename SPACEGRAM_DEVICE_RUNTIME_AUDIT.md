@@ -38,6 +38,25 @@ separate implementation, compilation, automated-test and device evidence.
   #15 test failure was available; it has the same test-target mismatch. Its own
   superseded run is cancelled after preserving #15's failure evidence; a corrected
   exact-SHA candidate run follows. No unrelated run is cancelled.
+- Candidate #17 source is `eb5b3b9ee6c78f39ccc43549df270bf9b6f3f8c0`:
+  https://github.com/BADMAAAN/SpaceGram/actions/runs/35511272473
+  BUILD-PASSED: full debug_arm64 app, embedded identity verification and IPA upload.
+  Workflow conclusion: FAILURE in simulator tests after a successful test build.
+  XCTest executed 84 tests with 21 failures (including one unexpected thrown error).
+  QR production preview construction/loading passed; QR image creation did not.
+  Archive reopen/cleanup/lease, retryable migration and EXIF assertions also failed.
+  This artifact is superseded for acceptance by the corrections below.
+  Artifact `SpaceGram-iPhone-test` (id 10605233284):
+  https://github.com/BADMAAAN/SpaceGram/actions/runs/35511272473/artifacts/10605233284
+  Downloaded IPA and build-info agree: SpaceGram 12.9.3 (17), source above,
+  dirty=false, build time `2026-09-20T12:41:22+00:00`.
+  Main executable LC_UUID `AA048262-113F-3E84-881F-8E3AADF37B49` matches
+  `Telegram.DSYMs.zip` / `DSYMs/Telegram.app.dSYM/Contents/Resources/DWARF/Telegram`.
+  All six DWARF UUIDs match their IPA binaries, including TelegramUIFramework,
+  TelegramCoreFramework, PostboxFramework, SwiftSignalKitFramework and MtProtoKitFramework.
+- The user's candidate #17 response still contains bracketed template alternatives
+  for About SHA, capsule and QR results. It does not establish a device pass or
+  failure. Actual values have been requested; DEVICE-VERIFICATION-REQUIRED remains.
 
 ## P0: findings and implementation
 
@@ -82,7 +101,7 @@ missing-media placeholders do not distinguish every failure reason.
   xcrun/Keychain or paired-device inspection; build-input is empty here.
   Bazel-rule directories are populated. No concurrency cancellation is configured.
 - dSYM generation and symbol artifact upload are enabled. The workflow also
-  runs SpaceGram simulator XCTest after the IPA is built, through Make.py.
+  runs SpaceGram simulator XCTest through Make.py before building the next IPA.
 - AUTOMATED-TEST-PASSED (Windows): `python tools/check_spacegram_consistency.py`,
   `python tools/check_spacegram_preflight.py`, and
   `python tools/test_spacegram_feature_contracts.py` (16 tests), plus `python tools/test_spacegram_build_info.py` (3 identity-verification tests). Pillow pixel
@@ -92,7 +111,21 @@ missing-media placeholders do not distinguish every failure reason.
   byte/scale boundaries, the actual preview node constructed off-main then loaded
   on main repeatedly, updated scheduling margins, exact copied text, unavailable
   media placeholder, and a live media lease surviving archive clear.
-  XCTest status: NOT EXECUTED in #15 (test-target build failure described above).
+  XCTest did not execute in #15; #17 executed and failed as detailed above.
+- Corrections after #17, pending repeat CI: archive locking no longer calls
+  non-recursive createDirectory on an existing root; directory migration uses
+  fresh lstat under the lock rather than cached URL resource values. Existing
+  migration/corruption/lease tests and assertions are preserved. The former
+  failures are reproducible source defects, not dismissed as simulator noise.
+- QR uses an explicit CPU CIContext so rasterization does not depend on a Metal
+  device. Missing GPU availability is a hypothesis for #17's nil image; repeat
+  decode tests must establish whether this correction is sufficient.
+- ImageIO receives explicit null EXIF/GPS/IPTC/TIFF dictionaries instead of an
+  empty properties dictionary. #17 showed encoder-generated EXIF dimensions and
+  color space; the private fixture comment/GPS did not survive. The existing
+  strict no-EXIF assertion is retained for the repeat run.
+- Simulator tests now run before the costly IPA build; only a passing suite
+  proceeds to the same resignable debug_arm64 build/signing configuration.
 
 ## P1/P2
 
@@ -121,7 +154,8 @@ Forward-as-new remains unimplemented; forward-without-name retains Telegram sema
 - Failed/partial media archive captures no longer permanently block a later
   native download-completion retry.
 
-These additions are source-implemented and await the next exact-SHA CI/device pass.
+These additions compile in candidate #17; the failed automated suite and device
+acceptance remain open until the corrected exact-SHA run.
 SpaceGram Cosmic and an approved wallpaper registry are not implemented. P2 is
 held behind the unresolved P0/device checks; no unapproved artwork is added.
 

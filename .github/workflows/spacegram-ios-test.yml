@@ -91,6 +91,32 @@ jobs:
               json.dump(configuration, output)
           PY
 
+      - name: Run SpaceGram simulator regression tests
+        id: tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACTS_DIR"
+          cat > local.bazelrc <<'RC'
+          build --//Telegram:disableExtensions
+          build --//Telegram:disableProvisioningProfiles
+          RC
+          python3 -u build-system/Make/Make.py --cacheDir "$BAZEL_CACHE" test \
+            --configurationPath build-input/spacegram-test-configuration.json \
+            --xcodeManagedCodesigning \
+            --target Tests/SpaceGramMediaArchiveTests:SpaceGramMediaArchiveTests \
+            2>&1 | tee "$ARTIFACTS_DIR/tests.log"
+
+      - name: Upload simulator test results
+        if: always() && steps.tests.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpaceGram-simulator-tests
+          path: |
+            ${{ runner.temp }}/spacegram-ios-artifacts/tests.log
+            bazel-testlogs/Tests/SpaceGramMediaArchiveTests/**/test.*
+          retention-days: 14
+
       - name: Prepare fake codesigning for resignable device build
         shell: bash
         run: |
@@ -157,29 +183,4 @@ jobs:
             ${{ runner.temp }}/spacegram-ios-artifacts/build.log
             ${{ runner.temp }}/spacegram-ios-artifacts/build-failure-summary.txt
           if-no-files-found: warn
-          retention-days: 14
-
-      - name: Run SpaceGram simulator regression tests
-        id: tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          cat > local.bazelrc <<'RC'
-          build --//Telegram:disableExtensions
-          build --//Telegram:disableProvisioningProfiles
-          RC
-          python3 -u build-system/Make/Make.py --cacheDir "$BAZEL_CACHE" test \
-            --configurationPath build-input/spacegram-test-configuration.json \
-            --xcodeManagedCodesigning \
-            --target Tests/SpaceGramMediaArchiveTests:SpaceGramMediaArchiveTests \
-            2>&1 | tee "$ARTIFACTS_DIR/tests.log"
-
-      - name: Upload simulator test results
-        if: always() && steps.tests.outcome != 'skipped'
-        uses: actions/upload-artifact@v4
-        with:
-          name: SpaceGram-simulator-tests
-          path: |
-            ${{ runner.temp }}/spacegram-ios-artifacts/tests.log
-            bazel-testlogs/Tests/SpaceGramMediaArchiveTests/**/test.*
           retention-days: 14

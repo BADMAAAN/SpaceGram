@@ -89,14 +89,18 @@ public enum SpaceGramMigrationCoordinator {
         defer { _ = flock(descriptor, LOCK_UN) }
         let legacy = parent.appendingPathComponent(legacyName, isDirectory: true)
         func exists(_ url: URL) throws -> Bool {
-            // resourceValues also detects symlinks; never follow a migrated root.
-            do {
-                let values = try url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
-                guard values.isDirectory == true, values.isSymbolicLink != true else { throw SpaceGramMigrationError.unavailable }
-                return true
-            } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
-                return false
+            // URL resource values may cache a directory that has since moved or
+            // been removed. Recheck the filesystem under the migration lock.
+            var info = stat()
+            guard lstat(url.path, &info) == 0 else {
+                if errno == ENOENT { return false }
+                throw SpaceGramMigrationError.unavailable
             }
+            // lstat rejects symlinks without following them.
+            guard (info.st_mode & mode_t(S_IFMT)) == mode_t(S_IFDIR) else {
+                throw SpaceGramMigrationError.unavailable
+            }
+            return true
         }
         let hasDestination = try exists(destination)
         guard try exists(legacy) else { return }

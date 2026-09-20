@@ -16,7 +16,14 @@ public enum SpaceGramMetadataSanitizer {
         guard let destination = CGImageDestinationCreateWithData(result, type, 1, nil) else {
             return nil
         }
-        var properties: [CFString: Any] = [:]
+        // Explicitly remove these dictionaries: ImageIO may otherwise synthesize
+        // an EXIF dictionary when encoding a fresh CGImage into JPEG.
+        var properties: [CFString: Any] = [
+            kCGImagePropertyExifDictionary: NSNull(),
+            kCGImagePropertyGPSDictionary: NSNull(),
+            kCGImagePropertyIPTCDictionary: NSNull(),
+            kCGImagePropertyTIFFDictionary: NSNull()
+        ]
         if let sourceProperties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
            let orientation = sourceProperties[kCGImagePropertyOrientation] {
             properties[kCGImagePropertyOrientation] = orientation

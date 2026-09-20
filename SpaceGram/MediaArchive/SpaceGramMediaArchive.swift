@@ -440,7 +440,11 @@ public enum SpaceGramMediaArchive {
         // Do not resurrect a removed account while a capture is queued.
         var isDirectory: ObjCBool = false
         guard fm.fileExists(atPath: root.deletingLastPathComponent().path, isDirectory: &isDirectory), isDirectory.boolValue else { throw SpaceGramMediaArchiveError.unavailable }
-        try fm.createDirectory(at: root, withIntermediateDirectories: false, attributes: [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication])
+        // createDirectory(..., false) throws for an existing archive. Migration
+        // has already validated the root; reopening must preserve its contents.
+        if !fm.fileExists(atPath: root.path) {
+            try fm.createDirectory(at: root, withIntermediateDirectories: false, attributes: [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication])
+        }
         var root = root
         var values = URLResourceValues()
         values.isExcludedFromBackup = true

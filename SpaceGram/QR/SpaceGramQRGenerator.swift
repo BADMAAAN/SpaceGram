@@ -4,7 +4,9 @@ import UIKit
 
 public enum SpaceGramQRGenerator {
     public static let maximumUTF8Bytes = 2000
-    private static let context = CIContext(options: [.cacheIntermediates: false])
+    // This small, bounded raster must also work without a Metal device (for
+    // example in headless simulator runs). CPU rendering avoids that dependency.
+    private static let context = CIContext(options: [.cacheIntermediates: false, .useSoftwareRenderer: true])
 
     public static func image(text: String, scale: CGFloat = 8.0) -> UIImage? {
         guard scale.isFinite, scale >= 1.0, scale <= 16.0, scale.rounded(.down) == scale,
