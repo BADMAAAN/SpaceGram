@@ -114,31 +114,32 @@ public enum SpaceGramMetadataSanitizer {
 
         let width = CGFloat(sourceWidth)
         let height = CGFloat(sourceHeight)
-        var transform = CGAffineTransform.identity
+        let transform: CGAffineTransform
+        // The destination's rows are consumed top-first, so these matrices
+        // include the Quartz Y-axis normalization as well as EXIF orientation.
         switch orientation {
-        case .down, .downMirrored:
-            transform = transform.translatedBy(x: width, y: height).rotated(by: .pi)
-        case .left, .leftMirrored:
-            transform = transform.translatedBy(x: width, y: 0.0).rotated(by: .pi / 2.0)
-        case .right, .rightMirrored:
-            transform = transform.translatedBy(x: 0.0, y: height).rotated(by: -.pi / 2.0)
-        default:
-            break
-        }
-        switch orientation {
-        case .upMirrored, .downMirrored:
-            transform = transform.translatedBy(x: width, y: 0.0).scaledBy(x: -1.0, y: 1.0)
-        case .leftMirrored, .rightMirrored:
-            transform = transform.translatedBy(x: height, y: 0.0).scaledBy(x: -1.0, y: 1.0)
-        default:
-            break
+        case .up:
+            transform = CGAffineTransform(a: 1.0, b: 0.0, c: 0.0, d: -1.0, tx: 0.0, ty: height)
+        case .upMirrored:
+            transform = CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: -1.0, tx: width, ty: height)
+        case .down:
+            transform = CGAffineTransform(a: -1.0, b: 0.0, c: 0.0, d: 1.0, tx: width, ty: 0.0)
+        case .downMirrored:
+            transform = .identity
+        case .leftMirrored:
+            transform = CGAffineTransform(a: 0.0, b: 1.0, c: -1.0, d: 0.0, tx: height, ty: 0.0)
+        case .right:
+            transform = CGAffineTransform(a: 0.0, b: 1.0, c: 1.0, d: 0.0, tx: 0.0, ty: 0.0)
+        case .rightMirrored:
+            transform = CGAffineTransform(a: 0.0, b: -1.0, c: 1.0, d: 0.0, tx: 0.0, ty: width)
+        case .left:
+            transform = CGAffineTransform(a: 0.0, b: -1.0, c: -1.0, d: 0.0, tx: height, ty: width)
+        @unknown default:
+            return nil
         }
         context.concatenate(transform)
         context.interpolationQuality = .none
-        let drawRect = swapsDimensions
-            ? CGRect(x: 0.0, y: 0.0, width: height, height: width)
-            : CGRect(x: 0.0, y: 0.0, width: width, height: height)
-        context.draw(image, in: drawRect)
+        context.draw(image, in: CGRect(x: 0.0, y: 0.0, width: width, height: height))
         return context.makeImage()
     }
 

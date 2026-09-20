@@ -6,7 +6,10 @@ import UIKit
 public enum SpaceGramQRGenerator {
     public static let maximumUTF8Bytes = 2000
     private static let maximumOutputDimension = 4096
-    private static let renderContext = CIContext(options: [.cacheIntermediates: false])
+    private static let renderContext = CIContext(options: [
+        .cacheIntermediates: false,
+        .useSoftwareRenderer: true
+    ])
     private static let log = OSLog(subsystem: "org.telegram.SpaceGram", category: "QR")
 
     public static func image(text: String, scale: CGFloat = 8.0) -> UIImage? {
@@ -40,9 +43,8 @@ public enum SpaceGramQRGenerator {
 
         let moduleWidth = Int(extent.width)
         let moduleHeight = Int(extent.height)
-        let (moduleCount, moduleOverflow) = moduleWidth.multipliedReportingOverflow(by: moduleHeight)
-        let (moduleByteCount, byteOverflow) = moduleCount.multipliedReportingOverflow(by: 4)
-        guard !moduleOverflow, !byteOverflow, moduleByteCount > 0 else {
+        let (moduleByteCount, moduleOverflow) = moduleWidth.multipliedReportingOverflow(by: moduleHeight)
+        guard !moduleOverflow, moduleByteCount > 0 else {
             logFailure(stage: "module-bounds", payloadBytes: payload.count, width: moduleWidth, height: moduleHeight)
             return nil
         }
@@ -51,15 +53,13 @@ public enum SpaceGramQRGenerator {
             renderContext.render(
                 output,
                 toBitmap: bytes.baseAddress!,
-                rowBytes: moduleWidth * 4,
+                rowBytes: moduleWidth,
                 bounds: extent,
-                format: .RGBA8,
-                colorSpace: CGColorSpaceCreateDeviceRGB()
+                format: .L8,
+                colorSpace: CGColorSpaceCreateDeviceGray()
             )
         }
-        guard stride(from: 0, to: moduleByteCount, by: 4).contains(where: {
-            modulePixels[$0] < 128 && modulePixels[$0 + 1] < 128 && modulePixels[$0 + 2] < 128
-        }) else {
+        guard modulePixels.contains(where: { $0 < 128 }) else {
             logFailure(stage: "module-render", payloadBytes: payload.count, width: moduleWidth, height: moduleHeight)
             return nil
         }
@@ -87,10 +87,8 @@ public enum SpaceGramQRGenerator {
             // top row first, so reverse rows while materializing the modules.
             let sourceY = moduleHeight - moduleY - 1
             for moduleX in 0 ..< moduleWidth {
-                let moduleOffset = (sourceY * moduleWidth + moduleX) * 4
-                guard modulePixels[moduleOffset] < 128,
-                      modulePixels[moduleOffset + 1] < 128,
-                      modulePixels[moduleOffset + 2] < 128 else {
+                let moduleOffset = sourceY * moduleWidth + moduleX
+                guard modulePixels[moduleOffset] < 128 else {
                     continue
                 }
                 let firstX = (moduleX + quietZone) * integerScale
