@@ -109,7 +109,7 @@ private func spaceGramLanguagePickerController(context: AccountContext, titleKey
         let entries = languages.enumerated().map { index, language in
             SpaceGramLanguagePickerEntry(stableId: Int32(index), title: ngI18n(language.localizationKey, lang), selected: language == selected, action: {
                 updated(language)
-                (controller?.navigationController as? NavigationController)?.popViewController(animated: true)
+                let _ = (controller?.navigationController as? NavigationController)?.popViewController(animated: true)
             })
         }
         let data = spaceGramItemListPresentationData(presentationData)
