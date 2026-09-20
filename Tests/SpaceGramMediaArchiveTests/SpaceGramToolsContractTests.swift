@@ -9,12 +9,24 @@ import XCTest
 final class SpaceGramToolsContractTests: XCTestCase {
     func testQRResultDecodesOriginalUTF8() throws {
         let detector = try XCTUnwrap(CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh]))
-        for text in ["hello", "https://example.org/a?q=1", "Привет", "🌌🙂", "first\nsecond", String(repeating: "a", count: SpaceGramQRGenerator.maximumUTF8Bytes)] {
+        let values = [
+            "hello",
+            "Привет",
+            "你好",
+            "🌌🙂",
+            "https://example.org/a?q=1",
+            "first\nsecond",
+            String(repeating: "SpaceGram-", count: 50),
+            String(repeating: "a", count: SpaceGramQRGenerator.maximumUTF8Bytes)
+        ]
+        for text in values {
             let image = try XCTUnwrap(SpaceGramQRGenerator.image(text: text)?.cgImage)
             let decoded = detector.features(in: CIImage(cgImage: image)).compactMap { ($0 as? CIQRCodeFeature)?.messageString }
-            XCTAssertEqual(decoded, [text])
+            XCTAssertEqual(decoded, [text], "Failed to round-trip \(text.utf8.count) UTF-8 bytes")
         }
-        XCTAssertNil(SpaceGramQRGenerator.image(text: String(repeating: "a", count: SpaceGramQRGenerator.maximumUTF8Bytes + 1)))
+        let overLimitUTF8 = String(repeating: "🙂", count: SpaceGramQRGenerator.maximumUTF8Bytes / 4 + 1)
+        XCTAssertGreaterThan(Data(overLimitUTF8.utf8).count, SpaceGramQRGenerator.maximumUTF8Bytes)
+        XCTAssertNil(SpaceGramQRGenerator.image(text: overLimitUTF8))
         for scale in [CGFloat.nan, .infinity, 0, -1, 1.5, 17, .greatestFiniteMagnitude] {
             XCTAssertNil(SpaceGramQRGenerator.image(text: "test", scale: scale))
         }
