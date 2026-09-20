@@ -3,6 +3,29 @@ import SpaceGramHistoryStorage
 import SpaceGramMediaArchive
 import XCTest
 
+private final class SpaceGramTestCallbackValue<Value> {
+    private let lock = NSLock()
+    private var value: Value?
+
+    func store(_ value: Value) {
+        lock.lock()
+        self.value = value
+        lock.unlock()
+    }
+
+    func load() -> Value? {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+}
+
+private enum SpaceGramMediaArchiveFixtureError: Error {
+    case captureFailed
+    case unlinkFailed
+    case timedOut(String)
+}
+
 final class SpaceGramMediaArchiveTests: XCTestCase {
     private var directory: URL!
 
@@ -12,46 +35,61 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
-        try FileManager.default.removeItem(at: directory)
+        guard let directory = self.directory else { return }
+        let root = SpaceGramMediaArchive.root(mediaBoxPath: directory.appendingPathComponent("media").path)
+        _ = try waitForCallback("archive queue drain") { SpaceGramMediaArchive.usage(root: root, completion: $0) }
+        self.directory = nil
+        if FileManager.default.fileExists(atPath: directory.path) {
+            try FileManager.default.removeItem(at: directory)
+        }
+    }
+
+    private func waitForCallback<Value>(_ description: String, timeout: TimeInterval = 10.0, _ operation: (@escaping (Value) -> Void) -> Void) throws -> Value {
+        let value = SpaceGramTestCallbackValue<Value>()
+        let completed = DispatchSemaphore(value: 0)
+        operation {
+            value.store($0)
+            completed.signal()
+        }
+        guard completed.wait(timeout: .now() + timeout) == .success else {
+            throw SpaceGramMediaArchiveFixtureError.timedOut(description)
+        }
+        return try XCTUnwrap(value.load(), "Missing callback value for \(description)")
     }
 
     private func store(_ bytes: Data, ext: String = "bin", unlink: Bool = false) throws -> (URL, SpaceGramArchivedAsset) {
         let source = directory.appendingPathComponent(UUID().uuidString)
         try bytes.write(to: source)
         let root = SpaceGramMediaArchive.root(mediaBoxPath: directory.appendingPathComponent("media").path)
-        let done = expectation(description: "store")
-        var assets: [SpaceGramArchivedAsset] = []
-        DispatchQueue.global().async {
-            guard let capture = SpaceGramMediaArchive.pinCompletedFile(path: source.path, fileName: "fixture." + ext, kind: "file", fileExtension: ext) else {
-                XCTFail("A complete regular file must be pinned")
-                done.fulfill()
-                return
-            }
-            if unlink {
-                do { try FileManager.default.removeItem(at: source) } catch { XCTFail("Fixture unlink failed") }
-            }
-            SpaceGramMediaArchive.store(root: root, captures: [capture]) {
-                assets = $0
-                done.fulfill()
+        let result: Result<[SpaceGramArchivedAsset], SpaceGramMediaArchiveFixtureError> = try waitForCallback("store") { complete in
+            DispatchQueue.global().async {
+                guard let capture = SpaceGramMediaArchive.pinCompletedFile(path: source.path, fileName: "fixture." + ext, kind: "file", fileExtension: ext) else {
+                    complete(.failure(.captureFailed))
+                    return
+                }
+                if unlink {
+                    do {
+                        try FileManager.default.removeItem(at: source)
+                    } catch {
+                        complete(.failure(.unlinkFailed))
+                        return
+                    }
+                }
+                SpaceGramMediaArchive.store(root: root, captures: [capture]) { complete(.success($0)) }
             }
         }
-        wait(for: [done], timeout: 10)
+        let assets = try result.get()
         return (root, try XCTUnwrap(assets.first))
     }
 
     func testPinnedFileSurvivesCacheUnlinkAndJSONExtension() throws {
         let bytes = Data("{\"version\":999,\"text\":\"payload, not a manifest\"}".utf8)
         let (root, asset) = try store(bytes, ext: "json", unlink: true)
-        let done = expectation(description: "verified preview")
-        SpaceGramMediaArchive.preview(root: root, id: asset.id) { result in
-            switch result {
-            case let .success(lease):
-                XCTAssertEqual(try? Data(contentsOf: lease.url), bytes)
-            case .failure: XCTFail("Unlink must not destroy a pinned inode; JSON payload is not metadata")
-            }
-            done.fulfill()
+        let result = try waitForCallback("verified preview") {
+            SpaceGramMediaArchive.preview(root: root, id: asset.id, completion: $0)
         }
-        wait(for: [done], timeout: 10)
+        let lease = try result.get()
+        XCTAssertEqual(try? Data(contentsOf: lease.url), bytes)
     }
 
     func testResourceReferenceDeduplicatesAndRetainsBeforeDeletionButHonorsExpiry() throws {
@@ -62,13 +100,11 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         for _ in 0 ..< 2 {
             let capture = try XCTUnwrap(SpaceGramMediaArchive.pinCompletedFile(path: source.path, fileName: "sticker.webp", kind: "sticker", fileExtension: "webp"))
             capture.resourceId = "cloud-resource-fixture"
-            let done = expectation(description: "deduplicate repeated completion")
-            SpaceGramMediaArchive.store(root: root, captures: [capture]) { assets in
-                XCTAssertEqual(assets.count, 1)
-                storedIds.append(contentsOf: assets.map(\.id))
-                done.fulfill()
+            let assets = try waitForCallback("deduplicate repeated completion") {
+                SpaceGramMediaArchive.store(root: root, captures: [capture], completion: $0)
             }
-            wait(for: [done], timeout: 10)
+            XCTAssertEqual(assets.count, 1)
+            storedIds.append(contentsOf: assets.map(\.id))
         }
         XCTAssertEqual(Set(storedIds).count, 1)
         let metadata = root.appendingPathComponent(try XCTUnwrap(storedIds.first) + ".json")
@@ -76,46 +112,34 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         object["timestamp"] = Date().timeIntervalSince1970 - 10 * 60
         try JSONSerialization.data(withJSONObject: object).write(to: metadata)
         SpaceGramMediaArchive.reconcile(root: root, referencedIds: [], referencesComplete: true)
-        let retained = expectation(description: "resource reference survives before any delete event")
-        SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: ["cloud-resource-fixture"]) { resources in
-            XCTAssertEqual(resources.count, 1)
-            retained.fulfill()
+        let retained = try waitForCallback("resource reference survives before any delete event") {
+            SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: ["cloud-resource-fixture"], completion: $0)
         }
-        wait(for: [retained], timeout: 10)
+        XCTAssertEqual(retained.count, 1)
         object["timestamp"] = Date().timeIntervalSince1970 - 31 * 24 * 60 * 60
         try JSONSerialization.data(withJSONObject: object).write(to: metadata)
-        let expired = expectation(description: "stable resource reference does not bypass retention")
-        SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: ["cloud-resource-fixture"]) { resources in
-            XCTAssertTrue(resources.isEmpty)
-            expired.fulfill()
+        let expired = try waitForCallback("stable resource reference does not bypass retention") {
+            SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: ["cloud-resource-fixture"], completion: $0)
         }
-        wait(for: [expired], timeout: 10)
+        XCTAssertTrue(expired.isEmpty)
     }
 
     func testBubbleLeaseSurvivesArchiveClearWithoutChangingContent() throws {
         let bytes = Data([1, 3, 5, 7])
         let (root, asset) = try store(bytes)
-        let resolved = expectation(description: "bubble lease")
-        var lease: SpaceGramArchivedMedia?
-        SpaceGramMediaArchive.resolve(root: root, ids: [asset.id]) { resources in
-            lease = resources[asset.id]
-            resolved.fulfill()
+        let resources = try waitForCallback("bubble lease") {
+            SpaceGramMediaArchive.resolve(root: root, ids: [asset.id], completion: $0)
         }
-        wait(for: [resolved], timeout: 10)
-        let held = try XCTUnwrap(lease)
-        let cleared = expectation(description: "archive cleared")
-        SpaceGramMediaArchive.clear(root: root) { success in
-            XCTAssertTrue(success)
-            XCTAssertEqual(try? Data(contentsOf: held.url), bytes)
-            cleared.fulfill()
+        let held = try XCTUnwrap(resources[asset.id])
+        let cleared = try waitForCallback("archive cleared") {
+            SpaceGramMediaArchive.clear(root: root, completion: $0)
         }
-        wait(for: [cleared], timeout: 10)
-        let missing = expectation(description: "cleared entries are not resurrected")
-        SpaceGramMediaArchive.resolve(root: root, ids: [asset.id]) { resources in
-            XCTAssertTrue(resources.isEmpty)
-            missing.fulfill()
+        XCTAssertTrue(cleared)
+        XCTAssertEqual(try? Data(contentsOf: held.url), bytes)
+        let missing = try waitForCallback("cleared entries are not resurrected") {
+            SpaceGramMediaArchive.resolve(root: root, ids: [asset.id], completion: $0)
         }
-        wait(for: [missing], timeout: 10)
+        XCTAssertTrue(missing.isEmpty)
     }
 
     func testLegacyArchiveMigrationPreservesHistoryAssetLookupAndPreview() throws {
@@ -123,13 +147,11 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         let (root, asset) = try store(bytes)
         let legacy = root.deletingLastPathComponent().appendingPathComponent("qwengram-media-v1")
         try FileManager.default.moveItem(at: root, to: legacy)
-        let done = expectation(description: "migrated asset")
-        SpaceGramMediaArchive.preview(root: root, id: asset.id) { result in
-            if case let .success(lease) = result { XCTAssertEqual(try? Data(contentsOf: lease.url), bytes) }
-            else { XCTFail("History UUID should still open the same verified payload") }
-            done.fulfill()
+        let result = try waitForCallback("migrated asset") {
+            SpaceGramMediaArchive.preview(root: root, id: asset.id, completion: $0)
         }
-        wait(for: [done], timeout: 10)
+        let lease = try result.get()
+        XCTAssertEqual(try? Data(contentsOf: lease.url), bytes)
         XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: root.appendingPathComponent(asset.id + ".json").path))
     }
@@ -137,38 +159,30 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
     func testCorruptionIsRejectedEvenWhenSizeMatches() throws {
         let (root, asset) = try store(Data([1, 2, 3, 4]))
         try Data([4, 3, 2, 1]).write(to: root.appendingPathComponent(asset.id + ".data.bin"))
-        let done = expectation(description: "corrupt preview")
-        SpaceGramMediaArchive.preview(root: root, id: asset.id) { result in
-            if case .success = result { XCTFail("A same-size corrupt file must fail SHA-256 verification") }
-            done.fulfill()
+        let result = try waitForCallback("corrupt preview") {
+            SpaceGramMediaArchive.preview(root: root, id: asset.id, completion: $0)
         }
-        wait(for: [done], timeout: 10)
+        guard case .failure = result else { return XCTFail("A same-size corrupt file must fail SHA-256 verification") }
     }
 
     func testAssetStatesAndClear() throws {
         let (root, asset) = try store(Data([1, 2, 3, 4]))
-        let checked = expectation(description: "available state")
-        SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [asset.id: Int64(Date().timeIntervalSince1970)]) { states in
-            if case .some(.available) = states[asset.id] { } else { XCTFail("Stored asset should be available") }
-            checked.fulfill()
+        let available = try waitForCallback("available state") {
+            SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [asset.id: Int64(Date().timeIntervalSince1970)], completion: $0)
         }
-        wait(for: [checked], timeout: 10)
+        guard case .some(.available) = available[asset.id] else { return XCTFail("Stored asset should be available") }
 
         try Data([4, 3, 2, 1]).write(to: root.appendingPathComponent(asset.id + ".data.bin"))
-        let corrupted = expectation(description: "corrupt state")
-        SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [:]) { states in
-            if case .some(.corrupt) = states[asset.id] { } else { XCTFail("Same-size SHA mismatch must be reported as corrupt") }
-            corrupted.fulfill()
+        let corrupted = try waitForCallback("corrupt state") {
+            SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [:], completion: $0)
         }
-        wait(for: [corrupted], timeout: 10)
+        guard case .some(.corrupt) = corrupted[asset.id] else { return XCTFail("Same-size SHA mismatch must be reported as corrupt") }
 
-        let cleared = expectation(description: "clear")
-        SpaceGramMediaArchive.clear(root: root) { success in
-            XCTAssertTrue(success)
-            XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent(asset.id + ".json").path))
-            cleared.fulfill()
+        let cleared = try waitForCallback("clear") {
+            SpaceGramMediaArchive.clear(root: root, completion: $0)
         }
-        wait(for: [cleared], timeout: 10)
+        XCTAssertTrue(cleared)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent(asset.id + ".json").path))
     }
 
     func testMissingPartialSymlinkAndOversizedResourcesAreNotPinned() throws {
@@ -182,14 +196,14 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         let handle = try FileHandle(forWritingTo: large)
         try handle.truncate(atOffset: UInt64(SpaceGramMediaArchive.maxAssetBytes + 1))
         try handle.close()
-        let done = expectation(description: "reject unavailable media")
-        DispatchQueue.global().async {
-            for url in [complete, link, large] {
-                XCTAssertNil(SpaceGramMediaArchive.pinCompletedFile(path: url.path, fileName: "fixture", kind: "file", fileExtension: "bin"))
+        let captures: [SpaceGramMediaCapture?] = try waitForCallback("reject unavailable media") { completeResult in
+            DispatchQueue.global().async {
+                completeResult([complete, link, large].map {
+                    SpaceGramMediaArchive.pinCompletedFile(path: $0.path, fileName: "fixture", kind: "file", fileExtension: "bin")
+                })
             }
-            done.fulfill()
         }
-        wait(for: [done], timeout: 10)
+        XCTAssertTrue(captures.allSatisfy { $0 == nil })
     }
 
     func testExpirationRemovesMetadataAndPayload() throws {
@@ -198,14 +212,12 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         var object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: metadata)) as? [String: Any])
         object["timestamp"] = Date().timeIntervalSince1970 - SpaceGramMediaArchive.retention - 10
         try JSONSerialization.data(withJSONObject: object).write(to: metadata)
-        let done = expectation(description: "expiry cleanup")
-        SpaceGramMediaArchive.list(root: root, ids: [asset.id]) { assets in
-            XCTAssertTrue(assets.isEmpty)
-            XCTAssertFalse(FileManager.default.fileExists(atPath: metadata.path))
-            XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent(asset.id + ".data.bin").path))
-            done.fulfill()
+        let assets = try waitForCallback("expiry cleanup") {
+            SpaceGramMediaArchive.list(root: root, ids: [asset.id], completion: $0)
         }
-        wait(for: [done], timeout: 10)
+        XCTAssertTrue(assets.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadata.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appendingPathComponent(asset.id + ".data.bin").path))
     }
 
     func testAccountIsolationAndFutureManifestPreservation() throws {
@@ -213,24 +225,20 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         let otherAccount = directory.appendingPathComponent("otherAccount")
         try FileManager.default.createDirectory(at: otherAccount, withIntermediateDirectories: true)
         let otherRoot = SpaceGramMediaArchive.root(mediaBoxPath: otherAccount.appendingPathComponent("media").path)
-        let isolated = expectation(description: "other account")
-        SpaceGramMediaArchive.list(root: otherRoot, ids: [asset.id]) { assets in
-            XCTAssertTrue(assets.isEmpty)
-            isolated.fulfill()
+        let isolated = try waitForCallback("other account") {
+            SpaceGramMediaArchive.list(root: otherRoot, ids: [asset.id], completion: $0)
         }
-        wait(for: [isolated], timeout: 10)
+        XCTAssertTrue(isolated.isEmpty)
         let metadata = root.appendingPathComponent(asset.id + ".json")
         var object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: metadata)) as? [String: Any])
         object["version"] = 2
         let future = try JSONSerialization.data(withJSONObject: object)
         try future.write(to: metadata)
-        let preserved = expectation(description: "newer schema")
-        SpaceGramMediaArchive.list(root: root, ids: [asset.id]) { assets in
-            XCTAssertTrue(assets.isEmpty)
-            XCTAssertEqual(try? Data(contentsOf: metadata), future)
-            preserved.fulfill()
+        let preserved = try waitForCallback("newer schema") {
+            SpaceGramMediaArchive.list(root: root, ids: [asset.id], completion: $0)
         }
-        wait(for: [preserved], timeout: 10)
+        XCTAssertTrue(preserved.isEmpty)
+        XCTAssertEqual(try? Data(contentsOf: metadata), future)
     }
 
     func testV1HistoryWithoutMediaFieldsStillDecodes() throws {
@@ -276,29 +284,23 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         XCTAssertEqual(SpaceGramMediaArchivePolicy.retentionPresets, [7, 30, 90])
         let (root, asset) = try store(Data([1, 2, 3]))
         let policy = SpaceGramMediaArchivePolicy(storageLimitBytes: 256 * 1024 * 1024, retentionDays: 7, automaticCleanup: false)
-        let configured = expectation(description: "policy")
-        SpaceGramMediaArchive.setPolicy(root: root, policy: policy) { success in
-            XCTAssertTrue(success)
-            configured.fulfill()
+        let configured = try waitForCallback("policy") {
+            SpaceGramMediaArchive.setPolicy(root: root, policy: policy, completion: $0)
         }
-        wait(for: [configured], timeout: 10)
+        XCTAssertTrue(configured)
         let metadata = root.appendingPathComponent(asset.id + ".json")
         var object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: metadata)) as? [String: Any])
         object["timestamp"] = Date().timeIntervalSince1970 - 8 * 24 * 60 * 60
         try JSONSerialization.data(withJSONObject: object).write(to: metadata)
-        let retained = expectation(description: "automatic cleanup disabled")
-        SpaceGramMediaArchive.list(root: root, ids: [asset.id]) { values in
-            XCTAssertEqual(values.count, 1)
-            retained.fulfill()
+        let retained = try waitForCallback("automatic cleanup disabled") {
+            SpaceGramMediaArchive.list(root: root, ids: [asset.id], completion: $0)
         }
-        wait(for: [retained], timeout: 10)
-        let cleaned = expectation(description: "manual cleanup")
-        SpaceGramMediaArchive.cleanExpired(root: root, referencedIds: [asset.id], referencesComplete: true) { success in
-            XCTAssertTrue(success)
-            XCTAssertFalse(FileManager.default.fileExists(atPath: metadata.path))
-            cleaned.fulfill()
+        XCTAssertEqual(retained.count, 1)
+        let cleaned = try waitForCallback("manual cleanup") {
+            SpaceGramMediaArchive.cleanExpired(root: root, referencedIds: [asset.id], referencesComplete: true, completion: $0)
         }
-        wait(for: [cleaned], timeout: 10)
+        XCTAssertTrue(cleaned)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadata.path))
     }
 
     func testOrphanCleanupAndMissingOrCorruptStates() throws {
@@ -306,20 +308,16 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         let metadata = root.appendingPathComponent(asset.id + ".json")
         let payload = root.appendingPathComponent(asset.id + ".data.bin")
         try FileManager.default.removeItem(at: payload)
-        let missing = expectation(description: "missing payload")
-        SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [:]) { states in
-            if case .some(.missing) = states[asset.id] { } else { XCTFail("Missing payload must be visible") }
-            missing.fulfill()
+        let missing = try waitForCallback("missing payload") {
+            SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [:], completion: $0)
         }
-        wait(for: [missing], timeout: 10)
+        guard case .some(.missing) = missing[asset.id] else { return XCTFail("Missing payload must be visible") }
         try Data([1, 2, 3]).write(to: payload)
         try Data("invalid".utf8).write(to: metadata)
-        let corrupt = expectation(description: "corrupt manifest")
-        SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [:]) { states in
-            if case .some(.corrupt) = states[asset.id] { } else { XCTFail("Corrupt manifest must be visible") }
-            corrupt.fulfill()
+        let corrupt = try waitForCallback("corrupt manifest") {
+            SpaceGramMediaArchive.states(root: root, ids: [asset.id], capturedAt: [:], completion: $0)
         }
-        wait(for: [corrupt], timeout: 10)
+        guard case .some(.corrupt) = corrupt[asset.id] else { return XCTFail("Corrupt manifest must be visible") }
 
         let (orphanRoot, orphan) = try store(Data([4, 5, 6]))
         let orphanMetadata = orphanRoot.appendingPathComponent(orphan.id + ".json")
@@ -327,14 +325,12 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         object["timestamp"] = Date().timeIntervalSince1970 - 10 * 60
         try JSONSerialization.data(withJSONObject: object).write(to: orphanMetadata)
         SpaceGramMediaArchive.reconcile(root: orphanRoot, referencedIds: [], referencesComplete: true)
-        let reconciled = expectation(description: "reconciled")
-        SpaceGramMediaArchive.usage(root: orphanRoot) { result in
-            if case let .success(usage) = result { XCTAssertEqual(usage.assetCount, 0) }
-            else { XCTFail("Archive should remain readable") }
-            XCTAssertFalse(FileManager.default.fileExists(atPath: orphanMetadata.path))
-            reconciled.fulfill()
+        let result = try waitForCallback("reconciled") {
+            SpaceGramMediaArchive.usage(root: orphanRoot, completion: $0)
         }
-        wait(for: [reconciled], timeout: 10)
+        let usage = try result.get()
+        XCTAssertEqual(usage.assetCount, 0)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: orphanMetadata.path))
     }
 
     func testSizeAndCountLimitsEvictOldestAssets() throws {
@@ -357,21 +353,16 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         let secondDirectory = directory.appendingPathComponent("second-account")
         try FileManager.default.createDirectory(at: secondDirectory, withIntermediateDirectories: true)
         let secondRoot = SpaceGramMediaArchive.root(mediaBoxPath: secondDirectory.appendingPathComponent("media").path)
-        let checked = expectation(description: "isolated usage")
-        SpaceGramMediaArchive.usage(root: secondRoot) { result in
-            if case let .success(usage) = result {
-                XCTAssertEqual(usage.bytes, 0)
-                XCTAssertEqual(usage.assetCount, 0)
-            } else { XCTFail("Second account usage unavailable") }
-            checked.fulfill()
+        let result = try waitForCallback("isolated usage") {
+            SpaceGramMediaArchive.usage(root: secondRoot, completion: $0)
         }
-        wait(for: [checked], timeout: 10)
-        let cleared = expectation(description: "isolated cleanup")
-        SpaceGramMediaArchive.clear(root: secondRoot) { success in
-            XCTAssertTrue(success)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: firstRoot.appendingPathComponent(firstAsset.id + ".json").path))
-            cleared.fulfill()
+        let usage = try result.get()
+        XCTAssertEqual(usage.bytes, 0)
+        XCTAssertEqual(usage.assetCount, 0)
+        let cleared = try waitForCallback("isolated cleanup") {
+            SpaceGramMediaArchive.clear(root: secondRoot, completion: $0)
         }
-        wait(for: [cleared], timeout: 10)
+        XCTAssertTrue(cleared)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: firstRoot.appendingPathComponent(firstAsset.id + ".json").path))
     }
 }

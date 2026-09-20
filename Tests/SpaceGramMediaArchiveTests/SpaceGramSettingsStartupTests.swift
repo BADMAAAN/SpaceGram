@@ -22,13 +22,13 @@ final class SpaceGramSettingsStartupTests: XCTestCase {
     // Run this test alone in a fresh test runner to exercise cold singleton
     // initialization, as well as in the full suite for subsequent subscriptions.
     func testColdPresenceSubscriptionCompletes() {
-        let completed = expectation(description: "Presence policy bootstrap returns")
+        let completed = DispatchSemaphore(value: 0)
         DispatchQueue.global().async {
             let disposable = spaceGramSuppressOnlinePresenceSignal().start(next: { _ in })
             disposable.dispose()
-            completed.fulfill()
+            completed.signal()
         }
-        wait(for: [completed], timeout: 5.0)
+        XCTAssertEqual(completed.wait(timeout: .now() + 5.0), .success)
     }
 
     func testSettingsNotificationAllowsReentrantSubscriptionAndDisposal() {

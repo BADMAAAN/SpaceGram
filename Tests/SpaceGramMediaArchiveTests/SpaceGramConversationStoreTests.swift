@@ -2,7 +2,41 @@ import Foundation
 import SpaceGramAI
 import XCTest
 
+private final class SpaceGramConversationTestCallbackValue<Value> {
+    private let lock = NSLock()
+    private var value: Value?
+
+    func store(_ value: Value) {
+        lock.lock()
+        self.value = value
+        lock.unlock()
+    }
+
+    func load() -> Value? {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+}
+
+private enum SpaceGramConversationTestError: Error {
+    case timedOut(String)
+}
+
 final class SpaceGramConversationStoreTests: XCTestCase {
+    private func waitForCallback<Value>(_ description: String, _ operation: (@escaping (Value) -> Void) -> Void) throws -> Value {
+        let value = SpaceGramConversationTestCallbackValue<Value>()
+        let completed = DispatchSemaphore(value: 0)
+        operation {
+            value.store($0)
+            completed.signal()
+        }
+        guard completed.wait(timeout: .now() + 10.0) == .success else {
+            throw SpaceGramConversationTestError.timedOut(description)
+        }
+        return try XCTUnwrap(value.load(), "Missing callback value for \(description)")
+    }
+
     func testLegacyDirectoryMigrationLoadsHistoryAndClearCannotResurrectIt() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let legacy = directory.appendingPathComponent("qwengram-conversations-v1")
@@ -11,27 +45,19 @@ final class SpaceGramConversationStoreTests: XCTestCase {
         let conversation = SpaceGramAIConversation(title: "Legacy", messages: [SpaceGramAIMessage(role: .user, content: "Saved before upgrade")])
         try JSONEncoder().encode(conversation).write(to: legacy.appendingPathComponent(conversation.id + ".json"))
         let store = SpaceGramConversationStore(mediaBoxPath: directory.appendingPathComponent("media").path)
-        let loaded = expectation(description: "legacy loaded")
-        store.list { result in
-            if case let .success(values) = result { XCTAssertEqual(values, [conversation]) }
-            else { XCTFail("Legacy conversation should migrate") }
-            loaded.fulfill()
+        let loaded = try waitForCallback("legacy loaded") {
+            store.list(completion: $0)
         }
-        wait(for: [loaded], timeout: 10)
+        XCTAssertEqual(try loaded.get(), [conversation])
         XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
-        let cleared = expectation(description: "cleared")
-        store.clear { result in
-            if case .failure = result { XCTFail("Clear should succeed") }
-            cleared.fulfill()
+        let cleared = try waitForCallback("cleared") {
+            store.clear(completion: $0)
         }
-        wait(for: [cleared], timeout: 10)
-        let restarted = expectation(description: "restart")
-        SpaceGramConversationStore(mediaBoxPath: directory.appendingPathComponent("media").path).list { result in
-            if case let .success(values) = result { XCTAssertTrue(values.isEmpty) }
-            else { XCTFail("Restart should succeed") }
-            restarted.fulfill()
+        try cleared.get()
+        let restarted = try waitForCallback("restart") {
+            SpaceGramConversationStore(mediaBoxPath: directory.appendingPathComponent("media").path).list(completion: $0)
         }
-        wait(for: [restarted], timeout: 10)
+        XCTAssertTrue(try restarted.get().isEmpty)
     }
 
     func testDeletingBeforeFirstLoadMigratesThenRemovesLegacyConversation() throws {
@@ -42,19 +68,14 @@ final class SpaceGramConversationStoreTests: XCTestCase {
         let conversation = SpaceGramAIConversation(title: "Legacy")
         try JSONEncoder().encode(conversation).write(to: legacy.appendingPathComponent(conversation.id + ".json"))
         let store = SpaceGramConversationStore(mediaBoxPath: directory.appendingPathComponent("media").path)
-        let removed = expectation(description: "removed before read")
-        store.remove(id: conversation.id) { result in
-            if case .failure = result { XCTFail("Legacy deletion should succeed") }
-            removed.fulfill()
+        let removed = try waitForCallback("removed before read") {
+            store.remove(id: conversation.id, completion: $0)
         }
-        wait(for: [removed], timeout: 10)
-        let loaded = expectation(description: "empty")
-        store.list { result in
-            if case let .success(values) = result { XCTAssertTrue(values.isEmpty) }
-            else { XCTFail("Should load empty store") }
-            loaded.fulfill()
+        try removed.get()
+        let loaded = try waitForCallback("empty") {
+            store.list(completion: $0)
         }
-        wait(for: [loaded], timeout: 10)
+        XCTAssertTrue(try loaded.get().isEmpty)
     }
 
     func testMessageLimitPreservesSystemAndLocalTranscript() {
@@ -77,40 +98,28 @@ final class SpaceGramConversationStoreTests: XCTestCase {
         let first = SpaceGramConversationStore(mediaBoxPath: path)
         let message = SpaceGramAIMessage(role: .user, content: "A private question")
         let conversation = SpaceGramAIConversation(title: "Test", model: "qwen-plus", messages: [message])
-        let saved = expectation(description: "saved")
-        first.save(conversation) { result in
-            if case .failure = result { XCTFail("Conversation should save") }
-            saved.fulfill()
+        let saved = try waitForCallback("saved") {
+            first.save(conversation, completion: $0)
         }
-        wait(for: [saved], timeout: 10)
+        try saved.get()
 
         let reopened = SpaceGramConversationStore(mediaBoxPath: path)
-        let loaded = expectation(description: "loaded")
-        reopened.list { result in
-            switch result {
-            case let .success(conversations):
-                XCTAssertEqual(conversations.count, 1)
-                XCTAssertEqual(conversations.first?.id, conversation.id)
-                XCTAssertEqual(conversations.first?.messages, [message])
-            case .failure: XCTFail("Conversation should load")
-            }
-            loaded.fulfill()
+        let loaded = try waitForCallback("loaded") {
+            reopened.list(completion: $0)
         }
-        wait(for: [loaded], timeout: 10)
+        let conversations = try loaded.get()
+        XCTAssertEqual(conversations.count, 1)
+        XCTAssertEqual(conversations.first?.id, conversation.id)
+        XCTAssertEqual(conversations.first?.messages, [message])
 
-        let removed = expectation(description: "removed")
-        reopened.remove(id: conversation.id) { result in
-            if case .failure = result { XCTFail("Conversation should delete") }
-            removed.fulfill()
+        let removed = try waitForCallback("removed") {
+            reopened.remove(id: conversation.id, completion: $0)
         }
-        wait(for: [removed], timeout: 10)
-        let empty = expectation(description: "empty")
-        first.list { result in
-            if case let .success(conversations) = result { XCTAssertTrue(conversations.isEmpty) }
-            else { XCTFail("Store should remain readable") }
-            empty.fulfill()
+        try removed.get()
+        let empty = try waitForCallback("empty") {
+            first.list(completion: $0)
         }
-        wait(for: [empty], timeout: 10)
+        XCTAssertTrue(try empty.get().isEmpty)
     }
 
     func testContextRetainsNewestCompleteMessages() {
@@ -138,30 +147,23 @@ final class SpaceGramConversationStoreTests: XCTestCase {
         var conversation = SpaceGramAIConversation(title: "Original", model: "qwen-plus", createdAt: created, messages: [user, partial])
         conversation.title = "Renamed"
         conversation.titleIsCustom = true
-        let saved = expectation(description: "saved")
-        first.save(conversation) { result in
-            if case .failure = result { XCTFail("Save failed") }
-            saved.fulfill()
+        let saved = try waitForCallback("saved") {
+            first.save(conversation, completion: $0)
         }
-        wait(for: [saved], timeout: 10)
-        let loaded = expectation(description: "reloaded")
-        first.list { result in
-            guard case let .success(values) = result, let value = values.first else { XCTFail("Reload failed"); loaded.fulfill(); return }
-            XCTAssertEqual(value.title, "Renamed")
-            XCTAssertTrue(value.titleIsCustom)
-            XCTAssertEqual(value.createdAt, created)
-            XCTAssertEqual(value.messages.last?.content, "Partial answer")
-            XCTAssertEqual(value.messages.last?.id, partial.id)
-            loaded.fulfill()
+        try saved.get()
+        let loaded = try waitForCallback("reloaded") {
+            first.list(completion: $0)
         }
-        wait(for: [loaded], timeout: 10)
-        let isolated = expectation(description: "isolated")
-        second.list { result in
-            if case let .success(values) = result { XCTAssertTrue(values.isEmpty) }
-            else { XCTFail("Other account unavailable") }
-            isolated.fulfill()
+        let value = try XCTUnwrap(try loaded.get().first)
+        XCTAssertEqual(value.title, "Renamed")
+        XCTAssertTrue(value.titleIsCustom)
+        XCTAssertEqual(value.createdAt, created)
+        XCTAssertEqual(value.messages.last?.content, "Partial answer")
+        XCTAssertEqual(value.messages.last?.id, partial.id)
+        let isolated = try waitForCallback("isolated") {
+            second.list(completion: $0)
         }
-        wait(for: [isolated], timeout: 10)
+        XCTAssertTrue(try isolated.get().isEmpty)
     }
 
     func testV1ConversationMigrationAndCorruptFileIsolation() throws {
@@ -177,18 +179,17 @@ final class SpaceGramConversationStoreTests: XCTestCase {
         try Data(fixture.utf8).write(to: root.appendingPathComponent(id + ".json"))
         try Data("broken JSON".utf8).write(to: root.appendingPathComponent(UUID().uuidString.lowercased() + ".json"))
         let store = SpaceGramConversationStore(mediaBoxPath: directory.appendingPathComponent("media").path)
-        let loaded = expectation(description: "migration")
-        store.list { result in
-            guard case let .success(values) = result, values.count == 1 else { XCTFail("Valid v1 record should survive corrupt neighbor"); loaded.fulfill(); return }
-            XCTAssertEqual(values[0].version, 2)
-            XCTAssertEqual(values[0].title, "Old title")
-            XCTAssertEqual(values[0].createdAt, values[0].updatedAt)
-            XCTAssertFalse(values[0].titleIsCustom)
-            XCTAssertEqual(values[0].messages[0].content, "Old question")
-            XCTAssertFalse(values[0].messages[0].id.isEmpty)
-            loaded.fulfill()
+        let loaded = try waitForCallback("migration") {
+            store.list(completion: $0)
         }
-        wait(for: [loaded], timeout: 10)
+        let values = try loaded.get()
+        XCTAssertEqual(values.count, 1)
+        XCTAssertEqual(values[0].version, 2)
+        XCTAssertEqual(values[0].title, "Old title")
+        XCTAssertEqual(values[0].createdAt, values[0].updatedAt)
+        XCTAssertFalse(values[0].titleIsCustom)
+        XCTAssertEqual(values[0].messages[0].content, "Old question")
+        XCTAssertFalse(values[0].messages[0].id.isEmpty)
     }
 
     func testContextAlwaysKeepsSystemPromptAndOmitsAttachmentsFromTextBudget() {
@@ -207,12 +208,10 @@ final class SpaceGramConversationStoreTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = SpaceGramConversationStore(mediaBoxPath: directory.appendingPathComponent("media").path)
         let oversized = SpaceGramAIConversation(messages: [SpaceGramAIMessage(role: .user, content: String(repeating: "x", count: 1024 * 1024))])
-        let rejected = expectation(description: "size limit")
-        store.save(oversized) { result in
-            if case .success = result { XCTFail("Oversized conversation should be rejected") }
-            rejected.fulfill()
+        let rejected = try waitForCallback("size limit") {
+            store.save(oversized, completion: $0)
         }
-        wait(for: [rejected], timeout: 10)
+        guard case .failure = rejected else { return XCTFail("Oversized conversation should be rejected") }
     }
 
     func testClearRemovesOnlySelectedAccountConversations() throws {
@@ -225,33 +224,24 @@ final class SpaceGramConversationStoreTests: XCTestCase {
         let first = SpaceGramConversationStore(mediaBoxPath: firstAccount.appendingPathComponent("media").path)
         let second = SpaceGramConversationStore(mediaBoxPath: secondAccount.appendingPathComponent("media").path)
         for (store, title) in [(first, "First"), (second, "Second")] {
-            let saved = expectation(description: "saved \(title)")
-            store.save(SpaceGramAIConversation(title: title)) { result in
-                if case .failure = result { XCTFail("Save failed") }
-                saved.fulfill()
+            let saved = try waitForCallback("saved \(title)") {
+                store.save(SpaceGramAIConversation(title: title), completion: $0)
             }
-            wait(for: [saved], timeout: 10)
+            try saved.get()
         }
 
-        let cleared = expectation(description: "cleared")
-        first.clear { result in
-            if case .failure = result { XCTFail("Clear failed") }
-            cleared.fulfill()
+        let cleared = try waitForCallback("cleared") {
+            first.clear(completion: $0)
         }
-        wait(for: [cleared], timeout: 10)
+        try cleared.get()
 
-        let firstList = expectation(description: "first list")
-        first.list { result in
-            guard case let .success(values) = result else { XCTFail("First account unreadable"); firstList.fulfill(); return }
-            XCTAssertTrue(values.isEmpty)
-            firstList.fulfill()
+        let firstList = try waitForCallback("first list") {
+            first.list(completion: $0)
         }
-        let secondList = expectation(description: "second list")
-        second.list { result in
-            guard case let .success(values) = result else { XCTFail("Second account unreadable"); secondList.fulfill(); return }
-            XCTAssertEqual(values.map(\.title), ["Second"])
-            secondList.fulfill()
+        XCTAssertTrue(try firstList.get().isEmpty)
+        let secondList = try waitForCallback("second list") {
+            second.list(completion: $0)
         }
-        wait(for: [firstList, secondList], timeout: 10)
+        XCTAssertEqual(try secondList.get().map(\.title), ["Second"])
     }
 }

@@ -6,8 +6,38 @@ import SpaceGramMediaArchive
 import TelegramCore
 import XCTest
 
+private final class SpaceGramOverlayTestCallbackValue<Value> {
+    private let lock = NSLock()
+    private var value: Value?
+
+    func store(_ value: Value) {
+        lock.lock()
+        self.value = value
+        lock.unlock()
+    }
+
+    func load() -> Value? {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+}
+
 final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
     private let peerId = PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(42))
+
+    private func waitForCallback<Value>(_ description: String, _ operation: (@escaping (Value) -> Void) -> Void) throws -> Value {
+        let value = SpaceGramOverlayTestCallbackValue<Value>()
+        let completed = DispatchSemaphore(value: 0)
+        operation {
+            value.store($0)
+            completed.signal()
+        }
+        guard completed.wait(timeout: .now() + 10.0) == .success else {
+            throw SpaceGramOverlayTestError.timedOut(description)
+        }
+        return try XCTUnwrap(value.load(), "Missing callback value for \(description)")
+    }
 
     func testCompletedResourcesSurviveUnlinkAndReconstructEveryMediaKind() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -25,19 +55,13 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
             captures.append(capture)
             try FileManager.default.removeItem(at: source)
         }
-        let stored = expectation(description: "atomic archive publication")
-        SpaceGramMediaArchive.store(root: root, captures: captures) { assets in
-            XCTAssertEqual(assets.count, kinds.count)
-            stored.fulfill()
+        let assets = try waitForCallback("atomic archive publication") {
+            SpaceGramMediaArchive.store(root: root, captures: captures, completion: $0)
         }
-        wait(for: [stored], timeout: 10)
-        let resolved = expectation(description: "resolve by stable resource identity without event asset IDs")
-        var resources: [String: SpaceGramArchivedMedia] = [:]
-        SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: Set(kinds.map { "fixture-" + $0 })) {
-            resources = $0
-            resolved.fulfill()
+        XCTAssertEqual(assets.count, kinds.count)
+        var resources = try waitForCallback("resolve by stable resource identity without event asset IDs") {
+            SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: Set(kinds.map { "fixture-" + $0 }), completion: $0)
         }
-        wait(for: [resolved], timeout: 10)
         XCTAssertEqual(resources.count, kinds.count)
         for (index, kind) in kinds.enumerated() {
             let resource = try XCTUnwrap(resources.values.first { $0.asset.resourceId == "fixture-" + kind })
@@ -68,6 +92,8 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
                 XCTAssertEqual(file.isAnimated, kind == "animation")
             }
         }
+        resources.removeAll()
+        _ = try waitForCallback("archive queue drain") { SpaceGramMediaArchive.usage(root: root, completion: $0) }
     }
 
     func testChronologicalPageBoundaryPolicy() {
@@ -109,4 +135,8 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
         XCTAssertEqual(message.text, "")
         XCTAssertTrue((message.media.first as? TelegramMediaFile)?.fileName?.contains("Media unavailable") == true)
     }
+}
+
+private enum SpaceGramOverlayTestError: Error {
+    case timedOut(String)
 }
