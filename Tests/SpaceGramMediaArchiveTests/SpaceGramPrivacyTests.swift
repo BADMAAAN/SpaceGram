@@ -67,7 +67,7 @@ final class SpaceGramPrivacyTests: XCTestCase {
                 kCGImagePropertyExifDateTimeOriginal: "2026:09:20 12:34:56"
             ],
             kCGImagePropertyIPTCDictionary: [kCGImagePropertyIPTCCaptionAbstract: "private caption"],
-            kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFImageDescription: "private description"]
+            kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFMake: "private camera"]
         ]
         CGImageDestinationAddImage(destination, image, metadata as CFDictionary)
         XCTAssertTrue(CGImageDestinationFinalize(destination))
@@ -78,7 +78,8 @@ final class SpaceGramPrivacyTests: XCTestCase {
         XCTAssertNotNil(originalProperties[kCGImagePropertyGPSDictionary])
         XCTAssertNotNil(originalProperties[kCGImagePropertyExifDictionary])
         XCTAssertNotNil(originalProperties[kCGImagePropertyIPTCDictionary])
-        XCTAssertNotNil(originalProperties[kCGImagePropertyTIFFDictionary])
+        let originalTIFF = originalProperties[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
+        XCTAssertEqual(originalTIFF?[kCGImagePropertyTIFFMake] as? String, "private camera")
 
         let sanitized = try XCTUnwrap(
             SpaceGramMetadataSanitizer.sanitizeStillImage(encoded as Data),
@@ -201,6 +202,11 @@ final class SpaceGramPrivacyTests: XCTestCase {
         CGImageDestinationAddImage(destination, image, nil)
         XCTAssertTrue(CGImageDestinationFinalize(destination))
         XCTAssertNil(SpaceGramMetadataSanitizer.sanitizeStillImage(encoded as Data))
+    }
+
+    func testStillImageSanitizerRejectsMalformedInput() {
+        XCTAssertNil(SpaceGramMetadataSanitizer.sanitizeStillImage(Data()))
+        XCTAssertNil(SpaceGramMetadataSanitizer.sanitizeStillImage(Data([0x00, 0x01, 0x02, 0x03])))
     }
 
     private typealias RGB = (UInt8, UInt8, UInt8)

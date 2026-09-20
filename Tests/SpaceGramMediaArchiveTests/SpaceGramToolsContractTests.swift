@@ -1,5 +1,5 @@
-import Foundation
 import CoreImage
+import Foundation
 import SpaceGramQR
 import SpaceGramSettings
 import SpaceGramSettingsUI
@@ -34,8 +34,18 @@ final class SpaceGramToolsContractTests: XCTestCase {
             )
             XCTAssertEqual(cgImage.width, cgImage.height, "scenario=\(scenario) utf8Bytes=\(bytes) stage=pixel-dimensions")
             XCTAssertGreaterThan(cgImage.width, 0, "scenario=\(scenario) utf8Bytes=\(bytes) stage=pixel-dimensions")
-            let decoded = detector.features(in: CIImage(cgImage: cgImage)).compactMap { ($0 as? CIQRCodeFeature)?.messageString }
-            XCTAssertEqual(decoded, [text], "scenario=\(scenario) utf8Bytes=\(bytes) stage=decoding")
+            XCTAssertLessThanOrEqual(cgImage.width, 4096, "scenario=\(scenario) utf8Bytes=\(bytes) stage=output-bounds")
+            let features = detector.features(in: CIImage(cgImage: cgImage))
+            XCTAssertEqual(features.count, 1, "scenario=\(scenario) utf8Bytes=\(bytes) stage=feature-detection")
+            let feature = try XCTUnwrap(
+                features.first as? CIQRCodeFeature,
+                "scenario=\(scenario) utf8Bytes=\(bytes) stage=qr-feature"
+            )
+            let decoded = try XCTUnwrap(
+                feature.messageString,
+                "scenario=\(scenario) utf8Bytes=\(bytes) stage=decoded-string"
+            )
+            XCTAssertEqual(decoded, text, "scenario=\(scenario) utf8Bytes=\(bytes) stage=decoding")
         }
         let overLimitUTF8 = String(repeating: "🙂", count: SpaceGramQRGenerator.maximumUTF8Bytes / 4 + 1)
         XCTAssertGreaterThan(Data(overLimitUTF8.utf8).count, SpaceGramQRGenerator.maximumUTF8Bytes)

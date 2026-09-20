@@ -6,6 +6,7 @@ import UIKit
 public enum SpaceGramQRGenerator {
     public static let maximumUTF8Bytes = 2000
     private static let maximumOutputDimension = 4096
+    private static let renderContext = CIContext(options: [.cacheIntermediates: false])
     private static let log = OSLog(subsystem: "org.telegram.SpaceGram", category: "QR")
 
     public static func image(text: String, scale: CGFloat = 8.0) -> UIImage? {
@@ -36,33 +37,37 @@ public enum SpaceGramQRGenerator {
             logFailure(stage: "extent-validation", payloadBytes: payload.count)
             return nil
         }
+
         let moduleWidth = Int(extent.width)
         let moduleHeight = Int(extent.height)
-        guard let modulesBitmap = CGContext(
-            data: nil,
-            width: moduleWidth,
-            height: moduleHeight,
-            bitsPerComponent: 8,
-            bytesPerRow: 0,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.noneSkipFirst.rawValue
-        ) else {
-            logFailure(stage: "module-context", payloadBytes: payload.count, width: moduleWidth, height: moduleHeight)
+        let (moduleCount, moduleOverflow) = moduleWidth.multipliedReportingOverflow(by: moduleHeight)
+        let (moduleByteCount, byteOverflow) = moduleCount.multipliedReportingOverflow(by: 4)
+        guard !moduleOverflow, !byteOverflow, moduleByteCount > 0 else {
+            logFailure(stage: "module-bounds", payloadBytes: payload.count, width: moduleWidth, height: moduleHeight)
             return nil
         }
-        modulesBitmap.setFillColor(UIColor.white.cgColor)
-        modulesBitmap.fill(CGRect(x: 0, y: 0, width: CGFloat(moduleWidth), height: CGFloat(moduleHeight)))
-        let renderContext = CIContext(cgContext: modulesBitmap, options: [.cacheIntermediates: false])
-        renderContext.draw(output, in: CGRect(x: 0, y: 0, width: CGFloat(moduleWidth), height: CGFloat(moduleHeight)), from: extent)
-        guard containsDarkPixel(modulesBitmap, width: moduleWidth, height: moduleHeight),
-              let modules = modulesBitmap.makeImage() else {
+        var modulePixels = [UInt8](repeating: 255, count: moduleByteCount)
+        modulePixels.withUnsafeMutableBytes { bytes in
+            renderContext.render(
+                output,
+                toBitmap: bytes.baseAddress!,
+                rowBytes: moduleWidth * 4,
+                bounds: extent,
+                format: .RGBA8,
+                colorSpace: CGColorSpaceCreateDeviceRGB()
+            )
+        }
+        guard stride(from: 0, to: moduleByteCount, by: 4).contains(where: {
+            modulePixels[$0] < 128 && modulePixels[$0 + 1] < 128 && modulePixels[$0 + 2] < 128
+        }) else {
             logFailure(stage: "module-render", payloadBytes: payload.count, width: moduleWidth, height: moduleHeight)
             return nil
         }
+
         let quietZone = 4
         let integerScale = Int(scale)
-        let paddedWidth = modules.width + quietZone * 2
-        let paddedHeight = modules.height + quietZone * 2
+        let paddedWidth = moduleWidth + quietZone * 2
+        let paddedHeight = moduleHeight + quietZone * 2
         guard paddedWidth <= maximumOutputDimension / integerScale,
               paddedHeight <= maximumOutputDimension / integerScale else {
             logFailure(stage: "output-bounds", payloadBytes: payload.count, width: paddedWidth * integerScale, height: paddedHeight * integerScale)
@@ -70,51 +75,55 @@ public enum SpaceGramQRGenerator {
         }
         let width = paddedWidth * integerScale
         let height = paddedHeight * integerScale
-        guard let bitmap = CGContext(
-            data: nil,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: 0,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
-        ) else {
-            logFailure(stage: "output-context", payloadBytes: payload.count, width: width, height: height)
+        let (pixelCount, pixelOverflow) = width.multipliedReportingOverflow(by: height)
+        let (byteCount, outputByteOverflow) = pixelCount.multipliedReportingOverflow(by: 4)
+        guard !pixelOverflow, !outputByteOverflow else {
+            logFailure(stage: "output-bounds", payloadBytes: payload.count, width: width, height: height)
             return nil
         }
-        bitmap.setFillColor(UIColor.white.cgColor)
-        bitmap.fill(CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
-        bitmap.interpolationQuality = .none
-        bitmap.draw(modules, in: CGRect(
-            x: CGFloat(quietZone) * scale,
-            y: CGFloat(quietZone) * scale,
-            width: CGFloat(modules.width) * scale,
-            height: CGFloat(modules.height) * scale
-        ))
-        guard let image = bitmap.makeImage() else {
-            logFailure(stage: "output-image", payloadBytes: payload.count, width: width, height: height)
-            return nil
-        }
-        guard image.width == width, image.height == height else {
-            logFailure(stage: "output-dimensions", payloadBytes: payload.count, width: image.width, height: image.height)
-            return nil
-        }
-        return UIImage(cgImage: image, scale: 1.0, orientation: .up)
-    }
-
-    private static func containsDarkPixel(_ context: CGContext, width: Int, height: Int) -> Bool {
-        guard let data = context.data else { return false }
-        let bytes = data.assumingMemoryBound(to: UInt8.self)
-        let bytesPerRow = context.bytesPerRow
-        for y in 0 ..< height {
-            for x in 0 ..< width {
-                let offset = y * bytesPerRow + x * 4
-                if bytes[offset] < 128 || bytes[offset + 1] < 128 || bytes[offset + 2] < 128 {
-                    return true
+        var pixels = [UInt8](repeating: 255, count: byteCount)
+        for moduleY in 0 ..< moduleHeight {
+            // Core Image's bitmap origin is lower-left; CGImage providers use a
+            // top row first, so reverse rows while materializing the modules.
+            let sourceY = moduleHeight - moduleY - 1
+            for moduleX in 0 ..< moduleWidth {
+                let moduleOffset = (sourceY * moduleWidth + moduleX) * 4
+                guard modulePixels[moduleOffset] < 128,
+                      modulePixels[moduleOffset + 1] < 128,
+                      modulePixels[moduleOffset + 2] < 128 else {
+                    continue
+                }
+                let firstX = (moduleX + quietZone) * integerScale
+                let firstY = (moduleY + quietZone) * integerScale
+                for y in firstY ..< firstY + integerScale {
+                    let rowOffset = y * width * 4
+                    for x in firstX ..< firstX + integerScale {
+                        let offset = rowOffset + x * 4
+                        pixels[offset] = 0
+                        pixels[offset + 1] = 0
+                        pixels[offset + 2] = 0
+                    }
                 }
             }
         }
-        return false
+        guard let provider = CGDataProvider(data: Data(pixels) as CFData),
+              let image = CGImage(
+                  width: width,
+                  height: height,
+                  bitsPerComponent: 8,
+                  bitsPerPixel: 32,
+                  bytesPerRow: width * 4,
+                  space: CGColorSpaceCreateDeviceRGB(),
+                  bitmapInfo: CGBitmapInfo(rawValue: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.noneSkipLast.rawValue),
+                  provider: provider,
+                  decode: nil,
+                  shouldInterpolate: false,
+                  intent: .defaultIntent
+              ) else {
+            logFailure(stage: "output-image", payloadBytes: payload.count, width: width, height: height)
+            return nil
+        }
+        return UIImage(cgImage: image, scale: 1.0, orientation: .up)
     }
 
     private static func logFailure(stage: String, payloadBytes: Int, width: Int = 0, height: Int = 0) {
