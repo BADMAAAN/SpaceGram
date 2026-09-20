@@ -484,6 +484,10 @@ public final class NagramSettings {
     @NagramDefault("nagram.autoInlineBotEnabled", false)
     public var autoInlineBotEnabled: Bool
 
+    // Explicit recipient consent is separate from remotely updated matching rules.
+    @NagramDefault("spacegram.approvedInlineBots", "")
+    public var approvedInlineBots: String
+
     public func isGroupProfileSettingItemVisible(_ item: NagramGroupProfileSettingItem) -> Bool {
         return self.visibleGroupProfileSettingItems.contains(item)
     }

@@ -1045,7 +1045,10 @@ extension ChatControllerImpl {
                 let effectiveSilentPosting = silentPosting ?? strongSelf.presentationInterfaceState.interfaceState.silentPosting
                 // MARK: NAGRAM — composer text has its own enqueue path. Apply after
                 // native transforms so explicit schedules are never replaced.
-                let delayedMessages = strongSelf.spaceGramDelayedMessages(strongSelf.transformEnqueueMessages(messages, silentPosting: effectiveSilentPosting, scheduleTime: scheduleTime, repeatPeriod: repeatPeriod, postpone: postpone))
+                guard let delayedMessages = strongSelf.spaceGramDelayedMessages(strongSelf.transformEnqueueMessages(messages, silentPosting: effectiveSilentPosting, scheduleTime: scheduleTime, repeatPeriod: repeatPeriod, postpone: postpone)) else {
+                    strongSelf.spaceGramPresentSchedulingUnavailable()
+                    return
+                }
                 let transformedMessages = delayedMessages.0
                 
                 var forwardedMessages: [[EnqueueMessage]] = []

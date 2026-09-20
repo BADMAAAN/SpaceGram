@@ -9,9 +9,9 @@
 "Nagram.FixLinkPreviews.Footer" = "会将移除查询参数和片段后的链接发送至经校验的 metadata 规则所指定的第三方预览服务；消息仍使用原始链接。";
 "Nagram.Section.AutoInlineBot" = "自动使用链接查询 Inline 机器人";
 "Nagram.AutoInlineBot.Enabled" = "启用";
-"Nagram.AutoInlineBot.Footer" = "实验性功能。输入匹配规则的链接时，自动显示对应 Inline 机器人的查询结果。";
+"Nagram.AutoInlineBot.Footer" = "Automatically query only the bots you explicitly select in Inline Bot Rules. Matching single URLs are sent to those bots. Off by default; ordinary @bot queries are unchanged.";
 "Nagram.InlineBotRules" = "Inline 机器人规则";
-"Nagram.InlineBotRules.Footer" = "规则由 metadata 服务提供；匹配时保留输入框中的原始链接。";
+"Nagram.InlineBotRules.Footer" = "Select the bots allowed to receive matching links automatically. With automatic inline requests enabled, only a single HTTP(S) URL is sent to a selected @bot; other draft text and secret chats are excluded. Rules come from the shared metadata channel; refreshing them never selects new recipients. Native @bot queries remain available.";
 
 "Nagram.Section.Camera" = "相机";
 "Nagram.Section.Camera.Footer" = "聊天附件面板中的相机入口与实时预览。";
@@ -382,3 +382,7 @@
 "SpaceGram.Hub.AboutAppearance" = "外观\n可使用 Telegram 主题和壁纸，并选择七种应用图标。";
 
 "SpaceGram.Hub.BuildInfo" = "Revision: %@\nBuilt: %@%@";
+
+"SpaceGram.Hub.DelayedSendUnavailable" = "Automatic delayed send is unavailable for this message or chat. Nothing was sent. Keep the draft and choose a supported message, a manual schedule, or turn off Delayed Send explicitly.";
+
+"SpaceGram.Translate.ProtectedText" = "Translation was not started: this draft contains a link, code or another protected entity. The original draft is unchanged.";

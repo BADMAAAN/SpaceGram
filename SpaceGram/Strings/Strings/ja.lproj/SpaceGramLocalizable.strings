@@ -9,9 +9,9 @@
 "Nagram.FixLinkPreviews.Footer" = "クエリとフラグメントを除去したリンクを、検証済みの metadata ルールが選ぶ外部プレビューサービスへ送信します。メッセージには元のリンクを使用します。";
 "Nagram.Section.AutoInlineBot" = "リンクを Inline Bot で自動検索";
 "Nagram.AutoInlineBot.Enabled" = "有効";
-"Nagram.AutoInlineBot.Footer" = "実験的機能です。対応リンクの入力時に Inline Bot の検索結果を自動表示します。";
+"Nagram.AutoInlineBot.Footer" = "Automatically query only the bots you explicitly select in Inline Bot Rules. Matching single URLs are sent to those bots. Off by default; ordinary @bot queries are unchanged.";
 "Nagram.InlineBotRules" = "Inline Bot ルール";
-"Nagram.InlineBotRules.Footer" = "ルールは metadata サービスから取得し、入力欄の元リンクは保持されます。";
+"Nagram.InlineBotRules.Footer" = "Select the bots allowed to receive matching links automatically. With automatic inline requests enabled, only a single HTTP(S) URL is sent to a selected @bot; other draft text and secret chats are excluded. Rules come from the shared metadata channel; refreshing them never selects new recipients. Native @bot queries remain available.";
 
 "Nagram.Section.Camera" = "カメラ";
 "Nagram.Section.Camera.Footer" = "添付メニュー内のカメラ入口とライブプレビュー。";
@@ -382,3 +382,7 @@
 "SpaceGram.Hub.AboutAppearance" = "外観\nTelegram のテーマと壁紙に加え、7 種類のアプリアイコンを選べます。";
 
 "SpaceGram.Hub.BuildInfo" = "Revision: %@\nBuilt: %@%@";
+
+"SpaceGram.Hub.DelayedSendUnavailable" = "Automatic delayed send is unavailable for this message or chat. Nothing was sent. Keep the draft and choose a supported message, a manual schedule, or turn off Delayed Send explicitly.";
+
+"SpaceGram.Translate.ProtectedText" = "Translation was not started: this draft contains a link, code or another protected entity. The original draft is unchanged.";

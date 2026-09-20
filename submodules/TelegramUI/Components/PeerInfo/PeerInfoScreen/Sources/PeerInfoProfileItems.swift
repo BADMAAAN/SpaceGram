@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import UndoUI // MARK: NAGRAM — profile ID copy confirmation.
 import Display
 import AccountContext
 import TelegramPresentationData
@@ -267,6 +268,26 @@ func infoItems(
             )
         }
         
+        // MARK: NAGRAM — the public user ID is distinct from the packed peer ID/access hash.
+        if NagramSettings.shared.showProfileId {
+            let profileId = "\(user.id.id._internalGetInt64Value())"
+            items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(
+                id: 3006, label: "ID", text: profileId, textColor: .accent,
+                action: { _, _ in
+                    UIPasteboard.general.string = profileId
+                    interaction.getController()?.present(UndoOverlayController(
+                        presentationData: presentationData,
+                        content: .copy(text: presentationData.strings.Conversation_TextCopied),
+                        elevatedLayout: false, animateInAsReplacement: false,
+                        action: { _ in false }), in: .current)
+                }, contextAction: { node, gesture, _ in
+                    interaction.openNagramAccountInfoContextMenu([
+                        PeerInfoNagramAccountInfoCopyItem(title: ngI18n("Nagram.AccountInfo.CopyId", presentationData.strings.baseLanguageCode), value: profileId)
+                    ], node, gesture)
+                }, requestLayout: { animated in interaction.requestLayout(animated) }
+            ))
+        }
+
         if let cachedData = data.cachedData as? CachedUserData {
             if let birthday = cachedData.birthday {
                 let isBirthdayToday = hasBirthdayToday(birthday: birthday)
@@ -608,14 +629,6 @@ func infoItems(
         let nagramLanguageCode = presentationData.strings.baseLanguageCode
         var nagramAccountInfoTextComponents: [String] = []
         var nagramAccountInfoCopyItems: [PeerInfoNagramAccountInfoCopyItem] = []
-        if NagramSettings.shared.showProfileId {
-            let profileId = "\(user.id.id._internalGetInt64Value())"
-            nagramAccountInfoTextComponents.append(profileId)
-            nagramAccountInfoCopyItems.append(PeerInfoNagramAccountInfoCopyItem(
-                title: ngI18n("Nagram.AccountInfo.CopyId", nagramLanguageCode),
-                value: profileId
-            ))
-        }
         if NagramSettings.shared.showDC, let smallProfileImage = user.smallProfileImage, let cloudResource = smallProfileImage.resource as? CloudPeerPhotoSizeMediaResource {
             let dataCenter = "DC\(cloudResource.datacenterId)"
             nagramAccountInfoTextComponents.append(dataCenter)

@@ -97,9 +97,13 @@ func inputContextQueriesForChatPresentationIntefaceState(_ chatPresentationInter
     }
     // MARK: NAGRAM — Query a configured inline bot for recognized links while
     // keeping the URL itself in the compose field.
-    if NagramSettings.shared.autoInlineBotEnabled, !result.contains(where: { $0.kind == .contextRequest }) {
-        let text = inputState.inputText.string
-        if let rule = NagramLinkMetadata.shared.inlineBot(for: text) {
+    if NagramSettings.shared.autoInlineBotEnabled,
+       chatPresentationInterfaceState.chatLocation.peerId?.namespace != Namespaces.Peer.SecretChat,
+       !result.contains(where: { $0.kind == .contextRequest }) {
+        let text = inputState.inputText.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        // MARK: NAGRAM — only a single URL, and only a recipient explicitly selected in settings.
+        let approved = Set(NagramSettings.shared.approvedInlineBots.split(separator: " ").map(String.init))
+        if let rule = NagramLinkMetadata.shared.inlineBot(for: text), approved.contains(rule.username.lowercased()) {
             result.append(.contextRequest(addressName: rule.username, query: text))
         }
     }

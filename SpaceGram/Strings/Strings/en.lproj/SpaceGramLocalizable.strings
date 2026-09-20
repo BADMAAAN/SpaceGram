@@ -21,11 +21,11 @@
 
 "Nagram.AutoInlineBot.Enabled" = "Enabled";
 
-"Nagram.AutoInlineBot.Footer" = "Experimental. Automatically shows results from the matching inline bot when a recognized link is entered.";
+"Nagram.AutoInlineBot.Footer" = "Automatically query only the bots you explicitly select in Inline Bot Rules. Matching single URLs are sent to those bots. Off by default; ordinary @bot queries are unchanged.";
 
 "Nagram.InlineBotRules" = "Inline Bot Rules";
 
-"Nagram.InlineBotRules.Footer" = "Rules are supplied by the metadata service. The original link remains in the compose field.";
+"Nagram.InlineBotRules.Footer" = "Select the bots allowed to receive matching links automatically. With automatic inline requests enabled, only a single HTTP(S) URL is sent to a selected @bot; other draft text and secret chats are excluded. Rules come from the shared metadata channel; refreshing them never selects new recipients. Native @bot queries remain available.";
 
 
 
@@ -1047,3 +1047,7 @@
 "SpaceGram.Hub.AboutAppearance" = "Appearance\nUse Telegram themes and wallpapers and choose the Default, Moon, Earth, Mars, Sun, Saturn or Neptune app icon.";
 
 "SpaceGram.Hub.BuildInfo" = "Revision: %@\nBuilt: %@%@";
+
+"SpaceGram.Hub.DelayedSendUnavailable" = "Automatic delayed send is unavailable for this message or chat. Nothing was sent. Keep the draft and choose a supported message, a manual schedule, or turn off Delayed Send explicitly.";
+
+"SpaceGram.Translate.ProtectedText" = "Translation was not started: this draft contains a link, code or another protected entity. The original draft is unchanged.";

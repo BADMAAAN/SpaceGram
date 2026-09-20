@@ -236,7 +236,7 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
 
             // MARK: NAGRAM — 发送前翻译输入内容(NAG-75):开关开启、输入非空且 entity-expressible 时提供翻译回填闭包
             var nagramTranslateInput: (() -> Void)?
-            if NagramSettings.shared.translateBeforeSend {
+            if NagramSettings.shared.translateBeforeSend, peerId.namespace != Namespaces.Peer.SecretChat {
                 let composeInputState = selfController.presentationInterfaceState.interfaceState.composeInputState
                 if !composeInputState.inputText.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, composeInputState.content.isEntityExpressible(options: [.quotesRequireRichContent]) {
                     nagramTranslateInput = { [weak selfController] in
@@ -245,19 +245,47 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
                         }
                         let inputText = selfController.presentationInterfaceState.interfaceState.composeInputState.inputText
                         let entities = generateChatInputTextEntities(inputText)
-                        let statusController = OverlayStatusController(theme: selfController.presentationData.theme, type: .loading(cancelled: nil))
+                        // MARK: NAGRAM — preserve technical entities until a protected-range translator exists.
+                        let hasProtectedEntities = entities.contains { entity in
+                            switch entity.type {
+                            case .Bold, .Italic, .Strikethrough, .Underline: return false
+                            default: return true
+                            }
+                        }
+                        let linkDetector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+                        guard !hasProtectedEntities, linkDetector?.firstMatch(in: inputText.string, range: NSRange(location: 0, length: inputText.length)) == nil else {
+                            selfController.controllerInteraction?.displayUndo(.info(title: nil, text: ngI18n("SpaceGram.Translate.ProtectedText", selfController.presentationData.strings.baseLanguageCode), timeout: nil, customUndoText: nil))
+                            return
+                        }
+                        let translationThreadId = selfController.chatLocation.threadId
+                        let request = MetaDisposable()
+                        let statusController = OverlayStatusController(theme: selfController.presentationData.theme, type: .loading(cancelled: { [weak selfController] in
+                            selfController?.spaceGramOutgoingTranslationDisposable.set(nil)
+                        }))
+                        selfController.spaceGramOutgoingTranslationDisposable.set(ActionDisposable { [weak statusController] in
+                            request.dispose()
+                            Queue.mainQueue().async { statusController?.dismiss() }
+                        })
                         selfController.present(statusController, in: .window(.root))
                         let presentTranslationFailed: (ChatControllerImpl) -> Void = { selfController in
                             selfController.controllerInteraction?.displayUndo(.info(title: nil, text: ngI18n("Nagram.TranslateBeforeSend.Failed", selfController.presentationData.strings.baseLanguageCode), timeout: nil, customUndoText: nil))
                         }
-                        let _ = (NagramTranslateService(context: selfController.context).translate(
+                        request.set((NagramTranslateService(context: selfController.context).translate(
                             text: inputText.string,
                             toLang: NagramSettings.shared.translateBeforeSendTargetLang,
                             entities: entities
                         )
-                        |> deliverOnMainQueue).startStandalone(next: { [weak selfController, weak statusController] result in
+                        |> timeout(45.0, queue: Queue.mainQueue(), alternate: .fail(.generic))
+                        |> deliverOnMainQueue).start(next: { [weak selfController, weak statusController] result in
                             statusController?.dismiss()
                             guard let selfController else {
+                                return
+                            }
+                            guard selfController.chatLocation.peerId == peerId,
+                                  selfController.chatLocation.threadId == translationThreadId,
+                                  selfController.isViewLoaded, selfController.view.window != nil,
+                                  selfController.presentationInterfaceState.interfaceState.composeInputState.inputText.isEqual(to: inputText) else {
+                                // The current draft belongs to the user; a stale result must not replace it.
                                 return
                             }
                             guard let (translatedText, translatedEntities) = result, !translatedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -275,7 +303,7 @@ func chatMessageDisplaySendMessageOptions(selfController: ChatControllerImpl, no
                                 return
                             }
                             presentTranslationFailed(selfController)
-                        })
+                        }))
                     }
                 }
             }

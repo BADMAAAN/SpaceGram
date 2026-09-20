@@ -48,6 +48,8 @@ public final class NagramLinkMetadata {
     }
 
     public func previewUrl(_ value: String) -> String {
+        guard value.utf16.count <= 2048 else { return value }
+        let deadline = ProcessInfo.processInfo.systemUptime + 0.02
         let parsedValue = value.range(of: "://") == nil ? "https://\(value)" : value
         guard var components = URLComponents(string: parsedValue), components.scheme?.lowercased() == "https", let host = components.host?.lowercased() else {
             return value
@@ -67,8 +69,15 @@ public final class NagramLinkMetadata {
         }
         var result = sanitizedValue
         for rule in domain.rules {
-            guard let expression = try? NSRegularExpression(pattern: rule.regex) else { continue }
-            result = expression.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: rule.replace)
+            guard let expression = try? NSRegularExpression(pattern: rule.regex),
+                  let matches = Self.boundedMatches(expression, text: result, deadline: deadline, firstOnly: false) else { return value }
+            let original = result
+            let replaced = NSMutableString(string: result)
+            for match in matches.reversed() {
+                replaced.replaceCharacters(in: match.range, with: expression.replacementString(for: match, in: original, offset: 0, template: rule.replace))
+                guard replaced.length <= 4096 else { return value }
+            }
+            result = replaced as String
         }
         guard result != sanitizedValue, let resultComponents = URLComponents(string: result), resultComponents.scheme?.lowercased() == "https", resultComponents.host != nil, resultComponents.user == nil, resultComponents.password == nil else {
             return value
@@ -84,14 +93,36 @@ public final class NagramLinkMetadata {
     }
 
     public func inlineBot(for text: String) -> NagramInlineBotRule? {
-        for item in self.currentInlineBotRules() {
-            for pattern in item.rules {
-                if let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]), expression.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil {
-                    return item
-                }
+        guard text.utf16.count <= 2048, !text.contains(where: { $0.isWhitespace }),
+              let url = URLComponents(string: text), ["https", "http"].contains(url.scheme?.lowercased() ?? ""),
+              url.host != nil, url.user == nil, url.password == nil else { return nil }
+        let deadline = ProcessInfo.processInfo.systemUptime + 0.02
+        for item in self.currentInlineBotRules().prefix(64) {
+            for pattern in item.rules.prefix(8) {
+                guard ProcessInfo.processInfo.systemUptime < deadline,
+                      let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+                      let matches = Self.boundedMatches(expression, text: text, deadline: deadline, firstOnly: true) else { return nil }
+                if !matches.isEmpty { return item }
             }
         }
         return nil
+    }
+
+    // ICU progress callbacks stop pathological remote patterns; reject the whole operation on timeout.
+    private static func boundedMatches(_ expression: NSRegularExpression, text: String, deadline: TimeInterval, firstOnly: Bool) -> [NSTextCheckingResult]? {
+        var matches: [NSTextCheckingResult] = []
+        var failed = false
+        expression.enumerateMatches(in: text, options: [.reportProgress], range: NSRange(text.startIndex..., in: text)) { match, flags, stop in
+            if ProcessInfo.processInfo.systemUptime >= deadline || flags.contains(.internalError) {
+                failed = true
+                stop.pointee = true
+            } else if let match {
+                matches.append(match)
+                if firstOnly { stop.pointee = true }
+                if matches.count > 32 { failed = true; stop.pointee = true }
+            }
+        }
+        return failed ? nil : matches
     }
 
     public func refreshIfNeeded(engine: TelegramEngine) {
@@ -135,14 +166,23 @@ public final class NagramLinkMetadata {
         var pages: [NagramPagePreviewDomain] = []
         var inline: [NagramInlineBotRule] = []
         let decoder = JSONDecoder()
-        for message in messages {
+        for message in messages.prefix(20) {
+            guard message.utf8.count <= 65536 else { continue }
             if message.hasPrefix("#pagepreview"), let data = String(message.dropFirst("#pagepreview".count)).data(using: .utf8), let payload = try? decoder.decode(PagePreviewPayload.self, from: data) {
                 pages.append(contentsOf: payload.domains.filter(Self.isValidPagePreviewDomain))
             } else if message.hasPrefix("#inlinebot"), let data = String(message.dropFirst("#inlinebot".count)).data(using: .utf8), let payload = try? decoder.decode(InlineBotPayload.self, from: data) {
-                inline.append(contentsOf: payload.data)
+                inline.append(contentsOf: payload.data.prefix(64).filter(Self.isValidInlineBotRule))
             }
         }
-        return (pages, inline)
+        return (Array(pages.prefix(64)), Array(inline.prefix(64)))
+    }
+
+    private static func isValidInlineBotRule(_ item: NagramInlineBotRule) -> Bool {
+        let username = item.username
+        guard (5...32).contains(username.count), username.lowercased().hasSuffix("bot"),
+              username.unicodeScalars.allSatisfy({ CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_").contains($0) }),
+              !item.rules.isEmpty, item.rules.count <= 8 else { return false }
+        return item.rules.allSatisfy { !$0.isEmpty && $0.utf16.count <= 512 && (try? NSRegularExpression(pattern: $0)) != nil }
     }
 
     private static func isValidPagePreviewDomain(_ item: NagramPagePreviewDomain) -> Bool {

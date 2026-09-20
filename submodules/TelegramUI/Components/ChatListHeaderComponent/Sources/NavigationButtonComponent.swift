@@ -28,6 +28,7 @@ public final class NavigationButtonComponent: Component {
         case text(title: String, isBold: Bool)
         case more
         case icon(imageName: String)
+        case image(UIImage) // MARK: NAGRAM — product-owned template glyphs.
         case proxy(status: ChatTitleProxyStatus)
     }
     
@@ -119,6 +120,7 @@ public final class NavigationButtonComponent: Component {
             
             var textString: NSAttributedString?
             var imageName: String?
+            var templateImage: UIImage? // MARK: NAGRAM
             var proxyStatus: ChatTitleProxyStatus?
             var isMore: Bool = false
             
@@ -133,6 +135,8 @@ public final class NavigationButtonComponent: Component {
                 isMore = true
             case let .icon(imageNameValue):
                 imageName = imageNameValue
+            case let .image(image): // MARK: NAGRAM
+                templateImage = image
             case let .proxy(status):
                 proxyStatus = status
             }
@@ -161,7 +165,7 @@ public final class NavigationButtonComponent: Component {
                 textView.removeFromSuperview()
             }
             
-            if let imageName = imageName {
+            if imageName != nil || templateImage != nil { // MARK: NAGRAM
                 let iconView: UIImageView
                 if let current = self.iconView {
                     iconView = current
@@ -171,7 +175,12 @@ public final class NavigationButtonComponent: Component {
                     self.iconView = iconView
                     self.addSubview(iconView)
                 }
-                if self.iconImageName != imageName || themeUpdated {
+                // MARK: NAGRAM — template glyphs keep native tint and 44-point hit targets.
+                if let templateImage {
+                    self.iconImageName = nil
+                    iconView.image = templateImage
+                    iconView.tintColor = theme.chat.inputPanel.panelControlColor
+                } else if let imageName, self.iconImageName != imageName || themeUpdated {
                     self.iconImageName = imageName
                     iconView.image = generateTintedImage(image: UIImage(bundleImageName: imageName), color: theme.chat.inputPanel.panelControlColor)
                 }

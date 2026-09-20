@@ -21,18 +21,21 @@ separate implementation, compilation, automated-test and device evidence.
   SHA-256 before edits: `1A375A8973C3F8C9CDB6C15AD12B52D0D78681DEF9978F80C57232A6094AF0E0`.
 - GitHub CLI login is confirmed as BADMAAAN with repo/workflow access. No Git
   CLI command, force push, release or PR is used.
-- This pass's compilation and publication results are recorded below once the
-  exact revision has completed CI. Queued/running is not BUILD-PASSED.
+- Intermediate source `05dd7e094d28874ac96606d8bddbdff53bb77dc0` is published
+  through `jj git push`; workflow #15 is running:
+  https://github.com/BADMAAAN/SpaceGram/actions/runs/35509471423
+  It passed preflight and reached the full ARM64 app build. Queued/running is
+  not BUILD-PASSED. Status-bar/second-pass changes require their own final build.
 
 ## P0: findings and implementation
 
 | Area | Evidence and change | Acceptance status |
 | --- | --- | --- |
 | QR input/preview | `SpaceGramQRImageItemNode.init` ran in the ItemList worker, then accessed a view-backed `ASImageNode.layer`. AsyncDisplayKit enforces main-thread loading. Layer configuration now runs in `didLoad`; input title is empty with a separate accessibility label. Controller capture is weak. Generator bounds UTF-8 to 2,000 bytes, integer scale 1...16, and adds an opaque four-module quiet zone. | IMPLEMENTED; actual user's crash cause remains a hypothesis pending a matching crash stack. DEVICE-VERIFICATION-REQUIRED. |
-| Branding | Baseline app/extension plist fragments already say SpaceGram, localized main-app display names inspected also say SpaceGram. No supplied screenshot identifies the reported blue NAGRAM surface. Searches are not visual proof and the previous claim that it must be a system capsule is withdrawn. | BLOCKED: need the actual offending image/live surface and its app context; IPA inspection alone cannot establish the source. |
+| NAGRAM status-bar capsule | User confirmed a permanent live overlay between time and system indicators. Inspected `Components/AppBadge.imageset/AppBadge@3x.png`: the raster contains the blue N + NAGRAM capsule. `Display/Source/WindowContent.swift` loads it, adds it to the window and centers it at `deviceMetrics.appBadgeOffset`; `TelegramRootController` controls visibility. Removed the decorative image assignment and keep the empty badge hidden. | SOURCE-IDENTIFIED / IMPLEMENTED; absence across screens still requires the updated IPA on iPhone. |
 | Ghost presence | Existing aggregate master/settings and typing/group-call behavior retained. `updatePresence` now checks current policy immediately before forming the RPC, including timer/queued callback paths. | IMPLEMENTED; second-account online/typing/read observation required. No universal invisibility claim. |
 | Read on Interact | Removed reads at send/reaction enqueue. Regular cloud delivery events in the open chat trigger the guarded read; scheduled ACKs do not. Non-thread reactions read only after successful server response. Policy is rechecked after asynchronous UI delivery. Forum/thread reaction acknowledgment remains unimplemented; paid reactions are unchanged. | IMPLEMENTED for stated paths; DEVICE-VERIFICATION-REQUIRED. |
-| Auto delay | Existing persisted provenance marker, corrected network time and post-upload submit hooks retained. Margin is 30 seconds (10-second server threshold plus 20-second transit/rounding budget). Removed size-based additional delays. Explicit schedules retain their date. Auto delay no longer opens the scheduled-message screen. | IMPLEMENTED; network delay can exceed the margin. Unsupported-message rejection/draft-preserving choice remains an open P0 gap; existing unsupported cases still bypass auto scheduling. Exactly-once/offline/edit/cancel require server/device tests. |
+| Auto delay | Existing persisted provenance marker, corrected network time and post-upload submit hooks retained. Margin is 30 seconds (10-second server threshold plus 20-second transit/rounding budget). Removed size-based additional delays. Explicit schedules retain their date. Auto delay no longer opens the scheduled-message screen. | IMPLEMENTED; network delay can exceed the margin. Unsupported cases now fail closed with localized feedback at both enqueue boundaries. Composer validation precedes draft cleanup; explicit schedules stay native. Attachment picker/recording draft retention still needs device verification. Exactly-once/offline/edit/cancel require server/device tests. |
 | Ordinary Ghost navigation | Initial construction uses the same upper-bound/top anchor as native scroll-to-end, after checking explicit message/pinned targets. Existing controller scroll is untouched; no read-state mutation. | IMPLEMENTED; DEVICE-VERIFICATION-REQUIRED for holes, restored chats and archive-only pages. |
 | Deleted text | Removed the appended emoji/italic deletion text. The common native timestamp formatter renders a small localized Deleted label from the local presentation attribute. Original caption/entities remain separate. | IMPLEMENTED; themes/Dynamic Type need device verification. |
 | Deleted media | Confirmed baseline defect: overlay always emitted `media: []` even with saved assets. It now resolves actual archive files, leases them through sandbox hard links, reconstructs native photo/video/voice/round/file media and opens them standalone instead of querying nonexistent Postbox IDs. Missing full files use a document placeholder without changing caption text. Spoilers, edited timestamp and album grouping are retained in optional v2 fields. | IMPLEMENTED; native renderer/playback is not yet device-proven. Unsupported/contact/complex media and old incomplete metadata are not fully reconstructed. |
@@ -81,12 +84,32 @@ missing-media placeholders do not distinguish every failure reason.
 
 ## P1/P2
 
-Existing independent opt-in actions, Message Shot renderer, translator,
-Accounts anchor and icon choices were preserved. They are not newly declared
-runtime-verified by this pass. Forward-as-new remains unimplemented; the retained
-forward-without-name action retains Telegram forwarding semantics. Outgoing
-translation is global, not per-chat. Full draft-race/entity/account-switch,
-inline regex/network consent and ID-copy acceptance work remains open.
+Existing independent opt-in actions, Message Shot renderer, Accounts anchor and
+app icon choices were preserved. They are not newly declared runtime-verified.
+Forward-as-new remains unimplemented; forward-without-name retains Telegram semantics.
+
+- Ghost toolbar uses a product-owned vector orbital template: outline OFF,
+  filled planet/satellite ON, native tint and 44-point hit target.
+- Existing opt-in profile ID becomes a separate accent row next to native user
+  data, with tap-to-copy and native feedback. It uses the model's unwrapped
+  numeric user ID, not packed PeerId or access_hash. DC/date settings remain.
+- Outgoing translation remains global/opt-in. Requests belong to the controller,
+  support cancellation and a 45-second timeout, and validate peer/thread,
+  visibility and the exact attributed draft before replacing it. Secret chats,
+  detected links and entities other than basic emphasis are excluded. The result
+  remains an editable draft; nothing auto-sends on failure. Account-switch and
+  in-flight cancellation require runtime verification.
+- Automatic inline rules require a second, per-bot recipient choice (empty by
+  default). Only one HTTP(S) URL is submitted; ordinary draft text and secret
+  chats are excluded. Native explicit @bot requests are unchanged. Metadata
+  updates cannot add consent. Remote payload/rule/input/match counts are bounded;
+  ICU progress callbacks reject matching after a shared 20 ms budget. Compilation
+  is bounded by a 512-character pattern limit, not a preemptive compiler timeout.
+  RU/EN footers now describe the actual recipient and behavior.
+- Failed/partial media archive captures no longer permanently block a later
+  native download-completion retry.
+
+These additions are source-implemented and await the next exact-SHA CI/device pass.
 SpaceGram Cosmic and an approved wallpaper registry are not implemented. P2 is
 held behind the unresolved P0/device checks; no unapproved artwork is added.
 

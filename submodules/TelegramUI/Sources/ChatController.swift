@@ -18,6 +18,7 @@ import AccountContext
 import NagramSettings // MARK: NAGRAM
 // MARK: NAGRAM — native scheduled sends while full Ghost Mode is active.
 import SpaceGramSettings
+import SpaceGramStrings // MARK: NAGRAM — scheduling rejection feedback.
 import SpaceGramHistoryOverlay // MARK: NAGRAM — local archive media has no server row.
 import TelegramStringFormatting
 import OverlayStatusController
@@ -328,6 +329,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     weak var currentFailedMessagesAlertController: ViewController?
     let messageActionCallbackDisposable = MetaDisposable()
     let messageActionUrlAuthDisposable = MetaDisposable()
+    // MARK: NAGRAM — translation is owned by this account/chat controller.
+    let spaceGramOutgoingTranslationDisposable = MetaDisposable()
     let editMessageDisposable = MetaDisposable()
     let editMessageErrorsDisposable = MetaDisposable()
     let enqueueMediaMessageDisposable = MetaDisposable()
@@ -6998,6 +7001,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         self.sentPeerMediaMessageEventsDisposable.dispose()
         self.messageActionCallbackDisposable.dispose()
         self.messageActionUrlAuthDisposable.dispose()
+        self.spaceGramOutgoingTranslationDisposable.dispose() // MARK: NAGRAM
         self.editMessageDisposable.dispose()
         self.editMessageErrorsDisposable.dispose()
         self.enqueueMediaMessageDisposable.dispose()
@@ -9007,29 +9011,35 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     }
     
     // MARK: NAGRAM — shared by the composer and media enqueue boundaries.
-    func spaceGramDelayedMessages(_ messages: [EnqueueMessage]) -> ([EnqueueMessage], Bool) {
+    func spaceGramDelayedMessages(_ messages: [EnqueueMessage]) -> ([EnqueueMessage], Bool)? {
         if case .scheduledMessages = self.presentationInterfaceState.subject { return (messages, false) }
         let settings = SpaceGramSettings.shared
-        guard settings.ghostMode.enabled, settings.delayedSend,
-              let peer = self.presentationInterfaceState.renderedPeer?.peer,
+        guard settings.ghostMode.enabled, settings.delayedSend, !messages.isEmpty else { return (messages, false) }
+        // Preserve an explicitly selected native schedule, including forwards.
+        let explicitlyScheduled = messages.map { message in
+            message.attributes.contains(where: { $0 is OutgoingScheduleInfoMessageAttribute })
+        }
+        if explicitlyScheduled.allSatisfy({ $0 }) { return (messages, false) }
+        guard !explicitlyScheduled.contains(true), let peer = self.presentationInterfaceState.renderedPeer?.peer,
               peer.id.namespace != Namespaces.Peer.SecretChat,
               self.presentationInterfaceState.sendPaidMessageStars == nil,
-              self.presentationInterfaceState.interfaceState.postSuggestionState == nil,
-              !messages.isEmpty else { return (messages, false) }
-        if let user = peer as? TelegramUser, user.botInfo != nil { return (messages, false) }
+              self.presentationInterfaceState.interfaceState.postSuggestionState == nil else { return nil }
+        if let user = peer as? TelegramUser, user.botInfo != nil { return nil }
         var mediaBytes: Int64?
         for message in messages {
             guard case let .message(_, attributes, _, mediaReference, _, _, replyToStoryId, _, _, _) = message,
                   replyToStoryId == nil,
-                  !attributes.contains(where: { $0 is OutgoingScheduleInfoMessageAttribute || $0 is AutoremoveTimeoutMessageAttribute }) else { return (messages, false) }
+                  !attributes.contains(where: { $0 is AutoremoveTimeoutMessageAttribute || $0 is EphemeralOutgoingMessageAttribute }) else { return nil }
             if let media = mediaReference?.media {
                 let size: Int64?
                 if let file = media as? TelegramMediaFile {
                     size = file.size
                 } else if let image = media as? TelegramMediaImage {
                     size = image.representations.compactMap { $0.resource.size }.max()
+                } else if media is TelegramMediaWebpage {
+                    size = nil
                 } else {
-                    return (messages, false)
+                    return nil
                 }
                 // Unknown media sizes use a conservative 3 MiB estimate. Album members share one date.
                 mediaBytes = max(mediaBytes ?? 0, size ?? 3 * 1_048_576)
@@ -9038,10 +9048,25 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         // MARK: NAGRAM — schedule against Telegram's corrected clock rather
         // than the device wall clock, which may be skewed.
         let serverNow = Int64(self.context.account.network.globalTime)
-        guard let timestamp = SpaceGramDelayedSendPolicy.timestamp(now: serverNow, ghost: settings.ghostMode, enabled: settings.delayedSend, mediaBytes: mediaBytes) else { return (messages, false) }
+        guard let timestamp = SpaceGramDelayedSendPolicy.timestamp(now: serverNow, ghost: settings.ghostMode, enabled: settings.delayedSend, mediaBytes: mediaBytes) else { return nil }
         return (messages.map { message in
             message.withUpdatedAttributes { $0 + [OutgoingScheduleInfoMessageAttribute(scheduleTime: timestamp, repeatPeriod: nil, spaceGramMinimumDelay: spaceGramDelayedSendMinimumInterval)] }
         }, true)
+    }
+
+    // MARK: NAGRAM — reject before composer cleanup; never silently bypass Ghost scheduling.
+    func spaceGramValidateAutoSchedule(_ messages: [EnqueueMessage]) -> Bool {
+        guard self.spaceGramDelayedMessages(messages) != nil else {
+            self.spaceGramPresentSchedulingUnavailable()
+            return false
+        }
+        return true
+    }
+
+    func spaceGramPresentSchedulingUnavailable() {
+        self.present(textAlertController(context: self.context, title: nil,
+            text: ngI18n("SpaceGram.Hub.DelayedSendUnavailable", self.presentationData.strings.baseLanguageCode),
+            actions: [TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Common_OK, action: {})]), in: .window(.root))
     }
 
     func sendMessages(_ messages: [EnqueueMessage], media: Bool = false, postpone: Bool = false, commit: Bool = false) {
@@ -9083,7 +9108,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             if commit || !isScheduledMessages {
                 // MARK: NAGRAM — explicit schedules are preserved by the policy guard.
                 if !isScheduledMessages {
-                    let delayed = self.spaceGramDelayedMessages(messages)
+                    guard let delayed = self.spaceGramDelayedMessages(messages) else {
+                        self.spaceGramPresentSchedulingUnavailable()
+                        return
+                    }
                     messages = delayed.0
                     // MARK: NAGRAM — automatic scheduling stays in this chat.
                 }

@@ -348,8 +348,7 @@ public class Window1 {
     public init(hostView: WindowHostView, statusBarHost: StatusBarHost?) {
         self.hostView = hostView
         self.badgeView = UIImageView()
-        // MARK: NAGRAM - Use the Nagram status badge artwork.
-        self.badgeView.image = UIImage(bundleImageName: "Components/AppBadge")
+        // MARK: NAGRAM - SpaceGram does not display the inherited decorative status-bar badge.
         self.badgeView.isHidden = true
         
         self.systemUserInterfaceStyle = hostView.systemUserInterfaceStyle
@@ -768,6 +767,11 @@ public class Window1 {
     }
     
     private func updateBadgeVisibility() {
+        // MARK: NAGRAM - Keep the unused badge hidden, including delayed visibility updates.
+        guard self.badgeView.image != nil else {
+            self.badgeView.isHidden = true
+            return
+        }
         let badgeIsHidden = !self.deviceMetrics.showAppBadge || self.forceBadgeHidden || self.windowLayout.size.width > self.windowLayout.size.height
         if badgeIsHidden != self.badgeView.isHidden && !badgeIsHidden {
             Queue.mainQueue().after(0.4) {

@@ -1,4 +1,5 @@
 import Foundation
+import SpaceGramAppearance // MARK: NAGRAM — orbital Ghost glyph.
 import UIKit
 import Postbox
 import SwiftSignalKit
@@ -7374,7 +7375,7 @@ private final class ChatListLocationContext {
            SpaceGramSettings.shared.spaceGramEnabled, SpaceGramSettings.shared.showGhostButton {
             let active = SpaceGramSettings.shared.ghostMode.enabled
             self.ghostButton = AnyComponentWithIdentity(id: "spacegram-ghost", component: AnyComponent(NavigationButtonComponent(
-                content: .text(title: active ? "👻" : "◌", isBold: active),
+                content: .image(active ? SpaceGramGhostGlyph.active : SpaceGramGhostGlyph.inactive),
                 accessibilityLabel: ngI18n(active ? "SpaceGram.Hub.GhostOn" : "SpaceGram.Hub.GhostOff", presentationData.strings.baseLanguageCode),
                 pressed: { _ in
                     SpaceGramSettings.shared.setGhostMode(!SpaceGramSettings.shared.ghostMode.enabled)

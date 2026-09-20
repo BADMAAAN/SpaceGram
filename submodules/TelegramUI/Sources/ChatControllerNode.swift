@@ -1,4 +1,5 @@
 import Foundation
+import SpaceGramSettings // MARK: NAGRAM — delayed-send preflight.
 import UIKit
 import AsyncDisplayKit
 import Postbox
@@ -4840,6 +4841,11 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                 }
 
                 if let resolved = resolveEphemeralBotCommand(text: inputText, peerCommands: peerCommands) {
+                    // MARK: NAGRAM — an ephemeral command must not bypass delayed send.
+                    if SpaceGramSettings.shared.ghostMode.enabled && SpaceGramSettings.shared.delayedSend {
+                        self.controller?.spaceGramPresentSchedulingUnavailable()
+                        return
+                    }
                     let replyMessageSubject = self.chatPresentationInterfaceState.interfaceState.replyMessageSubject
                     self.setupSendActionOnViewUpdate({ [weak self] in
                         guard let strongSelf = self else {
@@ -5245,6 +5251,10 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                         }
                     }
                     
+                    // MARK: NAGRAM — validate before registering draft cleanup or send animations.
+                    if scheduleTime == nil, let controller = self.controller, !controller.spaceGramValidateAutoSchedule(messages) {
+                        return
+                    }
                     var usedCorrelationId: Int64?
                     if !messages.isEmpty, case .message = messages[messages.count - 1] {
                         let correlationId = Int64.random(in: 0 ..< Int64.max)

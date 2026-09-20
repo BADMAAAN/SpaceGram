@@ -67,6 +67,11 @@ func spaceGramStoreMessageMedia(postbox: Postbox, key: SpaceGramHistoryMessageKe
                     return
                 }
                 record.events[index].mediaAssetIds = ids
+                if assets.count != captures.count {
+                    // An incomplete capture must be retryable on the next native completion.
+                    record.events[index].mediaCaptureId = nil
+                    record.events[index].mediaResourceIds = nil
+                }
                 try SpaceGramHistoryStore.upsert(transaction: transaction, record: record)
                 let references = SpaceGramHistoryStore.assetReferences(transaction: transaction)
                 SpaceGramMediaArchive.reconcile(root: root, referencedIds: references.ids, referencesComplete: references.complete)
