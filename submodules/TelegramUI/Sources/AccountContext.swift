@@ -21,6 +21,7 @@ import InAppPurchaseManager
 import NagramSettings
 // MARK: NAGRAM - shared SpaceGram localization.
 import SpaceGramStrings
+import SpaceGramSettings // MARK: NAGRAM — automatic reads recheck after queued UI work.
 import AnimationCache
 import MultiAnimationRenderer
 import DCTAnimationCacheImpl
@@ -608,6 +609,8 @@ public final class AccountContextImpl: AccountContext {
     }
     
     public func applyMaxReadIndex(for location: ChatLocation, contextHolder: Atomic<ChatLocationContextHolder?>, messageIndex: MessageIndex) {
+        // MARK: NAGRAM — successful interactions use their separate Core path.
+        guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return }
         switch location {
         case .peer:
             let _ = self.engine.messages.applyMaxReadIndexInteractively(index: messageIndex).start()

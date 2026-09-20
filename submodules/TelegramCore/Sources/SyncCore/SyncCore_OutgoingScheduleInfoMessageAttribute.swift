@@ -19,7 +19,7 @@ public func spaceGramAdjustedScheduleTime(plannedTime: Int32?, currentServerTime
         return Int32.max
     }
     let safeDelay = max(spaceGramDelayedSendMinimumInterval, minimumDelay)
-    let minimumTime = Int64(currentServerTime.rounded(.down)) + Int64(safeDelay)
+    let minimumTime = Int64(currentServerTime.rounded(.up)) + Int64(safeDelay)
     return max(plannedTime, Int32(clamping: minimumTime))
 }
 

@@ -474,6 +474,12 @@ func applyUpdateMessage(postbox: Postbox, stateManager: AccountStateManager, mes
         stateManager.addUpdateGroups([.ensurePeerHasLocalState(id: message.id.peerId)])
         
         if let updatedMessage, case let .Id(id) = updatedMessage.id {
+            // MARK: NAGRAM — server-confirmed cloud delivery, never schedule/upload ACK.
+            if id.namespace == Namespaces.Message.Cloud, message.scheduleTime == nil,
+               !updatedMessage.attributes.contains(where: { $0 is PendingProcessingMessageAttribute }),
+               let delivered = transaction.getMessage(id) {
+                spaceGramReadOnSuccessfulInteraction(transaction: transaction, stateManager: stateManager, message: delivered)
+            }
             pendingMessageEvent(PeerPendingMessageDelivered(
                 id: id,
                 isSilent: updatedMessage.attributes.contains(where: { attribute in
@@ -674,6 +680,12 @@ func applyUpdateGroupMessages(postbox: Postbox, stateManager: AccountStateManage
         pendingMessageEvents(mapping.compactMap { message, _, updatedMessage -> PeerPendingMessageDelivered? in
             guard case let .Id(id) = updatedMessage.id else {
                 return nil
+            }
+            // MARK: NAGRAM — albums use the same success-only interaction contract.
+            if id.namespace == Namespaces.Message.Cloud, message.scheduleTime == nil,
+               !updatedMessage.attributes.contains(where: { $0 is PendingProcessingMessageAttribute }),
+               let delivered = transaction.getMessage(id) {
+                spaceGramReadOnSuccessfulInteraction(transaction: transaction, stateManager: stateManager, message: delivered)
             }
             return PeerPendingMessageDelivered(
                 id: id,

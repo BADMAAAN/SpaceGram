@@ -82,6 +82,8 @@ public struct SpaceGramHistoryMediaMetadata: Codable, Equatable {
     public var isVoice: Bool?
     public var isInstantVideo: Bool?
     public var isAnimated: Bool?
+    public var stickerText: String?
+    public var resourceIds: [String]?
     // Descriptive identifiers only: no access hashes, credentials, file references,
     // local paths, resource retention, or encoded media payloads.
     public var identifiers: [String: String]

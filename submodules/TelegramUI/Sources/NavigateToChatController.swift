@@ -5,6 +5,7 @@ import SwiftSignalKit
 import TelegramCore
 import AccountContext
 import NagramSettings // MARK: NAGRAM
+import SpaceGramSettings // MARK: NAGRAM — ordinary Ghost re-entry anchors at latest.
 import GalleryUI
 import InstantPageUI
 import ChatListUI
@@ -204,9 +205,16 @@ public func navigateToChatControllerImpl(_ params: NavigateToChatControllerParam
                     if switchToThread {
                         controller.updateChatLocationThread(threadId: params.chatLocation.threadId, animationDirection: nil)
                     }
+                    // MARK: NAGRAM — reused controllers need the same latest anchor
+                    // as new chats. Explicit search/message/pinned navigation wins.
+                    if params.subject == nil, params.activateMessageSearch == nil, params.reportReason == nil,
+                       controller.subject == nil, SpaceGramSettings.shared.ghostMode.enabled {
+                        controller.scrollToEndOfHistory()
+                    }
                     
                     if popAndComplete {
-                        if let _ = params.navigationController.viewControllers.last as? AttachmentController, let controller = params.navigationController.viewControllers[params.navigationController.viewControllers.count - 2] as? ChatControllerImpl, controller.chatLocation == params.chatLocation.asChatLocation {
+                        // MARK: NAGRAM — a restored attachment can be the sole controller.
+                        if params.navigationController.viewControllers.count >= 2, let _ = params.navigationController.viewControllers.last as? AttachmentController, let controller = params.navigationController.viewControllers[params.navigationController.viewControllers.count - 2] as? ChatControllerImpl, controller.chatLocation == params.chatLocation.asChatLocation {
                             
                         } else {
                             let _ = params.navigationController.popToViewController(controller, animated: params.animated)

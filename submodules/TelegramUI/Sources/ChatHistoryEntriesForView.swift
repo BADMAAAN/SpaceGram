@@ -916,7 +916,37 @@ func chatHistoryEntriesForView(
                 archivedMediaLabel: archivedMediaLabel,
                 missingMediaLabel: missingMediaLabel
             )
-            entries.append(.MessageEntry(message, presentationData, true, nil, .none, ChatMessageEntryAttributes()))
+            // MARK: NAGRAM — merge archived album members using the original
+            // grouping key and sort index, never a fabricated Postbox record.
+            var attributes = ChatMessageEntryAttributes()
+            attributes.spaceGramOriginalIndex = MessageIndex(id: item.originalMessageId, timestamp: item.timestamp)
+            var grouped = false
+            if groupMessages || reverseGroupedMessages, let groupingKey = message.groupingKey {
+                let groupStableId = currentState.messageGroupStableId(messageStableId: message.stableId, groupId: groupingKey, isLocal: false)
+                for i in entries.indices {
+                    var members: [(Message, Bool, ChatHistoryMessageSelection, ChatMessageEntryAttributes, MessageHistoryEntryLocation?)]
+                    switch entries[i] {
+                    case let .MessageEntry(existing, _, read, location, selection, existingAttributes) where existing.groupingKey == groupingKey:
+                        members = [(existing, read, selection, existingAttributes, location)]
+                    case let .MessageGroupEntry(_, existing, _) where existing.first?.0.groupingKey == groupingKey:
+                        members = existing
+                    default:
+                        continue
+                    }
+                    members.append((message, true, .none, attributes, nil))
+                    members.sort { lhs, rhs in
+                        let lhsIndex = lhs.3.spaceGramOriginalIndex ?? lhs.0.index
+                        let rhsIndex = rhs.3.spaceGramOriginalIndex ?? rhs.0.index
+                        return reverseGroupedMessages ? rhsIndex < lhsIndex : lhsIndex < rhsIndex
+                    }
+                    entries[i] = .MessageGroupEntry(groupStableId, members, presentationData)
+                    grouped = true
+                    break
+                }
+            }
+            if !grouped {
+                entries.append(.MessageEntry(message, presentationData, true, nil, .none, attributes))
+            }
         }
         entries.sort()
     }

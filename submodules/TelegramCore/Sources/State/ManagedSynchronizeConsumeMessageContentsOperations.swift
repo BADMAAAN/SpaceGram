@@ -1,4 +1,7 @@
 import Foundation
+// MARK: NAGRAM — suspend queued content receipts during Ghost mode.
+import SpaceGramSettings
+import SpaceGramSettingsSignal
 import Postbox
 import SwiftSignalKit
 import TelegramApi
@@ -69,9 +72,10 @@ func managedSynchronizeConsumeMessageContentOperations(postbox: Postbox, network
     return Signal { _ in
         let helper = Atomic<ManagedSynchronizeConsumeMessageContentsOperationHelper>(value: ManagedSynchronizeConsumeMessageContentsOperationHelper())
         
-        let disposable = postbox.mergedOperationLogView(tag: OperationLogTags.SynchronizeConsumeMessageContents, limit: 10).start(next: { view in
+        // MARK: NAGRAM — retain the operations for normal sync after Ghost is off.
+        let disposable = combineLatest(postbox.mergedOperationLogView(tag: OperationLogTags.SynchronizeConsumeMessageContents, limit: 10), spaceGramSuppressAutomaticReadsSignal()).start(next: { view, suppressed in
             let (disposeOperations, beginOperations) = helper.with { helper -> (disposeOperations: [Disposable], beginOperations: [(PeerMergedOperationLogEntry, MetaDisposable)]) in
-                return helper.update(view.entries)
+                return helper.update(suppressed ? [] : view.entries)
             }
             
             for disposable in disposeOperations {
@@ -110,6 +114,8 @@ func managedSynchronizeConsumeMessageContentOperations(postbox: Postbox, network
 }
 
 private func synchronizeConsumeMessageContents(transaction: Transaction, network: Network, stateManager: AccountStateManager, peerId: PeerId, operation: SynchronizeConsumeMessageContentsOperation) -> Signal<Void, NoError> {
+    // MARK: NAGRAM — do not acknowledge a skipped receipt as synchronized.
+    guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return .never() }
     if peerId.namespace == Namespaces.Peer.CloudUser || peerId.namespace == Namespaces.Peer.CloudGroup {
         return network.request(Api.functions.messages.readMessageContents(id: operation.messageIds.map { $0.id }))
         |> map(Optional.init)

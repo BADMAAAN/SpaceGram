@@ -11,6 +11,9 @@ public enum ChatMessageEntryContentType {
 }
 
 public struct ChatMessageEntryAttributes: Equatable {
+    // MARK: NAGRAM — presentation order can retain a deleted cloud message's
+    // index while its actionable identity stays strictly local.
+    public var spaceGramOriginalIndex: EngineMessage.Index? = nil
     public var rank: CachedChannelAdminRank?
     public var isContact: Bool
     public var contentTypeHint: ChatMessageEntryContentType
@@ -90,10 +93,11 @@ public enum ChatHistoryEntry: Identifiable, Comparable {
     
     public var index: EngineMessage.Index {
         switch self {
-        case let .MessageEntry(message, _, _, _, _, _):
-            return message.index
+        case let .MessageEntry(message, _, _, _, _, attributes):
+            // MARK: NAGRAM — preserve same-second order for archived messages.
+            return attributes.spaceGramOriginalIndex ?? message.index
         case let .MessageGroupEntry(_, messages, _):
-            return messages[messages.count - 1].0.index
+            return messages[messages.count - 1].3.spaceGramOriginalIndex ?? messages[messages.count - 1].0.index
         case let .UnreadEntry(index, _):
             return index
         case let .ReplyCountEntry(index, _, _, _):
@@ -110,10 +114,11 @@ public enum ChatHistoryEntry: Identifiable, Comparable {
     
     public var firstIndex: EngineMessage.Index {
         switch self {
-            case let .MessageEntry(message, _, _, _, _, _):
-                return message.index
+            case let .MessageEntry(message, _, _, _, _, attributes):
+                // MARK: NAGRAM — preserve archive album boundaries as well.
+                return attributes.spaceGramOriginalIndex ?? message.index
             case let .MessageGroupEntry(_, messages, _):
-                return messages[0].0.index
+                return messages[0].3.spaceGramOriginalIndex ?? messages[0].0.index
             case let .UnreadEntry(index, _):
                 return index
             case let .ReplyCountEntry(index, _, _, _):

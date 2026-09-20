@@ -12,6 +12,7 @@ public struct SpaceGramArchivedAsset: Codable {
     public let bytes: Int64
     public let timestamp: Double
     public let sha256: String
+    public var resourceId: String? = nil
 }
 
 public enum SpaceGramMediaArchiveError: Error {
@@ -134,7 +135,7 @@ public enum SpaceGramMediaArchive {
                     let assets = try maintain(root: root, policy: policy, forceExpiry: true)
                     if referencesComplete {
                         let grace = Date().timeIntervalSince1970 - 5 * 60
-                        for asset in assets where !referencedIds.contains(asset.id) && asset.timestamp < grace {
+                        for asset in assets where asset.resourceId == nil && !referencedIds.contains(asset.id) && asset.timestamp < grace {
                             try erase(root: root, asset: asset)
                         }
                     }
@@ -152,7 +153,7 @@ public enum SpaceGramMediaArchive {
                     let policy = try readPolicy(root: root)
                     guard policy.automaticCleanup else { return }
                     let grace = Date().timeIntervalSince1970 - 5 * 60
-                    for asset in try maintain(root: root, policy: policy) where !referencedIds.contains(asset.id) && asset.timestamp < grace {
+                    for asset in try maintain(root: root, policy: policy) where asset.resourceId == nil && !referencedIds.contains(asset.id) && asset.timestamp < grace {
                         try erase(root: root, asset: asset)
                     }
                 }
@@ -167,7 +168,8 @@ public enum SpaceGramMediaArchive {
     }
 
     public static func pinCompletedFile(path: String, fileName: String, kind: String, fileExtension: String) -> SpaceGramMediaCapture? {
-        guard !Thread.isMainThread else { return nil }
+        // Opening/fstat pins metadata only. Cache hits can complete on main;
+        // refusing them silently loses received media. Copy/hash is always queued.
         let fd = Darwin.open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
         guard fd >= 0 else { return nil }
         var info = stat()
@@ -208,6 +210,14 @@ public enum SpaceGramMediaArchive {
                     var assets = try maintain(root: root, policy: policy)
                     for capture in captures {
                         do {
+                            // Cloud resource identities are immutable and account scoped.
+                            // Repeated fetch/delete hooks must not evict useful files with duplicates.
+                            if let resourceId = capture.resourceId,
+                               let existing = assets.first(where: { $0.resourceId == resourceId && $0.bytes == capture.size }),
+                               (try? hashFile(url: payload(root: root, asset: existing), size: existing.bytes)) == existing.sha256 {
+                                saved.append(existing)
+                                continue
+                            }
                             while !assets.isEmpty && (assets.count >= maxAssets || assets.reduce(Int64(0), { $0 + $1.bytes }) > policy.storageLimitBytes - capture.size) {
                                 try erase(root: root, asset: assets.removeFirst())
                             }
@@ -220,7 +230,8 @@ public enum SpaceGramMediaArchive {
                                   after.st_size == capture.size,
                                   after.st_mtimespec.tv_sec == capture.modified.tv_sec,
                                   after.st_mtimespec.tv_nsec == capture.modified.tv_nsec else { throw SpaceGramMediaArchiveError.invalidData }
-                            let asset = SpaceGramArchivedAsset(version: 1, id: id, fileName: capture.name, fileExtension: capture.ext, kind: capture.kind, bytes: capture.size, timestamp: Date().timeIntervalSince1970, sha256: digest)
+                            var asset = SpaceGramArchivedAsset(version: 1, id: id, fileName: capture.name, fileExtension: capture.ext, kind: capture.kind, bytes: capture.size, timestamp: Date().timeIntervalSince1970, sha256: digest)
+                            asset.resourceId = capture.resourceId
                             let destination = payload(root: root, asset: asset)
                             try FileManager.default.moveItem(at: partial, to: destination)
                             do {
@@ -253,7 +264,7 @@ public enum SpaceGramMediaArchive {
         }
     }
 
-    public static func resolve(root: URL, ids: Set<String>, completion: @escaping ([String: SpaceGramArchivedMedia]) -> Void) {
+    public static func resolve(root: URL, ids: Set<String>, resourceIds: Set<String> = [], completion: @escaping ([String: SpaceGramArchivedMedia]) -> Void) {
         queue.async {
             var result: [String: SpaceGramArchivedMedia] = [:]
             do {
@@ -269,11 +280,12 @@ public enum SpaceGramMediaArchive {
                     cleanedBubbleLeases = true
                 }
                 try withLock(root: root) {
-                    for asset in try maintain(root: root, policy: readPolicy(root: root)) where ids.contains(asset.id) {
+                    for asset in try maintain(root: root, policy: readPolicy(root: root)) where ids.contains(asset.id) || asset.resourceId.map(resourceIds.contains) == true {
                         let source = payload(root: root, asset: asset)
                         guard let values = try? source.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey]),
                               values.isRegularFile == true, values.isSymbolicLink != true,
-                              Int64(values.fileSize ?? -1) == asset.bytes else { continue }
+                              Int64(values.fileSize ?? -1) == asset.bytes,
+                              (try? hashFile(url: source, size: asset.bytes)) == asset.sha256 else { continue }
                         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("spacegram-bubble-" + UUID().uuidString, isDirectory: true)
                         do {
                             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

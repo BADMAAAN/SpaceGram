@@ -140,19 +140,14 @@ public final class SpaceGramSettings {
     public var ghostModeEnabled: Bool
 
     public var ghostMode: SpaceGramGhostMode {
-        return SpaceGramGhostMode(enabled: spaceGramEnabled && ghostModeEnabled, reads: suppressAutomaticReads, stories: hideStoryViews, presence: hideOnlinePresence, activity: hideChatActivity)
+        let enabled = spaceGramEnabled && ghostModeEnabled
+        return SpaceGramGhostMode(enabled: enabled, reads: enabled, stories: enabled, presence: enabled, activity: enabled)
     }
 
     public func setGhostMode(_ enabled: Bool) {
         ghostModeEnabled = enabled
-        // First-time opt-in enables the useful full preset. Later master toggles
-        // preserve the user's chosen subset.
-        if enabled && !suppressAutomaticReads && !hideStoryViews && !hideOnlinePresence && !hideChatActivity {
-            suppressAutomaticReads = true
-            hideStoryViews = true
-            hideOnlinePresence = true
-            hideChatActivity = true
-        }
+        // One persistent switch controls all four network protections. Legacy
+        // per-feature preferences remain stored for migration compatibility.
     }
 
     @SpaceGramDefault("spacegram.settings.delayedSend", false)

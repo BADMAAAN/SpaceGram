@@ -5277,11 +5277,8 @@ extension ChatControllerImpl {
                         return
                     }
                     let inAppNotificationSettings = self.context.sharedContext.currentInAppNotificationSettings.with { $0 }
-                    // MARK: NAGRAM — a scheduled ACK is not delivery. Never
-                    // acknowledge reads merely because an upload was queued.
-                    if eventGroup.contains(where: { $0.id.namespace == Namespaces.Message.Cloud && !$0.isPendingProcessing }) {
-                        self.chatDisplayNode.historyNode.spaceGramReadVisibleMessagesOnInteraction()
-                    }
+                    // MARK: NAGRAM — success-only reads belong to TelegramCore;
+                    // another open topic/controller must not read its visible history.
                     if inAppNotificationSettings.playSounds, let firstEvent = eventGroup.first, !firstEvent.isSilent {
                         serviceSoundManager.playMessageDeliveredSound()
                     }

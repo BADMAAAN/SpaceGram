@@ -20,6 +20,7 @@ swift_library(
         "//SpaceGram/SettingsUI:SpaceGramSettingsUI",
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         "//submodules/Postbox:Postbox",
+        "//submodules/Display:Display",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/TelegramCore:TelegramCore",
     ],

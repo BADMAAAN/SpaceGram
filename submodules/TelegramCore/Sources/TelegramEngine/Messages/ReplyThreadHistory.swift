@@ -1,4 +1,5 @@
 import Foundation
+import SpaceGramSettings // MARK: NAGRAM — protect automatic topic read paths.
 import Postbox
 import SwiftSignalKit
 import TelegramApi
@@ -315,6 +316,8 @@ private class ReplyThreadHistoryContextImpl {
     }
     
     func applyMaxReadIndex(messageIndex: MessageIndex) {
+        // MARK: NAGRAM — interaction reads have a separate success-only Core path.
+        guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return }
         let peerId = self.peerId
         let threadId = self.threadId
         
@@ -334,6 +337,8 @@ private class ReplyThreadHistoryContextImpl {
         let account = self.account
         
         let _ = (self.account.postbox.transaction { transaction -> (Api.InputPeer?, Api.InputPeer?, MessageId?, Int?) in
+            // MARK: NAGRAM — Ghost may change while this transaction is queued.
+            guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return (nil, nil, nil, nil) }
             guard let peer = transaction.getPeer(peerId) else {
                 return (nil, nil, nil, nil)
             }
@@ -437,6 +442,8 @@ private class ReplyThreadHistoryContextImpl {
             return (inputPeer, subPeerId, topMessageId, readCount)
         }
         |> deliverOnMainQueue).start(next: { [weak self] inputPeer, subPeerId, topMessageId, readCount in
+            // MARK: NAGRAM — recheck immediately before topic/saved-history RPCs.
+            guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return }
             guard let strongSelf = self else {
                 return
             }

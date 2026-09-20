@@ -751,7 +751,7 @@
 
 "SpaceGram.Online" = "Suppress online presence";
 
-"SpaceGram.GhostInfo" = "Suppresses outgoing chat activity, story acknowledgements and explicit online status. Calls remain functional. Chats stay unread until you explicitly mark them read or turn off read suppression. Ordinary media consumption, live-location views and read metrics are suppressed. Timed/view-once media still sends lifecycle acknowledgements. Sending, reacting or later viewing stories with this mode off may reveal activity; server-side invisibility is not guaranteed.";
+"SpaceGram.GhostInfo" = "One switch suppresses automatic reads, chat activity, story views and explicit online status. Opening and scrolling do not change read state. Calls and secret-chat lifecycle keep native Telegram behavior. Sending or reacting is visible to the recipient.";
 
 "SpaceGram.Media" = "Media";
 
@@ -949,7 +949,7 @@
 "SpaceGram.History.Author" = "Author";
 "SpaceGram.Hub.GhostButton" = "Ghost Mode button";
 "SpaceGram.Hub.DelayedSend" = "Delayed send";
-"SpaceGram.Hub.DelayedSendInfo" = "Uses the Telegram server queue when Ghost and Delayed Send are enabled. The date is checked after upload with at least 30 seconds of margin; file size adds no extra delay. Stay in the chat and use Scheduled Messages to edit or cancel. Network transit can exceed the margin. Secret chats, bots, forwards, paid messages and story replies are not supported by automatic scheduling.";
+"SpaceGram.Hub.DelayedSendInfo" = "With Ghost and Delayed Send enabled, text uses the Telegram server queue with a target of about 12 seconds. For media, the delay starts after upload. Use Scheduled Messages to edit or cancel. Slow networks can change the timing. Secret chats, bots, forwards, paid messages and story replies are not supported by automatic scheduling.";
 "SpaceGram.Hub.GhostOn" = "Ghost Mode on";
 "SpaceGram.Hub.GhostOff" = "Ghost Mode off";
 "SpaceGram.Hub.JumpToFirst" = "Jump to first message";
@@ -976,7 +976,7 @@
 "SpaceGram.UI.NotConfigured" = "Not configured";
 "SpaceGram.Hub.GoOffline" = "Go offline automatically";
 "SpaceGram.Hub.ReadOnInteract" = "Read on Interact";
-"SpaceGram.Hub.ReadOnInteractInfo" = "Automatically marks messages read when you send a message, react or perform another explicit interaction. Opening a chat alone is not an interaction.";
+"SpaceGram.Hub.ReadOnInteractInfo" = "In Ghost mode, reads through the message only after a confirmed immediate send, reply or reaction in that conversation or topic. Opening, scrolling, typing and queueing a scheduled message do not read history. Automatic delayed sends do not trigger reads.";
 "SpaceGram.Translator.Title" = "Translator";
 "SpaceGram.Translator.Source" = "Source language";
 "SpaceGram.Translator.Target" = "Target language";

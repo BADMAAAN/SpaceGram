@@ -1,4 +1,7 @@
 import Foundation
+// MARK: NAGRAM — pending mention/reaction receipts obey live Ghost state.
+import SpaceGramSettings
+import SpaceGramSettingsSignal
 import Postbox
 import SwiftSignalKit
 import TelegramApi
@@ -126,11 +129,12 @@ func managedConsumePersonalMessagesActions(postbox: Postbox, network: Network, s
         
         let actionsKey = PostboxViewKey.pendingMessageActions(type: .consumeUnseenPersonalMessage)
         let invalidateKey = PostboxViewKey.invalidatedMessageHistoryTagSummaries(peerId: nil, threadId: nil, tagMask: .unseenPersonalMessage, namespace: Namespaces.Message.Cloud)
-        let disposable = postbox.combinedView(keys: [actionsKey, invalidateKey]).start(next: { view in
+        // MARK: NAGRAM — suspend, cancel and resume pending receipts without deleting them.
+        let disposable = combineLatest(postbox.combinedView(keys: [actionsKey, invalidateKey]), spaceGramSuppressAutomaticReadsSignal()).start(next: { view, suppressed in
             var entries: [PendingMessageActionsEntry] = []
             var invalidateEntries = Set<InvalidatedMessageHistoryTagsSummaryEntry>()
             if let v = view.views[actionsKey] as? PendingMessageActionsView {
-                entries = v.entries
+                entries = suppressed ? [] : v.entries
             }
             if let v = view.views[invalidateKey] as? InvalidatedMessageHistoryTagSummariesView {
                 invalidateEntries = v.entries
@@ -190,12 +194,13 @@ func managedReadReactionOrPollVoteActions(postbox: Postbox, network: Network, st
         let actionsKey = PostboxViewKey.pendingMessageActions(type: .readReactionOrPollVote)
         let invalidateReactionsKey = PostboxViewKey.invalidatedMessageHistoryTagSummaries(peerId: nil, threadId: nil, tagMask: .unseenReaction, namespace: Namespaces.Message.Cloud)
         let invalidatePollVotesKey = PostboxViewKey.invalidatedMessageHistoryTagSummaries(peerId: nil, threadId: nil, tagMask: .unseenPollVote, namespace: Namespaces.Message.Cloud)
-        let disposable = postbox.combinedView(keys: [actionsKey, invalidateReactionsKey, invalidatePollVotesKey]).start(next: { view in
+        // MARK: NAGRAM — no reaction/poll-view receipts from ordinary Ghost scrolling.
+        let disposable = combineLatest(postbox.combinedView(keys: [actionsKey, invalidateReactionsKey, invalidatePollVotesKey]), spaceGramSuppressAutomaticReadsSignal()).start(next: { view, suppressed in
             var entries: [PendingMessageActionsEntry] = []
             var invalidateReactionEntries = Set<InvalidatedMessageHistoryTagsSummaryEntry>()
             var invalidatePollVoteEntries = Set<InvalidatedMessageHistoryTagsSummaryEntry>()
             if let v = view.views[actionsKey] as? PendingMessageActionsView {
-                entries = v.entries
+                entries = suppressed ? [] : v.entries
             }
             if let v = view.views[invalidateReactionsKey] as? InvalidatedMessageHistoryTagSummariesView {
                 invalidateReactionEntries = v.entries
@@ -252,6 +257,8 @@ func managedReadReactionOrPollVoteActions(postbox: Postbox, network: Network, st
 }
 
 private func synchronizeConsumeMessageContents(transaction: Transaction, postbox: Postbox, network: Network, stateManager: AccountStateManager, id: MessageId) -> Signal<Void, NoError> {
+    // MARK: NAGRAM — a notification may still be queued at this RPC boundary.
+    guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return .never() }
     if id.peerId.namespace == Namespaces.Peer.CloudUser || id.peerId.namespace == Namespaces.Peer.CloudGroup {
         return network.request(Api.functions.messages.readMessageContents(id: [id.id]))
             |> map(Optional.init)
@@ -321,6 +328,8 @@ private func synchronizeConsumeMessageContents(transaction: Transaction, postbox
 }
 
 private func synchronizeReadMessageReactionsOrPollVotes(transaction: Transaction, postbox: Postbox, network: Network, stateManager: AccountStateManager, id: MessageId) -> Signal<Void, NoError> {
+    // MARK: NAGRAM — keep blocked operations pending, never mark them synchronized.
+    guard !SpaceGramGhostPolicy.suppressAutomaticReads else { return .never() }
     if id.peerId.namespace == Namespaces.Peer.CloudUser || id.peerId.namespace == Namespaces.Peer.CloudGroup {
         return network.request(Api.functions.messages.readMessageContents(id: [id.id]))
         |> map(Optional.init)

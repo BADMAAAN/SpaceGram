@@ -1,4 +1,7 @@
 import Foundation
+// MARK: NAGRAM — gate queued reads at the network boundary as well as in UI.
+import SpaceGramSettings
+import SpaceGramSettingsSignal
 import Postbox
 import TelegramApi
 import SwiftSignalKit
@@ -227,9 +230,33 @@ private func validatePeerReadState(network: Network, postbox: Postbox, stateMana
 }
 
 private func pushPeerReadState(network: Network, postbox: Postbox, stateManager: AccountStateManager, peerId: PeerId, readState: PeerReadState) -> Signal<PeerReadState, PeerReadStateValidationError> {
+    // MARK: NAGRAM — leave the operation pending while Ghost blocks it; do not
+    // pretend a skipped RPC succeeded or lose the unread synchronization state.
+    return combineLatest(spaceGramSettingsChangesSignal(), stateManager.spaceGramReadPermissions.changes.get())
+    |> filter { _, allowed in
+        guard SpaceGramGhostPolicy.suppressAutomaticReads else { return true }
+        guard SpaceGramGhostPolicy.shouldReadOnInteraction else { return false }
+        if case let .idBased(maxIncomingReadId, _, _, _, _) = readState {
+            return (allowed[peerId] ?? 0) >= maxIncomingReadId
+        }
+        return false
+    }
+    |> take(1)
+    |> castError(PeerReadStateValidationError.self)
+    |> mapToSignal { _ in
+        return spaceGramPushAuthorizedReadState(network: network, postbox: postbox, stateManager: stateManager, peerId: peerId, readState: readState)
+    }
+}
+
+// MARK: NAGRAM — only reached after current policy or a successful interaction permits it.
+private func spaceGramPushAuthorizedReadState(network: Network, postbox: Postbox, stateManager: AccountStateManager, peerId: PeerId, readState: PeerReadState) -> Signal<PeerReadState, PeerReadStateValidationError> {
     if peerId.namespace == Namespaces.Peer.SecretChat {
         return inputSecretChat(postbox: postbox, peerId: peerId)
         |> mapToSignal { inputPeer -> Signal<PeerReadState, PeerReadStateValidationError> in
+            // MARK: NAGRAM — resolving the peer is asynchronous.
+            if SpaceGramGhostPolicy.suppressAutomaticReads {
+                return pushPeerReadState(network: network, postbox: postbox, stateManager: stateManager, peerId: peerId, readState: readState)
+            }
             switch readState {
             case .idBased:
                 return .single(readState)
@@ -246,6 +273,18 @@ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager:
     } else {
         return inputPeer(postbox: postbox, peerId: peerId)
         |> mapToSignal { inputPeer -> Signal<PeerReadState, PeerReadStateValidationError> in
+            // MARK: NAGRAM — do not send a stale authorization after Ghost changes.
+            if SpaceGramGhostPolicy.suppressAutomaticReads {
+                let allowed: Bool
+                if case let .idBased(maxIncomingReadId, _, _, _, _) = readState {
+                    allowed = SpaceGramGhostPolicy.shouldReadOnInteraction && stateManager.spaceGramReadPermissions.allows(peerId: peerId, maxId: maxIncomingReadId)
+                } else {
+                    allowed = false
+                }
+                if !allowed {
+                    return pushPeerReadState(network: network, postbox: postbox, stateManager: stateManager, peerId: peerId, readState: readState)
+                }
+            }
             switch inputPeer {
             case let .inputPeerChannel(inputPeerChannelData):
                 let (channelId, accessHash) = (inputPeerChannelData.channelId, inputPeerChannelData.accessHash)

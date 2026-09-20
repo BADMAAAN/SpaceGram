@@ -54,6 +54,44 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         wait(for: [done], timeout: 10)
     }
 
+    func testResourceReferenceDeduplicatesAndRetainsBeforeDeletionButHonorsExpiry() throws {
+        let source = directory.appendingPathComponent("completed-sticker")
+        try Data([1, 2, 3, 4]).write(to: source)
+        let root = SpaceGramMediaArchive.root(mediaBoxPath: directory.appendingPathComponent("media").path)
+        var storedIds: [String] = []
+        for _ in 0 ..< 2 {
+            let capture = try XCTUnwrap(SpaceGramMediaArchive.pinCompletedFile(path: source.path, fileName: "sticker.webp", kind: "sticker", fileExtension: "webp"))
+            capture.resourceId = "cloud-resource-fixture"
+            let done = expectation(description: "deduplicate repeated completion")
+            SpaceGramMediaArchive.store(root: root, captures: [capture]) { assets in
+                XCTAssertEqual(assets.count, 1)
+                storedIds.append(contentsOf: assets.map(\.id))
+                done.fulfill()
+            }
+            wait(for: [done], timeout: 10)
+        }
+        XCTAssertEqual(Set(storedIds).count, 1)
+        let metadata = root.appendingPathComponent(try XCTUnwrap(storedIds.first) + ".json")
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: metadata)) as? [String: Any])
+        object["timestamp"] = Date().timeIntervalSince1970 - 10 * 60
+        try JSONSerialization.data(withJSONObject: object).write(to: metadata)
+        SpaceGramMediaArchive.reconcile(root: root, referencedIds: [], referencesComplete: true)
+        let retained = expectation(description: "resource reference survives before any delete event")
+        SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: ["cloud-resource-fixture"]) { resources in
+            XCTAssertEqual(resources.count, 1)
+            retained.fulfill()
+        }
+        wait(for: [retained], timeout: 10)
+        object["timestamp"] = Date().timeIntervalSince1970 - 31 * 24 * 60 * 60
+        try JSONSerialization.data(withJSONObject: object).write(to: metadata)
+        let expired = expectation(description: "stable resource reference does not bypass retention")
+        SpaceGramMediaArchive.resolve(root: root, ids: [], resourceIds: ["cloud-resource-fixture"]) { resources in
+            XCTAssertTrue(resources.isEmpty)
+            expired.fulfill()
+        }
+        wait(for: [expired], timeout: 10)
+    }
+
     func testBubbleLeaseSurvivesArchiveClearWithoutChangingContent() throws {
         let bytes = Data([1, 3, 5, 7])
         let (root, asset) = try store(bytes)

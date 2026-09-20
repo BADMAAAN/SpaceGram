@@ -107,7 +107,7 @@ public struct SpaceGramDeletedMessageOverlayItem {
 
     private func makeMedia(missingMediaLabel: String) -> [Media] {
         guard let metadata = self.snapshot.media.first else { return [] }
-        let primary = self.archivedMedia.first(where: { $0.asset.kind != "thumbnail" })
+        let primary = self.archivedMedia.filter { $0.asset.kind != "thumbnail" }.max { $0.asset.bytes < $1.asset.bytes }
         let assetNumber = primary.flatMap { UInt64($0.asset.id.replacingOccurrences(of: "-", with: "").prefix(16), radix: 16) }
         let localNumber = assetNumber.map { Int64(bitPattern: $0) } ?? (self.originalMessageId.peerId.toInt64() ^ (Int64(self.originalMessageId.id) << 32))
         let mediaId = MediaId(namespace: Namespaces.Media.LocalFile, id: localNumber)
@@ -132,11 +132,15 @@ public struct SpaceGramDeletedMessageOverlayItem {
                 immediateThumbnailData: nil, reference: nil, partialReference: nil, flags: [])]
         }
         var fileAttributes: [TelegramMediaFileAttribute] = [.FileName(fileName: primary.asset.fileName)]
+        if primary.asset.kind == "sticker" || metadata.stickerText != nil {
+            fileAttributes.append(.Sticker(displayText: metadata.stickerText ?? "", packReference: nil, maskData: nil))
+            fileAttributes.append(.ImageSize(size: dimensions))
+        }
         let rawDuration = metadata.duration ?? 0
         let duration = rawDuration.isFinite ? max(0, min(rawDuration, Double(Int32.max))) : 0
         if primary.asset.kind == "voice" || metadata.isVoice == true {
             fileAttributes.append(.Audio(isVoice: true, duration: Int(duration), title: nil, performer: nil, waveform: nil))
-        } else if primary.asset.kind == "video" || primary.asset.kind == "videoMessage" {
+        } else if primary.asset.kind == "video" || primary.asset.kind == "videoMessage" || (primary.asset.kind == "animation" && metadata.mimeType == "video/mp4") {
             fileAttributes.append(.Video(duration: duration, size: dimensions, flags: primary.asset.kind == "videoMessage" ? [.instantRoundVideo] : [], preloadSize: nil, coverTime: nil, videoCodec: nil))
         }
         if primary.asset.kind == "animation" || metadata.isAnimated == true { fileAttributes.append(.Animated) }
@@ -202,10 +206,12 @@ public func spaceGramDeletedMessageOverlay(postbox: Postbox, peerId: PeerId, thr
     }
     |> mapToSignal { items in
         return Signal { subscriber in
-            SpaceGramMediaArchive.resolve(root: SpaceGramMediaArchive.root(mediaBoxPath: postbox.mediaBox.basePath), ids: Set(items.flatMap(\.assetIds))) { resources in
+            let resourceIds = Set(items.flatMap { $0.snapshot.media.flatMap { $0.resourceIds ?? [] } })
+            SpaceGramMediaArchive.resolve(root: SpaceGramMediaArchive.root(mediaBoxPath: postbox.mediaBox.basePath), ids: Set(items.flatMap(\.assetIds)), resourceIds: resourceIds) { resources in
                 subscriber.putNext(items.map { item in
                     var item = item
-                    item.archivedMedia = item.assetIds.compactMap { resources[$0] }
+                    let matchingIds = Set(item.snapshot.media.flatMap { $0.resourceIds ?? [] })
+                    item.archivedMedia = resources.values.filter { item.assetIds.contains($0.asset.id) || $0.asset.resourceId.map(matchingIds.contains) == true }
                     return item
                 })
                 subscriber.putCompletion()

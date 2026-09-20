@@ -380,10 +380,8 @@ private func requestUpdateMessageReaction(postbox: Postbox, network: Network, st
             return postbox.transaction { transaction -> Void in
                 // MARK: NAGRAM — only the successfully reacted-to message is
                 // acknowledged. Failure/cancellation never enters this block.
-                if SpaceGramGhostPolicy.shouldReadOnInteraction,
-                   let message = transaction.getMessage(messageId), message.threadId == nil,
-                   transaction.getPeer(messageId.peerId)?.isForumOrMonoForum != true {
-                    _internal_applyMaxReadIndexInteractively(transaction: transaction, stateManager: stateManager, index: message.index)
+                if let message = transaction.getMessage(messageId) {
+                    spaceGramReadOnSuccessfulInteraction(transaction: transaction, stateManager: stateManager, message: message)
                 }
                 transaction.setPendingMessageAction(type: .updateReaction, id: messageId, action: UpdateMessageReactionsAction())
                 transaction.updateMessage(messageId, update: { currentMessage in

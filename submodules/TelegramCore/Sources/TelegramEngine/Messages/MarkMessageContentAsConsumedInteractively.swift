@@ -8,11 +8,13 @@ import SwiftSignalKit
 func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messageId: MessageId) -> Signal<Void, NoError> {
     return postbox.transaction { transaction -> Void in
         if let message = transaction.getMessage(messageId), message.flags.contains(.Incoming) {
-            // MARK: NAGRAM — preserve TTL/secret-chat lifecycle acknowledgements.
+            // MARK: NAGRAM — archive first; Ghost blocks cloud playback receipts
+            // too. Secret-chat lifecycle acknowledgements retain native behavior.
             let timed = message.attributes.contains { $0 is AutoremoveTimeoutMessageAttribute || $0 is AutoclearTimeoutMessageAttribute }
             if timed {
                 spaceGramBeforeMediaExpiration(postbox: postbox, transaction: transaction, message: message, source: "timedMediaConsumption")
-            } else if SpaceGramGhostPolicy.suppressAutomaticReads {
+            }
+            if SpaceGramGhostPolicy.suppressAutomaticReads && (!timed || message.id.peerId.namespace != Namespaces.Peer.SecretChat) {
                 return
             }
 

@@ -9047,7 +9047,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         }
         // MARK: NAGRAM — schedule against Telegram's corrected clock rather
         // than the device wall clock, which may be skewed.
-        let serverNow = Int64(self.context.account.network.globalTime)
+        let serverTime = self.context.account.network.globalTime
+        guard serverTime.isFinite, serverTime >= 0, serverTime <= Double(Int32.max) else { return nil }
+        let serverNow = Int64(serverTime.rounded(.up))
         guard let timestamp = SpaceGramDelayedSendPolicy.timestamp(now: serverNow, ghost: settings.ghostMode, enabled: settings.delayedSend, mediaBytes: mediaBytes) else { return nil }
         return (messages.map { message in
             message.withUpdatedAttributes { $0 + [OutgoingScheduleInfoMessageAttribute(scheduleTime: timestamp, repeatPeriod: nil, spaceGramMinimumDelay: spaceGramDelayedSendMinimumInterval)] }

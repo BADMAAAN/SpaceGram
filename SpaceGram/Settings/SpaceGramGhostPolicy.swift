@@ -4,26 +4,26 @@ import Foundation
 public enum SpaceGramGhostPolicy {
     public static var suppressAutomaticReads: Bool {
         let settings = SpaceGramSettings.shared
-        return settings.ghostMode.enabled && settings.suppressAutomaticReads
+        return settings.ghostMode.enabled
     }
 
     public static var suppressChatActivity: Bool {
         let settings = SpaceGramSettings.shared
-        return settings.ghostMode.enabled && settings.hideChatActivity
+        return settings.ghostMode.enabled
     }
 
     public static var suppressStoryViews: Bool {
         let settings = SpaceGramSettings.shared
-        return settings.ghostMode.enabled && settings.hideStoryViews
+        return settings.ghostMode.enabled
     }
 
     public static var suppressOnlinePresence: Bool {
         let settings = SpaceGramSettings.shared
-        return settings.ghostMode.enabled && settings.hideOnlinePresence
+        return settings.ghostMode.enabled
     }
 
     public static var shouldReadOnInteraction: Bool {
         let settings = SpaceGramSettings.shared
-        return settings.ghostMode.enabled && settings.suppressAutomaticReads && settings.readOnInteract
+        return settings.ghostMode.enabled && settings.readOnInteract
     }
 }

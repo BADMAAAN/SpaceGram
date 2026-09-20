@@ -767,22 +767,10 @@ public class Window1 {
     }
     
     private func updateBadgeVisibility() {
-        // MARK: NAGRAM - Keep the unused badge hidden, including delayed visibility updates.
-        guard self.badgeView.image != nil else {
-            self.badgeView.isHidden = true
-            return
-        }
-        let badgeIsHidden = !self.deviceMetrics.showAppBadge || self.forceBadgeHidden || self.windowLayout.size.width > self.windowLayout.size.height
-        if badgeIsHidden != self.badgeView.isHidden && !badgeIsHidden {
-            Queue.mainQueue().after(0.4) {
-                let badgeShouldBeHidden = !self.deviceMetrics.showAppBadge || self.forceBadgeHidden || self.windowLayout.size.width > self.windowLayout.size.height
-                if badgeShouldBeHidden == badgeIsHidden {
-                    self.badgeView.isHidden = badgeIsHidden
-                }
-            }
-        } else {
-            self.badgeView.isHidden = badgeIsHidden
-        }
+        // MARK: NAGRAM — retain the window ordering anchor, never a branding overlay.
+        self.badgeView.image = nil
+        self.badgeView.isHidden = true
+        self.badgeView.isUserInteractionEnabled = false
     }
     
     public func setForceInCallStatusBar(_ forceInCallStatusBarText: String?, transition: ContainedViewLayoutTransition = .animated(duration: 0.3, curve: .easeInOut)) {

@@ -128,6 +128,8 @@ final class MessagesRemovedContext {
 }
 
 public final class AccountStateManager {
+    // MARK: NAGRAM — successful interactions authorize bounded Ghost read sync.
+    let spaceGramReadPermissions = SpaceGramReadPermissions()
     public final class IncomingCallUpdate {
         public let callId: Int64
         public let callAccessHash: Int64

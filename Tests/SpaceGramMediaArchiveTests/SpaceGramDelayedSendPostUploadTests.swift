@@ -5,31 +5,36 @@ final class SpaceGramDelayedSendPostUploadTests: XCTestCase {
     func testSlowMediaUploadMovesScheduleBeyondFreshServerTime() {
         XCTAssertEqual(
             spaceGramAdjustedScheduleTime(plannedTime: 112, currentServerTime: 115, minimumDelay: 12),
-            145
+            127
         )
     }
 
     func testScheduleAlreadyTooCloseGetsFullThreshold() {
         XCTAssertEqual(
             spaceGramAdjustedScheduleTime(plannedTime: 120, currentServerTime: 110, minimumDelay: 12),
-            140
+            122
         )
     }
 
     func testScheduleInPastGetsFullThreshold() {
         XCTAssertEqual(
             spaceGramAdjustedScheduleTime(plannedTime: 100, currentServerTime: 120, minimumDelay: 12),
-            150
+            132
         )
     }
 
     func testReconnectRevalidatesAgainstNewServerTime() {
         let firstAttempt = spaceGramAdjustedScheduleTime(plannedTime: 112, currentServerTime: 110, minimumDelay: 12)
-        XCTAssertEqual(firstAttempt, 140)
+        XCTAssertEqual(firstAttempt, 122)
         XCTAssertEqual(
             spaceGramAdjustedScheduleTime(plannedTime: firstAttempt, currentServerTime: 125, minimumDelay: 12),
-            155
+            137
         )
+    }
+
+    func testFractionalCorrectedServerClockAndExplicitFutureDate() {
+        XCTAssertEqual(spaceGramAdjustedScheduleTime(plannedTime: 112, currentServerTime: 115.75, minimumDelay: 12), 128)
+        XCTAssertEqual(spaceGramAdjustedScheduleTime(plannedTime: 1000, currentServerTime: 115, minimumDelay: nil), 1000)
     }
 
     func testNativeScheduleAndDuplicateSafeRetryRemainStable() {

@@ -186,7 +186,8 @@ public final class NavigationButtonComponent: Component {
                 }
                 
                 if let iconSize = iconView.image?.size {
-                    size.width = 44.0
+                    // MARK: NAGRAM — a labeled Ghost indicator needs its full hit area.
+                    size.width = max(44.0, iconSize.width + 8.0)
                     
                     iconView.frame = CGRect(origin: CGPoint(x: floor((size.width - iconSize.width) / 2.0), y: floor((availableSize.height - iconSize.height) / 2.0)), size: iconSize)
                 }

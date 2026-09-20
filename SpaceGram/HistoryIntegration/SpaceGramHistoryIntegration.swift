@@ -135,12 +135,16 @@ func spaceGramHistorySnapshot(_ message: Message) -> SpaceGramHistorySnapshot {
     if let threadId = message.threadId {
         snapshot.threadMetadata = ["threadId": String(threadId)]
     }
-    snapshot.media = spaceGramHistoryContentMedia(message.media)
+    snapshot.media = spaceGramHistoryContentMedia(message.effectiveMedia)
     // Descriptive details belong to the snapshot, but not the edit comparison:
     // downloads/sync may fill these in without changing the attachment.
-    for media in message.media {
-        if let file = media as? TelegramMediaFile,
+    for media in message.effectiveMedia {
+        if let image = media as? TelegramMediaImage,
+           let index = snapshot.media.firstIndex(where: { $0.type == "image" && $0.identifiers == spaceGramHistoryMediaId(image.imageId) }) {
+            snapshot.media[index].resourceIds = image.representations.map { $0.resource.id.stringRepresentation }
+        } else if let file = media as? TelegramMediaFile,
            let index = snapshot.media.firstIndex(where: { $0.type == "file" && $0.identifiers == spaceGramHistoryMediaId(file.fileId) }) {
+            snapshot.media[index].resourceIds = [file.resource.id.stringRepresentation] + file.previewRepresentations.map { $0.resource.id.stringRepresentation }
             snapshot.media[index].filename = file.fileName
             snapshot.media[index].size = file.size
             snapshot.media[index].mimeType = file.mimeType
@@ -149,6 +153,11 @@ func spaceGramHistorySnapshot(_ message: Message) -> SpaceGramHistorySnapshot {
             snapshot.media[index].isAnimated = file.isAnimated
             for attribute in file.attributes {
                 switch attribute {
+                case let .Sticker(displayText, _, _):
+                    snapshot.media[index].stickerText = displayText
+                case let .ImageSize(size):
+                    snapshot.media[index].width = size.width
+                    snapshot.media[index].height = size.height
                 case let .Video(duration, size, _, _, _, _):
                     snapshot.media[index].duration = duration
                     snapshot.media[index].width = size.width
