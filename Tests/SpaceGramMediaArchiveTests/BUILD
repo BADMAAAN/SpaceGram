@@ -33,7 +33,8 @@ ios_test_runner(
 
 ios_unit_test(
     name = "SpaceGramMediaArchiveTests",
-    minimum_os_version = "17.0",
+    # Match the app deployment target; the runner still uses iOS 26.2.
+    minimum_os_version = "15.0",
     runner = ":Runner",
     deps = [":SpaceGramMediaArchiveTestsLib"],
     visibility = ["//visibility:public"],

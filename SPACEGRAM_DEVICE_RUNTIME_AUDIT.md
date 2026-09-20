@@ -22,14 +22,22 @@ separate implementation, compilation, automated-test and device evidence.
 - GitHub CLI login is confirmed as BADMAAAN with repo/workflow access. No Git
   CLI command, force push, release or PR is used.
 - Intermediate source `05dd7e094d28874ac96606d8bddbdff53bb77dc0` is published
-  through `jj git push`; workflow #15 is running:
+  through `jj git push`; workflow #15 completed:
   https://github.com/BADMAAAN/SpaceGram/actions/runs/35509471423
-  It passed preflight and reached the full ARM64 app build. Queued/running is
-  not BUILD-PASSED.
+  BUILD-PASSED: full debug_arm64 IPA, embedded SHA verification and artifact
+  upload succeeded. `SpaceGram-iPhone-test` includes IPA/build-info/dSYM (artifact
+  id 10605971302). XCTest did not execute: the test target used minimum iOS 17
+  while the app uses 15, causing RMIntro's legacy camera header imports to fail
+  under deprecation-as-error. Match the app's deployment target (15); the test
+  runtime remains iPhone 17 / iOS 26.2 and warning/assertion policies are unchanged.
 - Second-pass source `189be17b7e27e0e62fe8e750921dcb667a76ce0d` is published
   through jj and confirmed by the GitHub commits API. It contains status-bar,
-  scheduling rejection, media retry and P1 safety/UX changes. Its build is pending
-  the intermediate run result.
+  scheduling rejection, media retry and P1 safety/UX changes.
+- Candidate `51c9966438d2ee594fb7d175f09341783ba37fd7` additionally preserves QR
+  whitespace and resets inline consent. Run #16 (35510990297) started before the
+  #15 test failure was available; it has the same test-target mismatch. Its own
+  superseded run is cancelled after preserving #15's failure evidence; a corrected
+  exact-SHA candidate run follows. No unrelated run is cancelled.
 
 ## P0: findings and implementation
 
@@ -84,7 +92,7 @@ missing-media placeholders do not distinguish every failure reason.
   byte/scale boundaries, the actual preview node constructed off-main then loaded
   on main repeatedly, updated scheduling margins, exact copied text, unavailable
   media placeholder, and a live media lease surviving archive clear.
-  XCTest status remains NOT RUN until CI results are available.
+  XCTest status: NOT EXECUTED in #15 (test-target build failure described above).
 
 ## P1/P2
 
