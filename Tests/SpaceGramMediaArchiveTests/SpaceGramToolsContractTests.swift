@@ -8,21 +8,34 @@ import XCTest
 
 final class SpaceGramToolsContractTests: XCTestCase {
     func testQRResultDecodesOriginalUTF8() throws {
-        let detector = try XCTUnwrap(CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh]))
-        let values = [
-            "hello",
-            "Привет",
-            "你好",
-            "🌌🙂",
-            "https://example.org/a?q=1",
-            "first\nsecond",
-            String(repeating: "SpaceGram-", count: 50),
-            String(repeating: "a", count: SpaceGramQRGenerator.maximumUTF8Bytes)
+        let detector = try XCTUnwrap(
+            CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh]),
+            "stage=detector-creation"
+        )
+        let scenarios = [
+            ("ascii", "hello"),
+            ("russian", "Привет"),
+            ("chinese", "你好"),
+            ("emoji", "🌌🙂"),
+            ("url", "https://example.org/a?q=1"),
+            ("newlines", "first\nsecond"),
+            ("long-mixed", String(repeating: "SpaceGram-", count: 50)),
+            ("byte-limit", String(repeating: "a", count: SpaceGramQRGenerator.maximumUTF8Bytes))
         ]
-        for text in values {
-            let image = try XCTUnwrap(SpaceGramQRGenerator.image(text: text)?.cgImage)
-            let decoded = detector.features(in: CIImage(cgImage: image)).compactMap { ($0 as? CIQRCodeFeature)?.messageString }
-            XCTAssertEqual(decoded, [text], "Failed to round-trip \(text.utf8.count) UTF-8 bytes")
+        for (scenario, text) in scenarios {
+            let bytes = text.utf8.count
+            let image = try XCTUnwrap(
+                SpaceGramQRGenerator.image(text: text),
+                "scenario=\(scenario) utf8Bytes=\(bytes) stage=ui-image"
+            )
+            let cgImage = try XCTUnwrap(
+                image.cgImage,
+                "scenario=\(scenario) utf8Bytes=\(bytes) stage=cg-image"
+            )
+            XCTAssertEqual(cgImage.width, cgImage.height, "scenario=\(scenario) utf8Bytes=\(bytes) stage=pixel-dimensions")
+            XCTAssertGreaterThan(cgImage.width, 0, "scenario=\(scenario) utf8Bytes=\(bytes) stage=pixel-dimensions")
+            let decoded = detector.features(in: CIImage(cgImage: cgImage)).compactMap { ($0 as? CIQRCodeFeature)?.messageString }
+            XCTAssertEqual(decoded, [text], "scenario=\(scenario) utf8Bytes=\(bytes) stage=decoding")
         }
         let overLimitUTF8 = String(repeating: "🙂", count: SpaceGramQRGenerator.maximumUTF8Bytes / 4 + 1)
         XCTAssertGreaterThan(Data(overLimitUTF8.utf8).count, SpaceGramQRGenerator.maximumUTF8Bytes)
@@ -51,8 +64,10 @@ final class SpaceGramToolsContractTests: XCTestCase {
     }
 
     func testQRGeneratorAcceptsUTF8AndLongishText() {
-        XCTAssertNotNil(SpaceGramQRGenerator.image(text: "SpaceGram 🌌 Привет 你好"))
-        XCTAssertNotNil(SpaceGramQRGenerator.image(text: String(repeating: "SpaceGram-", count: 50)))
+        let unicode = "SpaceGram 🌌 Привет 你好"
+        let long = String(repeating: "SpaceGram-", count: 50)
+        XCTAssertNotNil(SpaceGramQRGenerator.image(text: unicode), "scenario=unicode utf8Bytes=\(unicode.utf8.count) stage=ui-image")
+        XCTAssertNotNil(SpaceGramQRGenerator.image(text: long), "scenario=long utf8Bytes=\(long.utf8.count) stage=ui-image")
     }
 
     func testTranslationLanguageModel() {
