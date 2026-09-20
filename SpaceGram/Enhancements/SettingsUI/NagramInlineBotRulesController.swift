@@ -36,7 +36,7 @@ private enum NagramInlineBotRulesEntry: ItemListNodeEntry {
 
 public func nagramInlineBotRulesController(context: AccountContext) -> ViewController {
     NagramLinkMetadata.shared.refreshIfNeeded(engine: context.engine)
-    let signal = combineLatest(context.sharedContext.presentationData, nagramStringSignal("spacegram.approvedInlineBots", defaultValue: ""))
+    let signal = combineLatest(context.sharedContext.presentationData, nagramStringSignal("spacegram.settings.approvedInlineBots", defaultValue: ""))
     |> deliverOnMainQueue
     |> map { presentationData, approvedBots -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let lang = presentationData.strings.baseLanguageCode

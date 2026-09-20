@@ -107,7 +107,7 @@ public func spaceGramQRToolsController(context: AccountContext) -> ViewControlle
             controller?.present(textAlertController(context: context, title: ngI18n("SpaceGram.QR.Title", lang), text: ngI18n("SpaceGram.QR.Empty", lang), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
             return
         }
-        guard let generatedImage = SpaceGramQRGenerator.image(text: trimmedText) else {
+        guard let generatedImage = SpaceGramQRGenerator.image(text: text) else {
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
             let lang = presentationData.strings.baseLanguageCode
             controller?.present(textAlertController(context: context, title: ngI18n("SpaceGram.QR.Title", lang), text: ngI18n("SpaceGram.QR.Failed", lang), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))

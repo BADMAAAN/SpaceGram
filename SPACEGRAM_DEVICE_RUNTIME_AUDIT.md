@@ -5,7 +5,7 @@ separate implementation, compilation, automated-test and device evidence.
 
 ## Baseline and publication
 
-- Local `main`, saved `main@origin`, and the GitHub API agree on
+- At the initial checkpoint, local `main`, saved `main@origin`, and the GitHub API agreed on
   `cde2035fa095c46356334265c7ba9dfbdadd6055`.
 - Baseline iPhone workflow #14 succeeded:
   https://github.com/BADMAAAN/SpaceGram/actions/runs/35485267376
@@ -25,13 +25,17 @@ separate implementation, compilation, automated-test and device evidence.
   through `jj git push`; workflow #15 is running:
   https://github.com/BADMAAAN/SpaceGram/actions/runs/35509471423
   It passed preflight and reached the full ARM64 app build. Queued/running is
-  not BUILD-PASSED. Status-bar/second-pass changes require their own final build.
+  not BUILD-PASSED.
+- Second-pass source `189be17b7e27e0e62fe8e750921dcb667a76ce0d` is published
+  through jj and confirmed by the GitHub commits API. It contains status-bar,
+  scheduling rejection, media retry and P1 safety/UX changes. Its build is pending
+  the intermediate run result.
 
 ## P0: findings and implementation
 
 | Area | Evidence and change | Acceptance status |
 | --- | --- | --- |
-| QR input/preview | `SpaceGramQRImageItemNode.init` ran in the ItemList worker, then accessed a view-backed `ASImageNode.layer`. AsyncDisplayKit enforces main-thread loading. Layer configuration now runs in `didLoad`; input title is empty with a separate accessibility label. Controller capture is weak. Generator bounds UTF-8 to 2,000 bytes, integer scale 1...16, and adds an opaque four-module quiet zone. | IMPLEMENTED; actual user's crash cause remains a hypothesis pending a matching crash stack. DEVICE-VERIFICATION-REQUIRED. |
+| QR input/preview | `SpaceGramQRImageItemNode.init` ran in the ItemList worker, then accessed a view-backed `ASImageNode.layer`. AsyncDisplayKit enforces main-thread loading. Layer configuration now runs in `didLoad`; input title is empty with a separate accessibility label. Controller capture is weak. The QR payload retains the original whitespace/newlines (trimming is only used to reject blank input). Generator bounds UTF-8 to 2,000 bytes, integer scale 1...16, and adds an opaque four-module quiet zone. | IMPLEMENTED; actual user's crash cause remains a hypothesis pending a matching crash stack. DEVICE-VERIFICATION-REQUIRED. |
 | NAGRAM status-bar capsule | User confirmed a permanent live overlay between time and system indicators. Inspected `Components/AppBadge.imageset/AppBadge@3x.png`: the raster contains the blue N + NAGRAM capsule. `Display/Source/WindowContent.swift` loads it, adds it to the window and centers it at `deviceMetrics.appBadgeOffset`; `TelegramRootController` controls visibility. Removed the decorative image assignment and keep the empty badge hidden. | SOURCE-IDENTIFIED / IMPLEMENTED; absence across screens still requires the updated IPA on iPhone. |
 | Ghost presence | Existing aggregate master/settings and typing/group-call behavior retained. `updatePresence` now checks current policy immediately before forming the RPC, including timer/queued callback paths. | IMPLEMENTED; second-account online/typing/read observation required. No universal invisibility claim. |
 | Read on Interact | Removed reads at send/reaction enqueue. Regular cloud delivery events in the open chat trigger the guarded read; scheduled ACKs do not. Non-thread reactions read only after successful server response. Policy is rechecked after asynchronous UI delivery. Forum/thread reaction acknowledgment remains unimplemented; paid reactions are unchanged. | IMPLEMENTED for stated paths; DEVICE-VERIFICATION-REQUIRED. |
@@ -102,7 +106,7 @@ Forward-as-new remains unimplemented; forward-without-name retains Telegram sema
 - Automatic inline rules require a second, per-bot recipient choice (empty by
   default). Only one HTTP(S) URL is submitted; ordinary draft text and secret
   chats are excluded. Native explicit @bot requests are unchanged. Metadata
-  updates cannot add consent. Remote payload/rule/input/match counts are bounded;
+  updates cannot add consent; resetting SpaceGram settings clears it. Remote payload/rule/input/match counts are bounded;
   ICU progress callbacks reject matching after a shared 20 ms budget. Compilation
   is bounded by a 512-character pattern limit, not a preemptive compiler timeout.
   RU/EN footers now describe the actual recipient and behavior.
@@ -118,10 +122,11 @@ held behind the unresolved P0/device checks; no unapproved artwork is added.
 | Requirement | Inspected source revision/symbol | SpaceGram hook/change |
 | --- | --- | --- |
 | Runtime Ghost gate | Novagramorg/iOS main `268aa3be43a4f286d942162765d6e1f5740d3347`, `isFenixuzGhostModeActive` | Existing `SpaceGramGhostPolicy`; fresh presence-RPC gate |
+| Ghost button/settings | Same Novagram SHA, `HOOKS.md` Ghost section, `FenixSettingsController.updateShowGhostMode`, `ChatListController.updateGhostModeButton`, `NavigationButtonComponent` icon branch | Existing separate visibility/master state preserved; own 24-point orbital template and native 44-point hit target. Foreign branding/artwork and runtime keys are not copied. |
 | Read on send distinction | Same SHA, `fenixuzForceReadHistory` | Unconditional direct readHistory bypass deliberately not copied; success-only opt-in paths |
 | Presence worker | AyuGram/AyuGramDesktop dev `db3b9891cb0b04ebb7d8c0e71ada3bcc669b910a`, `GhostModeAccountSettings`, `AyuWorker::runOnce` | Existing account presence manager; no three-second cross-client online/offline race |
 | Scheduling | Same Ayu SHA, `api_sending.cpp`/`applyGhostScheduling` and `ayu/utils/telegram_helpers.cpp` | Existing provenance attribute and post-upload server-clock adjustment; bounded 30-second margin |
-| Deleted storage | Same Ayu SHA, `AyuMessages::map`, `addDeletedMessage`, `getDeletedMessages` | Existing Postbox archive retained; local media bridge added |
+| Deleted storage | Same Ayu SHA, `AyuMessages::map`, `addDeletedMessage`, `getDeletedMessages` | Existing Postbox archive retained; local media bridge added. This Ayu mapper sets mediaPath to a placeholder and skips empty-text records; it is not evidence of a complete media-retention implementation. |
 | Message Shot | Same Ayu SHA, `AyuFeatures::MessageShot::Make` in `features/message_shot/message_shot.cpp` | Existing SpaceGram bounded renderer preserved; no screenshot/watermark transplant |
 
 Also consulted the supplied Ghost/features docs, Telegram scheduled-messages
