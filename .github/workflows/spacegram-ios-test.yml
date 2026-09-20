@@ -53,8 +53,10 @@ jobs:
           XCODE_PATH="/Applications/Xcode_${REQUIRED_XCODE}.app"
           test -d "$XCODE_PATH"
           sudo xcode-select --switch "$XCODE_PATH/Contents/Developer"
-          xcodebuild -version
-          ACTUAL_XCODE="$(xcodebuild -version | awk '/Xcode/ { print $2; exit }')"
+          XCODE_VERSION_OUTPUT="$(xcodebuild -version)"
+          printf '%s\n' "$XCODE_VERSION_OUTPUT"
+          ACTUAL_XCODE="${XCODE_VERSION_OUTPUT#Xcode }"
+          ACTUAL_XCODE="${ACTUAL_XCODE%%$'\n'*}"
           test "$ACTUAL_XCODE" = "$REQUIRED_XCODE"
 
       - name: Write ephemeral test build configuration
