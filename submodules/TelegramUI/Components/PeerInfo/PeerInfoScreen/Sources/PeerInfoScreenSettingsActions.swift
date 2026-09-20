@@ -164,7 +164,9 @@ extension PeerInfoScreenNode {
                 // MARK: NAGRAM — anchor the native switcher to the visible top
                 // chrome. Anchoring to the whole list made the card originate at
                 // the bottom safe area on Dynamic Island devices.
-                let sourceView = source.navigationBar?.view ?? source.view
+                guard let sourceView = source.navigationBar?.view ?? source.view else {
+                    return
+                }
                 self?.controller?.presentAccountSwitcher(sourceView: sourceView, gesture: nil)
             }))
         case .appearance:
