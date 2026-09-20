@@ -5,6 +5,5 @@ swift_library(
     module_name = "SpaceGramMessageShot",
     srcs = glob(["*.swift"]),
     copts = ["-warnings-as-errors"],
-    sdk_frameworks = ["UIKit"],
     visibility = ["//visibility:public"],
 )

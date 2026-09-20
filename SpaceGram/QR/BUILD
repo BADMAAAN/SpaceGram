@@ -5,9 +5,5 @@ swift_library(
     module_name = "SpaceGramQR",
     srcs = glob(["*.swift"]),
     copts = ["-warnings-as-errors"],
-    sdk_frameworks = [
-        "CoreImage",
-        "UIKit",
-    ],
     visibility = ["//visibility:public"],
 )
