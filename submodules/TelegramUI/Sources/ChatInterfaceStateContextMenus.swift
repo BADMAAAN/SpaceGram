@@ -29,13 +29,9 @@ import NagramSettings
 // MARK: NAGRAM - shared SpaceGram localization.
 import SpaceGramStrings
 import TranslateUI
-// MARK: NAGRAM / SpaceGram
-// MARK: NAGRAM
-import SpaceGramSettingsUI
 // MARK: NAGRAM — SpaceGram master switch.
 import SpaceGramSettings
 // MARK: NAGRAM
-import SpaceGramHistoryUI
 import DebugSettingsUI
 import ChatPresentationInterfaceState
 import Pasteboard
@@ -1041,44 +1037,15 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         return (data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, messageViewsPrivacyTips, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer)
     }
     
-    // MARK: NAGRAM
-    let historyIndicators: Signal<SpaceGramMessageHistoryIndicators, NoError> = messages.count == 1 && !isScheduled && !isAction
-        ? spaceGramMessageHistoryIndicators(context: context, messageId: message.id)
-        : .single(SpaceGramMessageHistoryIndicators())
-    return combineLatest(dataSignal, historyIndicators)
+    return dataSignal
     |> deliverOnMainQueue
-    |> map { menuData, historyIndicators -> ContextController.Items in
+    |> map { menuData -> ContextController.Items in
         // MARK: NAGRAM
         let (data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, _, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer) = menuData
         let isPremium = accountPeer?.isPremium ?? false
 
         var actions: [NagramManagedMessageMenuItem] = []
 
-        // MARK: NAGRAM
-        if historyIndicators.hasHistory {
-            let historyLanguage = chatPresentationInterfaceState.strings.baseLanguageCode
-            var historyTitle = ngI18n(historyIndicators.hasEdits ? "SpaceGram.Hub.Edits" : "SpaceGram.History", historyLanguage)
-            if SpaceGramSettings.shared.showHistoryIndicator {
-                if historyIndicators.hasEdits && SpaceGramSettings.shared.showEditedIndicator { historyTitle += " · " + ngI18n("SpaceGram.History.Edited", historyLanguage) }
-                if historyIndicators.hasDeletes && SpaceGramSettings.shared.showDeletedIndicator { historyTitle += " · " + ngI18n("SpaceGram.History.Deleted", historyLanguage) }
-            }
-            actions.append(.action(ContextMenuActionItem(text: historyTitle, icon: { theme in
-                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Message"), color: theme.actionSheet.primaryTextColor)
-            }, action: { _, f in
-                f(.dismissWithoutContent)
-                controllerInteraction.navigationController()?.pushViewController(spaceGramHistoryDetailController(context: context, messageId: messages[0].id))
-            })))
-        }
-
-        // MARK: NAGRAM — browse local deleted records even if this message has no history.
-        if messages.count == 1 && message.id.namespace == Namespaces.Message.Cloud {
-            actions.append(.action(ContextMenuActionItem(text: ngI18n("SpaceGram.Hub.Deleted", chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
-                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Delete"), color: theme.actionSheet.primaryTextColor)
-            }, action: { _, f in
-                f(.dismissWithoutContent)
-                controllerInteraction.navigationController()?.pushViewController(spaceGramHistoryController(context: context, initialKind: .deleted, peerId: message.id.peerId.toInt64()))
-            })))
-        }
 
         // MARK: NAGRAM — reuse native history navigation; no full-history scan.
         if SpaceGramSettings.shared.spaceGramEnabled && SpaceGramSettings.shared.showJumpToFirst,
@@ -1574,18 +1541,6 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     }
                 }
 
-                // MARK: NAGRAM — SpaceGram AI is disabled at both entry and provider.
-                if SpaceGramSettings.shared.spaceGramEnabled, messages.count == 1, !message.containsSecretMedia, !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    actions.append(.action(ContextMenuActionItem(text: "SpaceGram AI", icon: { theme in
-                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Message"), color: theme.actionSheet.primaryTextColor)
-                    }, action: { _, f in
-                        f(.dismissWithoutContent)
-                        // MARK: NAGRAM — settings may change while the menu is open.
-                        guard SpaceGramSettings.shared.spaceGramEnabled else { return }
-                        controllerInteraction.navigationController()?.pushViewController(spaceGramMessageAIController(context: context, text: messageText))
-                    })))
-                }
-                
                 var showTranslateIfTopical = false
                 if let peer = chatPresentationInterfaceState.renderedPeer?.chatMainPeer as? TelegramChannel, !(peer.addressName ?? "").isEmpty {
                     showTranslateIfTopical = true

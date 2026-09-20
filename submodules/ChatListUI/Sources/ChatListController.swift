@@ -7372,12 +7372,12 @@ private final class ChatListLocationContext {
         self.ghostButton = nil
         if case .chatList(.root) = self.location, !stateAndFilterId.state.editing,
            SpaceGramSettings.shared.spaceGramEnabled, SpaceGramSettings.shared.showGhostButton {
-            let active = SpaceGramSettings.shared.ghostMode.isFull
+            let active = SpaceGramSettings.shared.ghostMode.enabled
             self.ghostButton = AnyComponentWithIdentity(id: "spacegram-ghost", component: AnyComponent(NavigationButtonComponent(
                 content: .text(title: active ? "👻" : "◌", isBold: active),
                 accessibilityLabel: ngI18n(active ? "SpaceGram.Hub.GhostOn" : "SpaceGram.Hub.GhostOff", presentationData.strings.baseLanguageCode),
                 pressed: { _ in
-                    SpaceGramSettings.shared.setGhostMode(!SpaceGramSettings.shared.ghostMode.isFull)
+                    SpaceGramSettings.shared.setGhostMode(!SpaceGramSettings.shared.ghostMode.enabled)
                 }
             )))
         }

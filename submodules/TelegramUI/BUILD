@@ -84,7 +84,6 @@ swift_library(
         # // MARK: NAGRAM — reactive automatic read policy.
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         # // MARK: NAGRAM
-        "//SpaceGram/HistoryUI:SpaceGramHistoryUI",
         "//submodules/MediaPlayer:UniversalMediaPlayer",
         "//submodules/TelegramVoip:TelegramVoip",
         "//submodules/DeviceAccess:DeviceAccess",

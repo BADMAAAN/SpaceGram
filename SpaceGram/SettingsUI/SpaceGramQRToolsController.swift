@@ -1,11 +1,11 @@
 import AccountContext
 import AsyncDisplayKit
-import CoreImage
 import Display
 import Foundation
 import ItemListUI
 import PresentationDataUtils
 import SpaceGramAppearance
+import SpaceGramQR
 import SpaceGramSettings
 import SpaceGramSettingsSignal
 import SpaceGramStrings
@@ -18,13 +18,14 @@ private enum SpaceGramQRToolsEntry: ItemListNodeEntry {
     case input(Int32, Int32, String)
     case generate(Int32, Int32, Bool)
     case result(Int32, Int32, UIImage, Int32)
+    case share(Int32, Int32, String, Bool)
 
     var section: ItemListSectionId {
-        switch self { case let .header(_, section, _), let .input(_, section, _), let .generate(_, section, _), let .result(_, section, _, _): return section }
+        switch self { case let .header(_, section, _), let .input(_, section, _), let .generate(_, section, _), let .result(_, section, _, _), let .share(_, section, _, _): return section }
     }
 
     var stableId: Int32 {
-        switch self { case let .header(id, _, _), let .input(id, _, _), let .generate(id, _, _), let .result(id, _, _, _): return id }
+        switch self { case let .header(id, _, _), let .input(id, _, _), let .generate(id, _, _), let .result(id, _, _, _), let .share(id, _, _, _): return id }
     }
 
     static func == (lhs: SpaceGramQRToolsEntry, rhs: SpaceGramQRToolsEntry) -> Bool {
@@ -37,6 +38,8 @@ private enum SpaceGramQRToolsEntry: ItemListNodeEntry {
             return lId == rId && lSection == rSection && lEnabled == rEnabled
         case let (.result(lId, lSection, _, lGeneration), .result(rId, rSection, _, rGeneration)):
             return lId == rId && lSection == rSection && lGeneration == rGeneration
+        case let (.share(lId, lSection, lTitle, lEnabled), .share(rId, rSection, rTitle, rEnabled)):
+            return lId == rId && lSection == rSection && lTitle == rTitle && lEnabled == rEnabled
         default:
             return false
         }
@@ -50,11 +53,13 @@ private enum SpaceGramQRToolsEntry: ItemListNodeEntry {
         case let .header(_, section, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
         case let .input(_, section, text):
-            return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: "Text", textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: "Enter text", type: .regular(capitalization: false, autocorrection: false), clearType: .onFocus, sectionId: section, textUpdated: arguments.updateText, action: {})
+            return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: arguments.textTitle, textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: arguments.placeholder, type: .regular(capitalization: false, autocorrection: false), clearType: .onFocus, sectionId: section, textUpdated: arguments.updateText, action: {})
         case let .generate(_, section, enabled):
-            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: "Generate QR", kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: arguments.generate)
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: arguments.generateTitle, kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: arguments.generate)
         case let .result(_, section, image, _):
             return SpaceGramQRImageItem(theme: presentationData.theme, image: image, sectionId: section)
+        case let .share(_, section, title, enabled):
+            return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: title, kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: enabled ? arguments.share : {})
         }
     }
 }
@@ -62,28 +67,16 @@ private enum SpaceGramQRToolsEntry: ItemListNodeEntry {
 private final class SpaceGramQRToolsArguments {
     let updateText: (String) -> Void
     let generate: () -> Void
+    let share: () -> Void
+    var textTitle = ""
+    var placeholder = ""
+    var generateTitle = ""
 
-    init(updateText: @escaping (String) -> Void, generate: @escaping () -> Void) {
+    init(updateText: @escaping (String) -> Void, generate: @escaping () -> Void, share: @escaping () -> Void) {
         self.updateText = updateText
         self.generate = generate
+        self.share = share
     }
-}
-
-private func spaceGramQRImage(text: String) -> UIImage? {
-    guard let data = text.data(using: .utf8), !data.isEmpty,
-          let filter = CIFilter(name: "CIQRCodeGenerator") else {
-        return nil
-    }
-    filter.setValue(data, forKey: "inputMessage")
-    filter.setValue("M", forKey: "inputCorrectionLevel")
-    guard let output = filter.outputImage else {
-        return nil
-    }
-    let scaled = output.transformed(by: CGAffineTransform(scaleX: 8.0, y: 8.0))
-    guard let cgImage = CIContext().createCGImage(scaled, from: scaled.extent) else {
-        return nil
-    }
-    return UIImage(cgImage: cgImage)
 }
 
 public func spaceGramQRToolsController(context: AccountContext) -> ViewController {
@@ -102,36 +95,52 @@ public func spaceGramQRToolsController(context: AccountContext) -> ViewControlle
     }, generate: {
         guard SpaceGramSettings.shared.toolsEnabled else {
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            controller?.present(textAlertController(context: context, title: "QR Tools", text: ngI18n("SpaceGram.Disabled", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+            controller?.present(textAlertController(context: context, title: ngI18n("SpaceGram.QR.Title", presentationData.strings.baseLanguageCode), text: ngI18n("SpaceGram.Disabled", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
             return
         }
-        guard !text.isEmpty else {
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else {
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            controller?.present(textAlertController(context: context, title: "QR Tools", text: "Enter text to generate a QR code.", actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+            let lang = presentationData.strings.baseLanguageCode
+            controller?.present(textAlertController(context: context, title: ngI18n("SpaceGram.QR.Title", lang), text: ngI18n("SpaceGram.QR.Empty", lang), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
             return
         }
-        guard let generatedImage = spaceGramQRImage(text: text) else {
+        guard let generatedImage = SpaceGramQRGenerator.image(text: trimmedText) else {
             let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-            controller?.present(textAlertController(context: context, title: "QR Tools", text: "Unable to generate a QR code for this text.", actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+            let lang = presentationData.strings.baseLanguageCode
+            controller?.present(textAlertController(context: context, title: ngI18n("SpaceGram.QR.Title", lang), text: ngI18n("SpaceGram.QR.Failed", lang), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
             return
         }
         image = generatedImage
         generation += 1
         bump()
+    }, share: {
+        guard let image else { return }
+        let activity = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        if let view = controller?.view {
+            activity.popoverPresentationController?.sourceView = view
+            activity.popoverPresentationController?.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1.0, height: 1.0)
+        }
+        context.sharedContext.applicationBindings.presentNativeController(activity)
     })
     let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get(), spaceGramToolsEnabledSignal())
     |> map { presentationData, _, enabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let listPresentationData = spaceGramItemListPresentationData(presentationData)
+        let lang = presentationData.strings.baseLanguageCode
+        arguments.textTitle = ngI18n("SpaceGram.QR.Text", lang)
+        arguments.placeholder = ngI18n("SpaceGram.QR.Placeholder", lang)
+        arguments.generateTitle = ngI18n("SpaceGram.QR.Generate", lang)
         var entries: [SpaceGramQRToolsEntry] = [
-            .header(0, 0, "Text"),
+            .header(0, 0, ngI18n("SpaceGram.QR.Text", lang)),
             .input(1, 0, text),
             .generate(2, 1, enabled)
         ]
         if let image {
-            entries.append(.header(3, 2, "Result"))
+            entries.append(.header(3, 2, ngI18n("SpaceGram.QR.Result", lang)))
             entries.append(.result(4, 2, image, generation))
+            entries.append(.share(5, 3, ngI18n("SpaceGram.QR.Share", lang), true))
         }
-        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text("QR Tools"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let controllerState = ItemListControllerState(presentationData: listPresentationData, title: .text(ngI18n("SpaceGram.QR.Title", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (controllerState, (ItemListNodeState(presentationData: listPresentationData, entries: entries, style: .blocks, animateChanges: true), arguments))
     }
     let itemListController = ItemListController(context: context, state: signal)

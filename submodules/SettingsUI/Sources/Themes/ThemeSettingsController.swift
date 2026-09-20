@@ -23,6 +23,8 @@ import ThemeAccentColorScreen
 import WallpaperGridScreen
 import PeerNameColorItem
 import DeviceModel
+// MARK: NAGRAM — localized SpaceGram icon-switch error.
+import SpaceGramStrings
 
 private final class ThemeSettingsControllerArguments {
     let context: AccountContext
@@ -538,7 +540,7 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
     let availableAppIcons: Signal<[PresentationAppIcon], NoError> = .single(appIcons)
     let currentAppIconName = ValuePromise<String?>()
     // MARK: NAGRAM
-    currentAppIconName.set(currentAppIcon?.name ?? "BlueIcon")
+    currentAppIconName.set(currentAppIcon?.name ?? "Default")
     
     let cloudThemes = Promise<[TelegramTheme]>()
     let updatedCloudThemes = context.engine.themes.themes(accountManager: context.sharedContext.accountManager)
@@ -635,8 +637,16 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
                 }
                 pushControllerImpl?(controller)
             } else {
-                currentAppIconName.set(icon.name)
-                context.sharedContext.applicationBindings.requestSetAlternateIconName(icon.isDefault ? nil : icon.name, { _ in
+                let requestedName: String? = icon.isDefault ? nil : icon.name
+                context.sharedContext.applicationBindings.requestSetAlternateIconName(requestedName, { success in
+                    Queue.mainQueue().async {
+                        if success {
+                            currentAppIconName.set(icon.name)
+                        } else {
+                            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                            presentControllerImpl?(textAlertController(context: context, title: presentationData.strings.Appearance_AppIcon, text: ngI18n("SpaceGram.AppIcon.ChangeFailed", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), nil)
+                        }
+                    }
                 })
             }
         })

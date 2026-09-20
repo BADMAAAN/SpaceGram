@@ -25,13 +25,13 @@ public struct SpaceGramGhostMode: Equatable {
 public enum SpaceGramDelayedSendPolicy {
     public static func delay(mediaBytes: Int64?) -> Int32 {
         guard let mediaBytes, mediaBytes >= 0 else { return 12 }
-        let seconds = max(6.0, ceil(Double(mediaBytes) / 1_048_576.0 * 4.5))
+        let seconds = max(12.0, ceil(Double(mediaBytes) / 1_048_576.0 * 4.5))
         // Bound malformed metadata before conversion; no overflow or years-long delay.
         return Int32(min(seconds, 86_400.0))
     }
 
     public static func timestamp(now: Int64, ghost: SpaceGramGhostMode, enabled: Bool, mediaBytes: Int64?) -> Int32? {
-        guard ghost.isFull, enabled, now >= 0 else { return nil }
+        guard ghost.enabled, enabled, now >= 0 else { return nil }
         let (value, overflow) = now.addingReportingOverflow(Int64(delay(mediaBytes: mediaBytes)))
         guard !overflow else { return nil }
         return Int32(exactly: value)

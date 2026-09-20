@@ -2251,6 +2251,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             })
                         }
                         
+                        // MARK: NAGRAM — acknowledge only after every reaction
+                        // guard has passed and an interaction will be submitted.
+                        strongSelf.chatDisplayNode.historyNode.spaceGramReadVisibleMessagesOnInteraction()
                         let _ = updateMessageReactionsInteractively(account: strongSelf.context.account, messageIds: [message.id], reactions: mappedUpdatedReactions, isLarge: false, storeAsRecentlyUsed: false).startStandalone()
                     }
                 }
@@ -9001,7 +9004,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     func spaceGramDelayedMessages(_ messages: [EnqueueMessage]) -> ([EnqueueMessage], Bool) {
         if case .scheduledMessages = self.presentationInterfaceState.subject { return (messages, false) }
         let settings = SpaceGramSettings.shared
-        guard settings.ghostMode.isFull, settings.delayedSend,
+        guard settings.ghostMode.enabled, settings.delayedSend,
               let peer = self.presentationInterfaceState.renderedPeer?.peer,
               peer.id.namespace != Namespaces.Peer.SecretChat,
               self.presentationInterfaceState.sendPaidMessageStars == nil,
@@ -9026,7 +9029,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 mediaBytes = max(mediaBytes ?? 0, size ?? 3 * 1_048_576)
             }
         }
-        guard let timestamp = SpaceGramDelayedSendPolicy.timestamp(now: Int64(Date().timeIntervalSince1970), ghost: settings.ghostMode, enabled: settings.delayedSend, mediaBytes: mediaBytes) else { return (messages, false) }
+        // MARK: NAGRAM — schedule against Telegram's corrected clock rather
+        // than the device wall clock, which may be skewed.
+        let serverNow = Int64(self.context.account.network.globalTime)
+        guard let timestamp = SpaceGramDelayedSendPolicy.timestamp(now: serverNow, ghost: settings.ghostMode, enabled: settings.delayedSend, mediaBytes: mediaBytes) else { return (messages, false) }
         return (messages.map { message in
             message.withUpdatedAttributes { $0 + [OutgoingScheduleInfoMessageAttribute(scheduleTime: timestamp, repeatPeriod: nil)] }
         }, true)
@@ -9069,6 +9075,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             }
             
             if commit || !isScheduledMessages {
+                // MARK: NAGRAM — sending is an explicit interaction; merely
+                // opening or viewing this chat never reaches this path.
+                self.chatDisplayNode.historyNode.spaceGramReadVisibleMessagesOnInteraction()
                 // MARK: NAGRAM — explicit schedules are preserved by the policy guard.
                 if !isScheduledMessages {
                     let delayed = self.spaceGramDelayedMessages(messages)

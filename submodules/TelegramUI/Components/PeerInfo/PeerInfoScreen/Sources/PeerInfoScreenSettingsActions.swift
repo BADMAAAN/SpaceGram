@@ -161,7 +161,11 @@ extension PeerInfoScreenNode {
         // MARK: NAGRAM / SpaceGram — SpaceGram settings entry.
         case .spaceGram:
             push(spaceGramSettingsController(context: self.context, openAccounts: { [weak self] source in
-                self?.controller?.presentAccountSwitcher(sourceView: source.view, gesture: nil)
+                // MARK: NAGRAM — anchor the native switcher to the visible top
+                // chrome. Anchoring to the whole list made the card originate at
+                // the bottom safe area on Dynamic Island devices.
+                let sourceView = source.navigationBar?.view ?? source.view
+                self?.controller?.presentAccountSwitcher(sourceView: sourceView, gesture: nil)
             }))
         case .appearance:
             push(themeSettingsController(context: self.context))

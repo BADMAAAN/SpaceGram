@@ -17,6 +17,7 @@ private final class AccountPresenceManagerImpl {
     private var shouldKeepOnlinePresenceDisposable: Disposable?
     private let currentRequestDisposable = MetaDisposable()
     private var onlineTimer: SignalKitTimer?
+    private var automaticOfflineTimer: SignalKitTimer?
     
     // MARK: NAGRAM — also publish offline on the first suppressed subscription.
     private var wasOnline: Bool?
@@ -26,17 +27,18 @@ private final class AccountPresenceManagerImpl {
         self.network = network
         
         // MARK: NAGRAM — preserve the connection; only change explicit presence.
-        self.shouldKeepOnlinePresenceDisposable = (combineLatest(shouldKeepOnlinePresence, spaceGramSuppressOnlinePresenceSignal())
-        |> map { online, suppressed in online && !suppressed }
-        |> distinctUntilChanged
+        self.shouldKeepOnlinePresenceDisposable = (combineLatest(shouldKeepOnlinePresence, spaceGramSuppressOnlinePresenceSignal(), spaceGramGoOfflineAutomaticallySignal())
+        |> map { online, suppressed, automaticOffline in (online && !suppressed, automaticOffline) }
+        |> distinctUntilChanged(isEqual: { $0.0 == $1.0 && $0.1 == $1.1 })
         |> deliverOn(self.queue)).start(next: { [weak self] value in
             guard let `self` = self else {
                 return
             }
-            if self.wasOnline != value {
-                self.wasOnline = value
-                self.updatePresence(value)
+            if self.wasOnline != value.0 {
+                self.wasOnline = value.0
+                self.updatePresence(value.0)
             }
+            self.updateAutomaticOffline(value.1 && !value.0)
         })
     }
     
@@ -45,6 +47,7 @@ private final class AccountPresenceManagerImpl {
         self.shouldKeepOnlinePresenceDisposable?.dispose()
         self.currentRequestDisposable.dispose()
         self.onlineTimer?.invalidate()
+        self.automaticOfflineTimer?.invalidate()
     }
     
     private func updatePresence(_ isOnline: Bool) {
@@ -75,6 +78,17 @@ private final class AccountPresenceManagerImpl {
             }
             strongSelf.isPerformingUpdate.set(false)
         }))
+    }
+
+    private func updateAutomaticOffline(_ enabled: Bool) {
+        self.automaticOfflineTimer?.invalidate()
+        self.automaticOfflineTimer = nil
+        guard enabled else { return }
+        let timer = SignalKitTimer(timeout: 25.0, repeat: true, completion: { [weak self] in
+            self?.updatePresence(false)
+        }, queue: self.queue)
+        self.automaticOfflineTimer = timer
+        timer.start()
     }
 }
 

@@ -4,11 +4,11 @@ import Foundation
 import ItemListUI
 import LocalAuth
 import PresentationDataUtils
-import SpaceGramAI
 import SpaceGramAppearance
 import SpaceGramHistoryStorage
 import SpaceGramMediaArchive
 import SpaceGramPrivacy
+import SpaceGramSettings
 import SpaceGramStrings
 import SettingsUI
 import SwiftSignalKit
@@ -75,7 +75,6 @@ public func spaceGramPrivacySettingsController(context: AccountContext) -> ViewC
     let accountId = context.account.id.int64
     let mediaBoxPath = context.account.postbox.mediaBox.basePath
     let mediaRoot = SpaceGramMediaArchive.root(mediaBoxPath: mediaBoxPath)
-    let conversations = SpaceGramConversationStore(mediaBoxPath: mediaBoxPath)
     let baseBundleId = Bundle.main.bundleIdentifier
     var policy = SpaceGramPrivacyPolicyStore.loadAccountPolicy(mediaBoxPath: mediaBoxPath)
     let revision = ValuePromise<Int32>(0, ignoreRepeated: false)
@@ -115,13 +114,6 @@ public func spaceGramPrivacySettingsController(context: AccountContext) -> ViewC
             }
         })
     }
-    let clearConversations: (@escaping (Bool) -> Void) -> Void = { completion in
-        conversations.clear { result in
-            Queue.mainQueue().async {
-                if case .success = result { completion(true) } else { completion(false) }
-            }
-        }
-    }
     let clearAccountPolicy: () -> Void = {
         SpaceGramPrivacyPolicyStore.clearAccountPolicy(accountId: accountId, mediaBoxPath: mediaBoxPath, baseBundleId: baseBundleId)
         policy = .default
@@ -132,12 +124,11 @@ public func spaceGramPrivacySettingsController(context: AccountContext) -> ViewC
             SpaceGramHistoryStore.clearArchive(transaction: transaction)
         }.start(next: {
             SpaceGramMediaArchive.clear(root: mediaRoot) { mediaSuccess in
-                clearConversations { conversationsSuccess in
-                    var keySuccess = true
-                    do { try SpaceGramAIKeychain.deleteQwenAPIKey(accountId: accountId) } catch { keySuccess = false }
+                Queue.mainQueue().async {
                     clearAccountPolicy()
+                    SpaceGramSettings.shared.resetLocalSettings()
                     let lang = context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode
-                    showMessage(ngI18n("SpaceGram.Privacy.ClearAll", lang), ngI18n(mediaSuccess && conversationsSuccess && keySuccess ? "SpaceGram.Privacy.AllCleared" : "SpaceGram.Privacy.AllClearPartial", lang))
+                    showMessage(ngI18n("SpaceGram.Privacy.ClearAll", lang), ngI18n(mediaSuccess ? "SpaceGram.Privacy.AllCleared" : "SpaceGram.Privacy.AllClearPartial", lang))
                 }
             }
         })
@@ -163,26 +154,10 @@ public func spaceGramPrivacySettingsController(context: AccountContext) -> ViewC
                 }
             })
         }
-        let clearConversationsAction: () -> Void = {
-            confirm(ngI18n("SpaceGram.Privacy.ClearConversations", lang), ngI18n("SpaceGram.Privacy.ClearConversationsConfirm", lang), {
-                clearConversations { success in
-                    showMessage(ngI18n("SpaceGram.Privacy.ClearConversations", lang), ngI18n(success ? "SpaceGram.Privacy.ConversationsCleared" : "SpaceGram.Privacy.ConversationsClearFailed", lang))
-                }
-            })
-        }
-        let clearAPIKeyAction: () -> Void = {
-            confirm(ngI18n("SpaceGram.Privacy.ClearAPIKey", lang), ngI18n("SpaceGram.Privacy.ClearAPIKeyConfirm", lang), {
-                do {
-                    try SpaceGramAIKeychain.deleteQwenAPIKey(accountId: accountId)
-                    showMessage(ngI18n("SpaceGram.Privacy.ClearAPIKey", lang), ngI18n("SpaceGram.Privacy.APIKeyCleared", lang))
-                } catch {
-                    showMessage(ngI18n("SpaceGram.Privacy.ClearAPIKey", lang), ngI18n("SpaceGram.Privacy.APIKeyClearFailed", lang))
-                }
-            })
-        }
         let clearSettingsAction: () -> Void = {
             confirm(ngI18n("SpaceGram.Privacy.ClearLocalSettings", lang), ngI18n("SpaceGram.Privacy.ClearSettingsConfirm", lang), {
                 clearAccountPolicy()
+                SpaceGramSettings.shared.resetLocalSettings()
                 showMessage(ngI18n("SpaceGram.Privacy.ClearLocalSettings", lang), ngI18n("SpaceGram.Privacy.SettingsCleared", lang))
             })
         }
@@ -214,8 +189,6 @@ public func spaceGramPrivacySettingsController(context: AccountContext) -> ViewC
             .header(30, 3, ngI18n("SpaceGram.Privacy.LocalData", lang)),
             .action(31, 3, ngI18n("SpaceGram.Privacy.ClearHistory", lang), true, { confirm(ngI18n("SpaceGram.Privacy.ClearHistory", lang), ngI18n("SpaceGram.Privacy.ClearHistoryConfirm", lang), clearHistory) }),
             .action(32, 3, ngI18n("SpaceGram.Privacy.ClearMedia", lang), true, clearMediaAction),
-            .action(33, 3, ngI18n("SpaceGram.Privacy.ClearConversations", lang), true, clearConversationsAction),
-            .action(34, 3, ngI18n("SpaceGram.Privacy.ClearAPIKey", lang), true, clearAPIKeyAction),
             .action(35, 3, ngI18n("SpaceGram.Privacy.ClearLocalSettings", lang), true, clearSettingsAction),
             .action(36, 3, ngI18n("SpaceGram.Privacy.ClearAll", lang), true, clearAllAction),
             .header(40, 4, ngI18n("SpaceGram.Privacy.Emergency", lang)),

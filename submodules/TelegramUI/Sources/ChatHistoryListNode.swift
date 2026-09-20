@@ -2543,6 +2543,25 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
     func stopHistoryUpdates() {
         self.historyDisposable.set(nil)
     }
+
+    // MARK: NAGRAM — Read on Interact bypasses automatic-read suppression only
+    // after an explicit server action such as sending or reacting.
+    func spaceGramReadVisibleMessagesOnInteraction() {
+        guard SpaceGramGhostPolicy.shouldReadOnInteraction else { return }
+        let _ = (self.maxVisibleIncomingMessageIndex.get()
+        |> take(1)
+        |> deliverOnMainQueue).startStandalone(next: { [weak self] messageIndex in
+            guard let self else { return }
+            switch self.chatLocation {
+            case .peer, .replyThread:
+                if !self.context.sharedContext.immediateExperimentalUISettings.skipReadHistory && !self.context.account.isSupportUser {
+                    self.context.applyMaxReadIndex(for: self.chatLocation, contextHolder: self.chatLocationContextHolder, messageIndex: messageIndex)
+                }
+            case .customChatContents:
+                break
+            }
+        })
+    }
     
     private func beginReadHistoryManagement() {
         let previousMaxIncomingMessageIndexByNamespace = Atomic<[MessageId.Namespace: MessageIndex]>(value: [:])

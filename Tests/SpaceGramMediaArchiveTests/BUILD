@@ -13,6 +13,7 @@ swift_library(
         "//SpaceGram/MediaArchive:SpaceGramMediaArchive",
         "//SpaceGram/Migration:SpaceGramMigration",
         "//SpaceGram/Privacy:SpaceGramPrivacy",
+        "//SpaceGram/QR:SpaceGramQR",
         "//SpaceGram/Settings:SpaceGramSettings",
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",

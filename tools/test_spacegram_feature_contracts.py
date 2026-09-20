@@ -7,6 +7,24 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SpaceGramFeatureContracts(unittest.TestCase):
+    def test_no_foreign_user_facing_branding(self):
+        forbidden = re.compile(r"Nagram|NGram|AyuGram|AuraGram|Qwengram|Qwen", re.I)
+        for path in (ROOT / "SpaceGram/Strings/Strings").glob("*.lproj/SpaceGramLocalizable.strings"):
+            entries = re.findall(r'^"(?:[^"\\]|\\.)*"\s*=\s*"((?:[^"\\]|\\.)*)";', path.read_text(encoding="utf-8"), re.M)
+            self.assertFalse([value for value in entries if forbidden.search(value)], path)
+
+        active_ui = [
+            ROOT / "SpaceGram/SettingsUI",
+            ROOT / "SpaceGram/Bots",
+            ROOT / "submodules/GalleryUI/Sources/Items",
+        ]
+        for directory in active_ui:
+            for path in directory.glob("*.swift"):
+                source = path.read_text(encoding="utf-8")
+                self.assertNotIn("查看信息", source, path)
+                if directory.name in ("SettingsUI", "Bots"):
+                    self.assertNotIn("Qwen", source, path)
+
     def test_single_root_entry(self):
         source = (ROOT / "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoSettingsItems.swift").read_text(encoding="utf-8")
         self.assertEqual(source.count('text: "SpaceGram"'), 1)
@@ -69,12 +87,23 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn("OutgoingScheduleInfoMessageAttribute", hook)
         self.assertIn("!attributes.contains", hook)
         self.assertNotIn("Timer(", hook)
+        self.assertIn("context.account.network.globalTime", hook)
         composer = (ROOT / "submodules/TelegramUI/Sources/Chat/ChatControllerLoadDisplayNode.swift").read_text(encoding="utf-8")
         self.assertIn("spaceGramDelayedMessages(strongSelf.transformEnqueueMessages", composer)
         self.assertIn("var shouldOpenScheduledMessages = delayedMessages.1", composer)
         self.assertIn("strongSelf.openScheduledMessages(force: true", composer)
         activity = (ROOT / "submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift").read_text(encoding="utf-8")
         self.assertIn("if !isSpeakingInGroupCall(activity)", activity)
+
+    def test_ghost_quick_button_uses_the_persisted_master(self):
+        settings = (ROOT / "SpaceGram/Settings/SpaceGramSettings.swift").read_text(encoding="utf-8")
+        chat_list = (ROOT / "submodules/ChatListUI/Sources/ChatListController.swift").read_text(encoding="utf-8")
+        delayed = (ROOT / "submodules/TelegramUI/Sources/ChatController.swift").read_text(encoding="utf-8")
+        self.assertIn('@SpaceGramDefault("spacegram.settings.ghostModeEnabled", false)', settings)
+        self.assertIn("ghostModeEnabled = enabled", settings)
+        self.assertIn("SpaceGramSettings.shared.ghostMode.enabled", chat_list)
+        self.assertNotIn("SpaceGramSettings.shared.ghostMode.isFull", chat_list)
+        self.assertIn("guard settings.ghostMode.enabled, settings.delayedSend", delayed)
 
 
 if __name__ == "__main__":

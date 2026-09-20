@@ -6,7 +6,6 @@ import NagramSettings
 import NagramSettingsUI
 import SettingsUI
 import SpaceGramAppearance
-import SpaceGramHistoryUI
 import SpaceGramSettings
 import SpaceGramSettingsSignal
 import SpaceGramStrings
@@ -23,9 +22,21 @@ public func spaceGramSettingsIcon() -> UIImage? {
 }
 
 private func spaceGramTile(_ symbol: String, section: Int32) -> UIImage? {
-    let colors: [UIColor] = [.systemBlue, .systemIndigo, .systemGreen, .systemPurple, .systemOrange, .systemTeal, .systemPink]
+    let colors: [Int32: UIColor] = [
+        0: .darkGray,
+        1: .systemBlue,
+        2: .systemGreen,
+        3: .systemPurple,
+        4: .systemOrange,
+        5: .systemTeal,
+        6: .systemIndigo,
+        7: .systemCyan,
+        8: .systemIndigo,
+        9: .systemPurple,
+        10: .systemGray,
+    ]
     return UIGraphicsImageRenderer(size: CGSize(width: 29, height: 29)).image { _ in
-        colors[Int(section) % colors.count].setFill()
+        (colors[section] ?? .systemGray).setFill()
         UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 29, height: 29), cornerRadius: 7).fill()
         let configuration = UIImage.SymbolConfiguration(pointSize: 17, weight: .medium)
         if let image = UIImage(systemName: symbol, withConfiguration: configuration)?.withTintColor(.white, renderingMode: .alwaysOriginal) {
@@ -92,19 +103,22 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
             link(101, "SpaceGram.Hub.AllAccounts", "person.2.fill", { accounts?() })
         }
         header(2, "SpaceGram.Hub.Chat")
-        link(201, "SpaceGram.Hub.Deleted", "trash.fill", { push?(spaceGramHistoryController(context: context, initialKind: .deleted)) })
-        link(202, "SpaceGram.Hub.Edits", "pencil", { push?(spaceGramHistoryController(context: context, initialKind: .edited)) })
+        toggle(201, "SpaceGram.SaveDeletes", "trash.slash.fill", settings.saveServerDeletedMessages, { settings.saveServerDeletedMessages = $0 })
         toggle(203, "SpaceGram.Hub.GhostButton", "eye.slash", settings.showGhostButton, { settings.showGhostButton = $0 })
         toggle(204, "SpaceGram.Hub.JumpToFirst", "arrow.up.to.line", settings.showJumpToFirst, { settings.showJumpToFirst = $0 })
         toggle(205, "SpaceGram.Hub.ForwardWithoutName", "arrowshape.turn.up.right", enhancements.isMessageMenuItemEnabled(.forwardWithoutQuote), { enhancements.setMessageMenuItemEnabled(.forwardWithoutQuote, enabled: $0) })
+        toggle(206, "SpaceGram.Hub.TranslateBeforeSend", "character.bubble", enhancements.translateBeforeSend, { enhancements.translateBeforeSend = $0 })
         footer(290, "SpaceGram.Hub.HistoryInfo")
         header(3, "SpaceGram.Hub.Ghost")
-        toggle(301, "SpaceGram.Hub.Ghost", "eye.slash.fill", settings.ghostMode.isFull, { settings.setGhostMode($0) })
+        toggle(301, "SpaceGram.Hub.Ghost", "eye.slash.fill", settings.ghostMode.enabled, { settings.setGhostMode($0) })
         toggle(302, "SpaceGram.AutomaticReads", "checkmark.message", settings.suppressAutomaticReads, { settings.suppressAutomaticReads = $0 })
         toggle(303, "SpaceGram.Stories", "eye.slash", settings.hideStoryViews, { settings.hideStoryViews = $0 })
         toggle(304, "SpaceGram.Online", "network", settings.hideOnlinePresence, { settings.hideOnlinePresence = $0 })
         toggle(305, "SpaceGram.Activity", "ellipsis.bubble", settings.hideChatActivity, { settings.hideChatActivity = $0 })
-        toggle(306, "SpaceGram.Hub.DelayedSend", "clock.arrow.circlepath", settings.delayedSend, { settings.delayedSend = $0 })
+        toggle(306, "SpaceGram.Hub.GoOffline", "wifi.slash", settings.goOfflineAutomatically, { settings.goOfflineAutomatically = $0 })
+        toggle(307, "SpaceGram.Hub.ReadOnInteract", "hand.tap", settings.readOnInteract, { settings.readOnInteract = $0 })
+        toggle(308, "SpaceGram.Hub.DelayedSend", "clock.arrow.circlepath", settings.delayedSend, { settings.delayedSend = $0 })
+        footer(388, "SpaceGram.Hub.ReadOnInteractInfo")
         footer(389, "SpaceGram.Hub.DelayedSendInfo")
         footer(390, "SpaceGram.GhostInfo")
         header(4, "SpaceGram.Privacy")
@@ -117,21 +131,16 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
         toggle(502, "SpaceGram.Hub.CompactChats", "list.bullet", enhancements.chatListCompact, { enhancements.chatListCompact = $0 })
         header(6, "SpaceGram.Hub.Messages")
         toggle(601, "SpaceGram.Hub.Formatter", "textformat", enhancements.showTextStyleToolbar, { enhancements.showTextStyleToolbar = $0 })
-        toggle(602, "SpaceGram.Hub.TranslateBeforeSend", "character.bubble", enhancements.translateBeforeSend, { enhancements.translateBeforeSend = $0 })
         link(603, "SpaceGram.Hub.Translation", "globe", { push?(nagramSettingsController(context: context, deepLinkPath: "https://t.me/nasettings/chat?p=ios&r=TranslationProvider", unified: true)) })
         toggle(604, "SpaceGram.Hub.Seconds", "clock", enhancements.secondsInMessages, { enhancements.secondsInMessages = $0 })
         header(7, "SpaceGram.Hub.HistoryMedia")
-        link(701, "SpaceGram.History", "clock.arrow.circlepath", { push?(spaceGramHistorySettingsController(context: context)) })
         link(702, "SpaceGram.Archive", "archivebox.fill", { push?(spaceGramMediaArchiveSettingsController(context: context)) })
         footer(790, "SpaceGram.ArchiveLimits")
         header(8, "SpaceGram.Tools")
         if settings.toolsEnabled {
-            link(801, "SpaceGram.Hub.Qwen", "sparkles", { push?(spaceGramQwenAssistantController(context: context)) })
-            link(802, "SpaceGram.Hub.Summarizer", "text.alignleft", { push?(spaceGramSummarizerController(context: context)) })
             link(803, "SpaceGram.Hub.Translator", "character.bubble", { push?(spaceGramTranslatorController(context: context)) })
             link(804, "SpaceGram.Hub.QR", "qrcode", { push?(spaceGramQRToolsController(context: context)) })
         }
-        link(805, "SpaceGram.Provider", "slider.horizontal.3", { push?(spaceGramAISettingsController(context: context)) })
         header(9, "SpaceGram.Appearance")
         link(901, "SpaceGram.Hub.ThemeIcons", "paintpalette.fill", { push?(themeSettingsController(context: context)) })
         header(10, "SpaceGram.Advanced")
@@ -154,10 +163,13 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
 private func spaceGramAboutController(context: AccountContext) -> ViewController {
     let signal = context.sharedContext.presentationData |> map { presentationData -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let lang = presentationData.strings.baseLanguageCode
-        let keys = ["SpaceGram.Hub.AboutIntro", "SpaceGram.Hub.AboutGhost", "SpaceGram.Hub.AboutHistory", "SpaceGram.Hub.AboutMedia", "SpaceGram.Hub.AboutAI", "SpaceGram.Hub.AboutPrivacy"]
-        let entries = keys.enumerated().map { index, key in
+        let keys = ["SpaceGram.Hub.AboutIntro", "SpaceGram.Hub.AboutGhost", "SpaceGram.Hub.AboutHistory", "SpaceGram.Hub.AboutMedia", "SpaceGram.Hub.AboutTools", "SpaceGram.Hub.AboutPrivacy"]
+        var entries = keys.enumerated().map { index, key in
             SpaceGramHubEntry(stableId: Int32(index), section: Int32(index), title: ngI18n(key, lang), footer: true)
         }
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+        entries.append(SpaceGramHubEntry(stableId: 6, section: 6, title: String(format: ngI18n("SpaceGram.Hub.AboutVersion", lang), version, build), footer: true))
         let data = spaceGramItemListPresentationData(presentationData)
         let state = ItemListControllerState(presentationData: data, title: .text(ngI18n("SpaceGram.Hub.About", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (state, (ItemListNodeState(presentationData: data, entries: entries, style: .blocks), NSNull()))

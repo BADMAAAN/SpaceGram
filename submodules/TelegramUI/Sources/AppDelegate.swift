@@ -49,8 +49,7 @@ import NavigationBarImpl
 import ContextUI
 import ContextControllerImpl
 import ProxyServerPreviewScreen
-
-// MARK: NAGRAM — data-driven SpaceGram icon collection.
+// MARK: NAGRAM — SpaceGram icon identifiers must match the alternate-icon plist.
 private let spaceGramAppIcons: [PresentationAppIcon] = [
     PresentationAppIcon(name: "Default", imageName: "SpaceGramIconDefaultPreview", isDefault: true),
     PresentationAppIcon(name: "Moon", imageName: "SpaceGramIconMoonPreview"),
@@ -58,7 +57,7 @@ private let spaceGramAppIcons: [PresentationAppIcon] = [
     PresentationAppIcon(name: "Mars", imageName: "SpaceGramIconMarsPreview"),
     PresentationAppIcon(name: "Sun", imageName: "SpaceGramIconSunPreview"),
     PresentationAppIcon(name: "Saturn", imageName: "SpaceGramIconSaturnPreview"),
-    PresentationAppIcon(name: "Neptune", imageName: "SpaceGramIconNeptunePreview"),
+    PresentationAppIcon(name: "Neptune", imageName: "SpaceGramIconNeptunePreview")
 ]
 
 #if canImport(AppCenter)
@@ -992,9 +991,16 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 return nil
             }
         }, requestSetAlternateIconName: { name, completion in
+            #if DEBUG
+            Logger.shared.log("App \(self.episodeId)", "SpaceGram icon request: requested=\(name ?? "default") supports=\(application.supportsAlternateIcons) previous=\(application.alternateIconName ?? "default")")
+            #endif
             application.setAlternateIconName(name, completionHandler: { error in
                 if let error = error {
-                   Logger.shared.log("App \(self.episodeId)", "failed to set alternate icon with error \(error.localizedDescription)")
+                    Logger.shared.log("App \(self.episodeId)", "SpaceGram icon request failed: requested=\(name ?? "default") error=\(error.localizedDescription) resulting=\(application.alternateIconName ?? "default")")
+                } else {
+                    #if DEBUG
+                    Logger.shared.log("App \(self.episodeId)", "SpaceGram icon request succeeded: requested=\(name ?? "default") resulting=\(application.alternateIconName ?? "default")")
+                    #endif
                 }
                 completion(error == nil)
             })

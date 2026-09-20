@@ -19,13 +19,14 @@ final class SpaceGramGhostModeTests: XCTestCase {
         XCTAssertEqual(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: full, enabled: true, mediaBytes: nil), 112)
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: full, enabled: false, mediaBytes: nil))
         let partial = SpaceGramGhostMode(enabled: true, reads: true, stories: true, presence: false, activity: true)
-        XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: partial, enabled: true, mediaBytes: nil))
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: partial, enabled: true, mediaBytes: nil), 112)
+        XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: SpaceGramGhostMode(enabled: false, reads: true, stories: true, presence: true, activity: true), enabled: true, mediaBytes: nil))
     }
 
     func testMediaDelayRoundsUpAndHasFloor() {
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 0), 6)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 1_048_576), 6)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 2_097_152), 9)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 0), 12)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 1_048_576), 12)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 2_097_152), 12)
         XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 3_145_728), 14)
         XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 10_485_760), 45)
     }

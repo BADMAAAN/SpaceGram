@@ -15,7 +15,7 @@
 
 "Nagram.FixLinkPreviews" = "Fix Link Previews";
 
-"Nagram.FixLinkPreviews.Footer" = "Sends sanitized links without query parameters or fragments to third-party preview services selected by validated Nagram metadata rules. Messages continue to use the original link.";
+"Nagram.FixLinkPreviews.Footer" = "Sends sanitized links without query parameters or fragments to third-party preview services selected by validated metadata rules. Messages continue to use the original link.";
 
 "Nagram.Section.AutoInlineBot" = "Automatic Inline Bot Link Queries";
 
@@ -25,7 +25,7 @@
 
 "Nagram.InlineBotRules" = "Inline Bot Rules";
 
-"Nagram.InlineBotRules.Footer" = "Rules are supplied by Nagram metadata. The original link remains in the compose field.";
+"Nagram.InlineBotRules.Footer" = "Rules are supplied by the metadata service. The original link remains in the compose field.";
 
 
 
@@ -734,13 +734,12 @@
 
 "SpaceGram.Disabled" = "SpaceGram is disabled. Settings and saved history remain available.";
 
-"SpaceGram.Tools" = "Tools & AI";
+"SpaceGram.Tools" = "Tools";
 
 "SpaceGram.ToolsEnabled" = "Tools Hub Enabled";
 
 "SpaceGram.OpenTools" = "Open Tools Hub";
 
-"SpaceGram.Provider" = "Qwen Provider";
 
 "SpaceGram.History" = "Message History";
 
@@ -863,8 +862,6 @@
 "SpaceGram.Privacy.LocalData" = "LOCAL SPACEGRAM DATA";
 "SpaceGram.Privacy.ClearHistory" = "Clear Message History";
 "SpaceGram.Privacy.ClearMedia" = "Clear Media Archive";
-"SpaceGram.Privacy.ClearConversations" = "Clear Qwen Conversations";
-"SpaceGram.Privacy.ClearAPIKey" = "Clear Qwen API Key";
 "SpaceGram.Privacy.ClearLocalSettings" = "Clear SpaceGram Local Settings";
 "SpaceGram.Privacy.ClearAll" = "Clear All SpaceGram Data";
 "SpaceGram.Privacy.Emergency" = "EMERGENCY ACTIONS";
@@ -875,15 +872,12 @@
 "SpaceGram.Privacy.ClearMediaConfirm" = "Only saved SpaceGram media for this Telegram account will be removed.";
 "SpaceGram.Privacy.MediaCleared" = "Media Archive was cleared.";
 "SpaceGram.Privacy.MediaClearFailed" = "Unable to clear Media Archive.";
-"SpaceGram.Privacy.ClearConversationsConfirm" = "Only local Qwen conversations for this Telegram account will be removed.";
-"SpaceGram.Privacy.ConversationsCleared" = "Qwen conversations were cleared.";
-"SpaceGram.Privacy.ConversationsClearFailed" = "Unable to clear Qwen conversations.";
 "SpaceGram.Privacy.ClearAPIKeyConfirm" = "The Keychain entry for this Telegram account will be removed.";
 "SpaceGram.Privacy.APIKeyCleared" = "The API key was cleared.";
 "SpaceGram.Privacy.APIKeyClearFailed" = "Unable to clear the API key.";
 "SpaceGram.Privacy.ClearSettingsConfirm" = "Account-scoped notification and metadata settings will reset. Shared feature toggles will remain unchanged so other Telegram accounts are not affected.";
 "SpaceGram.Privacy.SettingsCleared" = "Account-scoped SpaceGram settings were reset.";
-"SpaceGram.Privacy.ClearAllConfirm" = "This removes SpaceGram History, Media Archive, Qwen conversations, the Qwen API key and account privacy settings. Telegram account, chats, session and cloud data are never removed.";
+"SpaceGram.Privacy.ClearAllConfirm" = "This removes local SpaceGram history, Media Archive, settings and account privacy preferences. Telegram account, chats, session and cloud data are never removed.";
 "SpaceGram.Privacy.ConfirmRemoval" = "Confirm Account Data Removal";
 "SpaceGram.Privacy.ClearAllConfirmAgain" = "This action affects only the currently selected Telegram account and cannot be undone.";
 "SpaceGram.Privacy.AllCleared" = "All SpaceGram data for this account was cleared.";
@@ -900,7 +894,6 @@
 "SpaceGram.Hub.AllAccounts" = "All accounts";
 "SpaceGram.Hub.Chat" = "Chat";
 "SpaceGram.Hub.Deleted" = "Deleted messages";
-"SpaceGram.Hub.Edits" = "Message edit history";
 "SpaceGram.Hub.HistoryInfo" = "Only messages received by this device can be saved. Deleted messages stay in the local archive; they are not restored on Telegram servers.";
 "SpaceGram.Hub.Ghost" = "Ghost Mode";
 "SpaceGram.Hub.Downloads" = "Media auto-download";
@@ -914,18 +907,17 @@
 "SpaceGram.Hub.Translation" = "Translation provider and language";
 "SpaceGram.Hub.Seconds" = "Seconds in message timestamps";
 "SpaceGram.Hub.HistoryMedia" = "History and media";
-"SpaceGram.Hub.Qwen" = "Qwen Assistant";
-"SpaceGram.Hub.Summarizer" = "Summarizer";
 "SpaceGram.Hub.Translator" = "Translator";
 "SpaceGram.Hub.QR" = "QR tools";
 "SpaceGram.Hub.ThemeIcons" = "Theme and app icon";
 "SpaceGram.Hub.Enhancements" = "Additional settings";
 "SpaceGram.Hub.AboutIntro" = "SpaceGram\nTelegram with native tools for privacy, saved history and everyday conversations.";
 "SpaceGram.Hub.AboutGhost" = "Ghost Mode\nControl read receipts, story views, typing and online presence. Server-side actions can still reveal activity.";
-"SpaceGram.Hub.AboutHistory" = "Deleted messages and edit history\nRead locally saved messages and previous versions, including formatting and timestamps.";
+"SpaceGram.Hub.AboutHistory" = "Deleted messages\nSpaceGram locally retains messages received by this device before deletion. iOS cannot recover data that never reached the device.";
 "SpaceGram.Hub.AboutMedia" = "Media archive\nKeep complete downloaded assets with storage limits, retention and cleanup controls. Unreceived files cannot be recovered.";
-"SpaceGram.Hub.AboutAI" = "AI and tools\nQwen, summaries, translation and QR tools. AI requests send the text you choose to the configured provider.";
+"SpaceGram.Hub.AboutTools" = "Tools\nTranslate text with the configured Telegram-compatible translation service and generate QR codes locally.";
 "SpaceGram.Hub.AboutPrivacy" = "Your choices\nFeatures use existing Telegram and SpaceGram settings. No subscription is required. History and media archives are local to each account.";
+"SpaceGram.Hub.AboutVersion" = "Version %@ (%@)";
 // History presentation
 "SpaceGram.History.UnknownPeer" = "Unknown or deleted peer";
 "SpaceGram.History.SomeUnreadable" = "Some history could not be read";
@@ -982,7 +974,41 @@
 "SpaceGram.UI.Status" = "Status";
 "SpaceGram.UI.Configured" = "Configured";
 "SpaceGram.UI.NotConfigured" = "Not configured";
-"SpaceGram.UI.Provider" = "Qwen Provider";
+"SpaceGram.Hub.GoOffline" = "Go offline automatically";
+"SpaceGram.Hub.ReadOnInteract" = "Read on Interact";
+"SpaceGram.Hub.ReadOnInteractInfo" = "Automatically marks messages read when you send a message, react or perform another explicit interaction. Opening a chat alone is not an interaction.";
+"SpaceGram.Translator.Title" = "Translator";
+"SpaceGram.Translator.Source" = "Source language";
+"SpaceGram.Translator.Target" = "Target language";
+"SpaceGram.Translator.Auto" = "Auto Detect";
+"SpaceGram.Translator.Text" = "Text";
+"SpaceGram.Translator.Placeholder" = "Paste or type text to translate";
+"SpaceGram.Translator.Translate" = "Translate";
+"SpaceGram.Translator.Loading" = "Translating…";
+"SpaceGram.Translator.Result" = "Translation";
+"SpaceGram.Translator.Empty" = "Enter text to translate.";
+"SpaceGram.Translator.Failed" = "Translation failed. Your text was not changed.";
+"SpaceGram.Language.en" = "English";
+"SpaceGram.Language.ru" = "Russian";
+"SpaceGram.Language.zh" = "Chinese";
+"SpaceGram.Language.es" = "Spanish";
+"SpaceGram.Language.de" = "German";
+"SpaceGram.Language.fr" = "French";
+"SpaceGram.Language.it" = "Italian";
+"SpaceGram.Language.ja" = "Japanese";
+"SpaceGram.Language.ko" = "Korean";
+"SpaceGram.Language.pt-BR" = "Portuguese (Brazil)";
+"SpaceGram.Language.uk" = "Ukrainian";
+"SpaceGram.Language.ar" = "Arabic";
+"SpaceGram.QR.Title" = "QR Tools";
+"SpaceGram.QR.Text" = "Text";
+"SpaceGram.QR.Placeholder" = "Enter text";
+"SpaceGram.QR.Generate" = "Generate QR";
+"SpaceGram.QR.Result" = "Result";
+"SpaceGram.QR.Share" = "Share or Save";
+"SpaceGram.QR.Empty" = "Enter text to generate a QR code.";
+"SpaceGram.QR.Failed" = "Unable to generate a QR code for this text.";
+"SpaceGram.AppIcon.ChangeFailed" = "The Home Screen icon could not be changed. The previous icon is still selected.";
 "SpaceGram.UI.MediaUsageError" = "Unable to read Media Archive usage on this device.";
 "SpaceGram.UI.MediaSettingsError" = "Unable to update Media Archive settings.";
 "SpaceGram.UI.MediaCleanError" = "Unable to clean expired media.";

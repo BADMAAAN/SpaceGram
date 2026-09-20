@@ -17,7 +17,7 @@ public enum SpaceGramMigrationError: LocalizedError {
 
 /// Namespace migration only: payload schemas, UUIDs and account identity stay intact.
 public enum SpaceGramMigrationCoordinator {
-    public static let version = 1
+    public static let version = 2
     private static let defaultsLock = NSRecursiveLock()
 
     /// Keep legacy preferences as a recovery copy: UserDefaults has no durable
@@ -39,6 +39,18 @@ public enum SpaceGramMigrationCoordinator {
                     verified = false
                 }
             }
+        }
+        // Version 2 introduces a real Ghost master switch. Preserve an existing
+        // installation's effective opt-in without conflating it with SpaceGram's
+        // product-wide enabled flag.
+        if defaults.object(forKey: "spacegram.settings.ghostModeEnabled") == nil {
+            let legacyControls = [
+                "spacegram.settings.suppressAutomaticReads",
+                "spacegram.settings.hideStoryViews",
+                "spacegram.settings.hideOnlinePresence",
+                "spacegram.settings.hideChatActivity",
+            ]
+            defaults.set(legacyControls.contains(where: { defaults.bool(forKey: $0) }), forKey: "spacegram.settings.ghostModeEnabled")
         }
         if verified && defaults.integer(forKey: "spacegram.migration.defaults.version") != version {
             defaults.set(version, forKey: "spacegram.migration.defaults.version")

@@ -60,11 +60,7 @@ public func spaceGramBotsController(context: AccountContext) -> ViewController {
     var pushControllerImpl: ((ViewController) -> Void)?
     let arguments = SpaceGramBotsArguments(openBot: { bot in
         guard SpaceGramSettings.shared.toolsEnabled else { return }
-        if bot.id == "qwen-assistant" {
-            pushControllerImpl?(spaceGramQwenAssistantController(context: context))
-        } else if bot.id == "summarizer" {
-            pushControllerImpl?(spaceGramSummarizerController(context: context))
-        } else if bot.id == "translator" {
+        if bot.id == "translator" {
             pushControllerImpl?(spaceGramTranslatorController(context: context))
         } else if bot.id == "qr-tools" {
             pushControllerImpl?(spaceGramQRToolsController(context: context))

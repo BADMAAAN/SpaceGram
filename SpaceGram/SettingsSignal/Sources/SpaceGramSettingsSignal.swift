@@ -82,6 +82,14 @@ public func spaceGramSuppressOnlinePresenceSignal() -> Signal<Bool, NoError> {
     return settingsSignal { SpaceGramGhostPolicy.suppressOnlinePresence } |> distinctUntilChanged
 }
 
+public func spaceGramGoOfflineAutomaticallySignal() -> Signal<Bool, NoError> {
+    return settingsSignal {
+        let settings = SpaceGramSettings.shared
+        return SpaceGramGhostPolicy.suppressOnlinePresence && settings.goOfflineAutomatically
+    }
+    |> distinctUntilChanged
+}
+
 public func spaceGramSuppressChatActivitySignal() -> Signal<Bool, NoError> {
     return settingsSignal { SpaceGramGhostPolicy.suppressChatActivity } |> distinctUntilChanged
 }

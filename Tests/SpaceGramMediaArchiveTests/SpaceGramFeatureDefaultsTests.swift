@@ -33,6 +33,7 @@ final class SpaceGramFeatureDefaultsTests: XCTestCase {
         XCTAssertFalse(defaults.bool(forKey: "spacegram.settings.hideOnlinePresence"))
         XCTAssertFalse(defaults.bool(forKey: "spacegram.settings.saveEditedMessages"))
         XCTAssertFalse(defaults.bool(forKey: "spacegram.settings.saveServerDeletedMessages"))
+        XCTAssertFalse(defaults.bool(forKey: "spacegram.settings.ghostModeEnabled"))
         XCTAssertNil(defaults.object(forKey: "spacegram.settings.delayedSend"))
         XCTAssertNil(defaults.object(forKey: "spacegram.settings.showGhostButton"))
         XCTAssertTrue(SpaceGramMigrationCoordinator.migrateDefaults(defaults))

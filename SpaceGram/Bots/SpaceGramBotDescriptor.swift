@@ -4,7 +4,7 @@ public enum SpaceGramBotCategory: CaseIterable, Equatable {
     case utilities
     case custom
 
-    public static let allCases: [SpaceGramBotCategory] = [.ai, .media, .utilities, .custom]
+    public static let allCases: [SpaceGramBotCategory] = [.media, .utilities, .custom]
 }
 
 public struct SpaceGramBotDescriptor {
@@ -27,9 +27,7 @@ public struct SpaceGramBotDescriptor {
 
 public enum SpaceGramBotCatalog {
     public static let defaultBots: [SpaceGramBotDescriptor] = [
-        SpaceGramBotDescriptor(id: "qwen-assistant", title: "Qwen Assistant", subtitle: "Ask Qwen", username: nil, category: .ai, isEnabled: true),
-        SpaceGramBotDescriptor(id: "summarizer", title: "Summarizer", subtitle: "Summarize text", username: nil, category: .ai, isEnabled: true),
-        SpaceGramBotDescriptor(id: "translator", title: "Translator", subtitle: "Translate text", username: nil, category: .ai, isEnabled: true),
+        SpaceGramBotDescriptor(id: "translator", title: "Translator", subtitle: "Translate text", username: nil, category: .utilities, isEnabled: true),
         SpaceGramBotDescriptor(id: "media-tools", title: "Media Tools", subtitle: "Coming soon", username: nil, category: .media, isEnabled: false),
         SpaceGramBotDescriptor(id: "qr-tools", title: "QR Tools", subtitle: "Generate QR codes", username: nil, category: .utilities, isEnabled: true),
         SpaceGramBotDescriptor(id: "reminders", title: "Reminders", subtitle: "Coming soon", username: nil, category: .utilities, isEnabled: false),

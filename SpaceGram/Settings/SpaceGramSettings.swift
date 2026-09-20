@@ -136,20 +136,33 @@ public final class SpaceGramSettings {
     @SpaceGramDefault("spacegram.settings.hideOnlinePresence", false)
     public var hideOnlinePresence: Bool
 
+    @SpaceGramDefault("spacegram.settings.ghostModeEnabled", false)
+    public var ghostModeEnabled: Bool
+
     public var ghostMode: SpaceGramGhostMode {
-        return SpaceGramGhostMode(enabled: spaceGramEnabled, reads: suppressAutomaticReads, stories: hideStoryViews, presence: hideOnlinePresence, activity: hideChatActivity)
+        return SpaceGramGhostMode(enabled: spaceGramEnabled && ghostModeEnabled, reads: suppressAutomaticReads, stories: hideStoryViews, presence: hideOnlinePresence, activity: hideChatActivity)
     }
 
     public func setGhostMode(_ enabled: Bool) {
-        // Explicit user action only. Initialization never replaces legacy values.
-        suppressAutomaticReads = enabled
-        hideStoryViews = enabled
-        hideOnlinePresence = enabled
-        hideChatActivity = enabled
+        ghostModeEnabled = enabled
+        // First-time opt-in enables the useful full preset. Later master toggles
+        // preserve the user's chosen subset.
+        if enabled && !suppressAutomaticReads && !hideStoryViews && !hideOnlinePresence && !hideChatActivity {
+            suppressAutomaticReads = true
+            hideStoryViews = true
+            hideOnlinePresence = true
+            hideChatActivity = true
+        }
     }
 
     @SpaceGramDefault("spacegram.settings.delayedSend", false)
     public var delayedSend: Bool
+
+    @SpaceGramDefault("spacegram.settings.readOnInteract", false)
+    public var readOnInteract: Bool
+
+    @SpaceGramDefault("spacegram.settings.goOfflineAutomatically", false)
+    public var goOfflineAutomatically: Bool
 
     @SpaceGramDefault("spacegram.settings.showGhostButton", false)
     public var showGhostButton: Bool
@@ -186,5 +199,13 @@ public final class SpaceGramSettings {
 
     public var captureDeletedMessages: Bool {
         return spaceGramEnabled && messageHistoryEnabled && saveServerDeletedMessages
+    }
+
+    public func resetLocalSettings() {
+        let defaults = UserDefaults.standard
+        for key in defaults.dictionaryRepresentation().keys where key.hasPrefix("spacegram.settings.") {
+            defaults.removeObject(forKey: key)
+        }
+        publishEnabledForExtensions()
     }
 }
