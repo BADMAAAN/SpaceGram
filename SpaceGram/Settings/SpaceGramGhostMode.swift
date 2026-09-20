@@ -23,11 +23,13 @@ public struct SpaceGramGhostMode: Equatable {
 /// https://docs.ayugram.one/shared/ghost/#schedule-messages
 /// Native Telegram owns persistence, retries, cancellation and sending.
 public enum SpaceGramDelayedSendPolicy {
+    // Telegram sends immediately below 10 seconds. Leave 20 seconds for
+    // transit/clock rounding; the boundary is checked again after upload.
+    public static let minimumDelay: Int32 = 30
+
     public static func delay(mediaBytes: Int64?) -> Int32 {
-        guard let mediaBytes, mediaBytes >= 0 else { return 12 }
-        let seconds = max(12.0, ceil(Double(mediaBytes) / 1_048_576.0 * 4.5))
-        // Bound malformed metadata before conversion; no overflow or years-long delay.
-        return Int32(min(seconds, 86_400.0))
+        // Upload time is handled at submit, not estimated from file size twice.
+        return minimumDelay
     }
 
     public static func timestamp(now: Int64, ghost: SpaceGramGhostMode, enabled: Bool, mediaBytes: Int64?) -> Int32? {

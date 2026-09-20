@@ -15,25 +15,25 @@ final class SpaceGramGhostModeTests: XCTestCase {
     }
 
     func testTextDelayAndOptIn() {
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: nil), 12)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: full, enabled: true, mediaBytes: nil), 112)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: nil), 30)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: full, enabled: true, mediaBytes: nil), 130)
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: full, enabled: false, mediaBytes: nil))
         let partial = SpaceGramGhostMode(enabled: true, reads: true, stories: true, presence: false, activity: true)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: partial, enabled: true, mediaBytes: nil), 112)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: partial, enabled: true, mediaBytes: nil), 130)
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: 100, ghost: SpaceGramGhostMode(enabled: false, reads: true, stories: true, presence: true, activity: true), enabled: true, mediaBytes: nil))
     }
 
-    func testMediaDelayRoundsUpAndHasFloor() {
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 0), 12)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 1_048_576), 12)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 2_097_152), 12)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 3_145_728), 14)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 10_485_760), 45)
+    func testUploadSizeDoesNotAddAnExtraDelay() {
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 0), 30)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 1_048_576), 30)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 2_097_152), 30)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 3_145_728), 30)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: 10_485_760), 30)
     }
 
     func testMalformedMetadataAndTimestampCannotTrap() {
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: -1), 12)
-        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: Int64.max), 86_400)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: -1), 30)
+        XCTAssertEqual(SpaceGramDelayedSendPolicy.delay(mediaBytes: Int64.max), 30)
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: Int64.max, ghost: full, enabled: true, mediaBytes: nil))
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: Int64(Int32.max), ghost: full, enabled: true, mediaBytes: nil))
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: -1, ghost: full, enabled: true, mediaBytes: nil))

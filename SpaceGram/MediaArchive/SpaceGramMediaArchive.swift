@@ -32,6 +32,7 @@ public enum SpaceGramArchivedAssetState {
 // A regular, complete cache inode pinned before Telegram unlinks it. No payload
 // is read on Postbox's queue. Closing also releases the bounded pending reservation.
 public final class SpaceGramMediaCapture {
+    public var resourceId: String?
     fileprivate let file: FileHandle
     fileprivate let size: Int64
     fileprivate let modified: timespec
@@ -66,6 +67,23 @@ public final class SpaceGramMediaPreview {
     }
 }
 
+// Runtime-only lease: unlinking/evicting an archive entry cannot invalidate a
+// bubble that is already using it. Paths are never persisted in history JSON.
+public final class SpaceGramArchivedMedia {
+    public let asset: SpaceGramArchivedAsset
+    public let url: URL
+
+    fileprivate init(asset: SpaceGramArchivedAsset, url: URL) {
+        self.asset = asset
+        self.url = url
+    }
+
+    deinit {
+        let directory = self.url.deletingLastPathComponent()
+        SpaceGramMediaArchive.queue.async { try? FileManager.default.removeItem(at: directory) }
+    }
+}
+
 public enum SpaceGramMediaArchive {
     public static let maxBytes: Int64 = 512 * 1024 * 1024
     public static let maxAssetBytes: Int64 = 128 * 1024 * 1024
@@ -77,6 +95,7 @@ public enum SpaceGramMediaArchive {
     private static let pendingLock = NSLock()
     private static var pendingCount = 0
     private static var pendingBytes: Int64 = 0
+    private static var cleanedBubbleLeases = false
     private struct VersionHeader: Decodable { let version: Int }
 
     public static func usage(root: URL, completion: @escaping (Result<SpaceGramMediaArchiveUsage, SpaceGramMediaArchiveError>) -> Void) {
@@ -231,6 +250,44 @@ public enum SpaceGramMediaArchive {
             let wanted = Set(ids)
             let result = try? withLock(root: root) { try maintain(root: root, policy: readPolicy(root: root)).filter { wanted.contains($0.id) } }
             completion(result ?? [])
+        }
+    }
+
+    public static func resolve(root: URL, ids: Set<String>, completion: @escaping ([String: SpaceGramArchivedMedia]) -> Void) {
+        queue.async {
+            var result: [String: SpaceGramArchivedMedia] = [:]
+            do {
+                if !cleanedBubbleLeases {
+                    // An earlier process cannot release its hard links. Clean
+                    // only stale leases; current-process leases do not exist yet.
+                    let folders = try FileManager.default.contentsOfDirectory(at: FileManager.default.temporaryDirectory, includingPropertiesForKeys: [.creationDateKey])
+                    for folder in folders where folder.lastPathComponent.hasPrefix("spacegram-bubble-") {
+                        if let date = try folder.resourceValues(forKeys: [.creationDateKey]).creationDate, Date().timeIntervalSince(date) > 24 * 60 * 60 {
+                            try FileManager.default.removeItem(at: folder)
+                        }
+                    }
+                    cleanedBubbleLeases = true
+                }
+                try withLock(root: root) {
+                    for asset in try maintain(root: root, policy: readPolicy(root: root)) where ids.contains(asset.id) {
+                        let source = payload(root: root, asset: asset)
+                        guard let values = try? source.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey]),
+                              values.isRegularFile == true, values.isSymbolicLink != true,
+                              Int64(values.fileSize ?? -1) == asset.bytes else { continue }
+                        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("spacegram-bubble-" + UUID().uuidString, isDirectory: true)
+                        do {
+                            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                            let url = directory.appendingPathComponent("media." + asset.fileExtension)
+                            // Same sandbox volume: no full-file I/O or bitmap allocation.
+                            try FileManager.default.linkItem(at: source, to: url)
+                            result[asset.id] = SpaceGramArchivedMedia(asset: asset, url: url)
+                        } catch {
+                            try? FileManager.default.removeItem(at: directory)
+                        }
+                    }
+                }
+            } catch { NSLog("SpaceGramMediaArchive: bubble resources unavailable") }
+            completion(result)
         }
     }
 

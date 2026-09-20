@@ -25,7 +25,8 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
 
         XCTAssertEqual(message.id.namespace, Namespaces.Message.Local)
         XCTAssertEqual(message.timestamp, 150)
-        XCTAssertTrue(message.text.contains("Deleted"))
+        XCTAssertEqual(message.text, "hello", "Presentation metadata must not alter copied text")
+        XCTAssertEqual((message.attributes.first { $0 is TextEntitiesMessageAttribute } as? TextEntitiesMessageAttribute)?.entities.first?.range, 0 ..< 5)
         XCTAssertEqual((message.attributes.first { $0 is SpaceGramDeletedMessageAttribute } as? SpaceGramDeletedMessageAttribute)?.originalMessageId, originalId)
     }
 
@@ -42,7 +43,7 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
             stableVersion: 1
         )
         let message = item.makeMessage(accountPeerId: self.peerId, deletedLabel: "Deleted", archivedMediaLabel: "Archived media", missingMediaLabel: "Media unavailable")
-        XCTAssertTrue(message.text.contains("Media unavailable"))
-        XCTAssertTrue(message.media.isEmpty)
+        XCTAssertEqual(message.text, "")
+        XCTAssertTrue((message.media.first as? TelegramMediaFile)?.fileName?.contains("Media unavailable") == true)
     }
 }

@@ -170,6 +170,11 @@ private func spaceGramAboutController(context: AccountContext) -> ViewController
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
         entries.append(SpaceGramHubEntry(stableId: 11, section: 11, title: String(format: ngI18n("SpaceGram.Hub.AboutVersion", lang), version, build), footer: true))
+        let sha = Bundle.main.object(forInfoDictionaryKey: "SpaceGramSourceSHA") as? String ?? "unknown"
+        let time = Bundle.main.object(forInfoDictionaryKey: "SpaceGramBuildTime") as? String ?? "unknown"
+        let dirty = Bundle.main.object(forInfoDictionaryKey: "SpaceGramSourceDirty") as? Bool ?? true
+        let diagnostic = String(format: ngI18n("SpaceGram.Hub.BuildInfo", lang), String(sha.prefix(12)), time, dirty ? " · dirty" : "")
+        entries.append(SpaceGramHubEntry(stableId: 12, section: 12, title: diagnostic, footer: true))
         let data = spaceGramItemListPresentationData(presentationData)
         let state = ItemListControllerState(presentationData: data, title: .text(ngI18n("SpaceGram.Hub.About", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (state, (ItemListNodeState(presentationData: data, entries: entries, style: .blocks), NSNull()))

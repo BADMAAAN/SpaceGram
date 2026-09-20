@@ -1,17 +1,21 @@
 import Foundation
 import Postbox
 import SpaceGramHistoryStorage
+import SpaceGramMediaArchive
 import SwiftSignalKit
 import TelegramCore
 
 public final class SpaceGramDeletedMessageAttribute: MessageAttribute {
     public let originalMessageId: MessageId
+    private let mediaLeases: [SpaceGramArchivedMedia]
 
-    public init(originalMessageId: MessageId) {
+    public init(originalMessageId: MessageId, mediaLeases: [SpaceGramArchivedMedia] = []) {
         self.originalMessageId = originalMessageId
+        self.mediaLeases = mediaLeases
     }
 
     public required init(decoder: PostboxDecoder) {
+        self.mediaLeases = []
         self.originalMessageId = MessageId(
             peerId: PeerId(decoder.decodeInt64ForKey("p", orElse: 0)),
             namespace: decoder.decodeInt32ForKey("n", orElse: 0),
@@ -34,6 +38,8 @@ public struct SpaceGramDeletedMessageOverlayItem {
     public let chatPeer: Peer?
     public let hasArchivedMedia: Bool
     public let stableVersion: UInt32
+    public var assetIds: [String] = []
+    public var archivedMedia: [SpaceGramArchivedMedia] = []
 
     public init(originalMessageId: MessageId, threadId: Int64?, snapshot: SpaceGramHistorySnapshot, author: Peer?, chatPeer: Peer?, hasArchivedMedia: Bool, stableVersion: UInt32) {
         self.originalMessageId = originalMessageId
@@ -50,23 +56,8 @@ public struct SpaceGramDeletedMessageOverlayItem {
     }
 
     public func makeMessage(accountPeerId: PeerId, deletedLabel: String, archivedMediaLabel: String, missingMediaLabel: String) -> Message {
-        var text = self.snapshot.text
-        var entities = self.snapshot.entities.compactMap { spaceGramMessageEntity($0, textLength: text.utf16.count) }
-
-        if !text.isEmpty {
-            text.append("\n")
-        }
-        let indicatorStart = text.utf16.count
-        text.append("🗑 ")
-        text.append(deletedLabel)
-        entities.append(MessageTextEntity(range: indicatorStart ..< text.utf16.count, type: .Italic))
-
-        if !self.snapshot.media.isEmpty {
-            text.append("\n")
-            let mediaStart = text.utf16.count
-            text.append(self.hasArchivedMedia ? archivedMediaLabel : missingMediaLabel)
-            entities.append(MessageTextEntity(range: mediaStart ..< text.utf16.count, type: .Italic))
-        }
+        let text = self.snapshot.text
+        let entities = self.snapshot.entities.compactMap { spaceGramMessageEntity($0, textLength: text.utf16.count) }
 
         let localId = Int32(bitPattern: UInt32(bitPattern: self.originalMessageId.id) ^ 0x80000000)
         let localMessageId = MessageId(peerId: self.originalMessageId.peerId, namespace: Namespaces.Message.Local, id: localId)
@@ -77,13 +68,21 @@ public struct SpaceGramDeletedMessageOverlayItem {
         if let author = self.author {
             peers[author.id] = author
         }
-        let incoming = self.author?.id != accountPeerId
+        let incoming = self.snapshot.authorPeerId != accountPeerId.toInt64()
+        var attributes: [MessageAttribute] = [
+            TextEntitiesMessageAttribute(entities: entities),
+            SpaceGramDeletedMessageAttribute(originalMessageId: self.originalMessageId, mediaLeases: self.archivedMedia)
+        ]
+        if self.snapshot.hasMediaSpoiler == true { attributes.append(MediaSpoilerMessageAttribute()) }
+        if let edited = self.snapshot.serverEditTimestamp {
+            attributes.append(EditedMessageAttribute(date: Int32(clamping: edited), isHidden: false))
+        }
         return Message(
             stableId: UInt32(bitPattern: localId),
             stableVersion: self.stableVersion,
             id: localMessageId,
             globallyUniqueId: nil,
-            groupingKey: nil,
+            groupingKey: self.snapshot.groupingKey,
             groupInfo: nil,
             threadId: self.threadId,
             timestamp: self.timestamp,
@@ -95,11 +94,8 @@ public struct SpaceGramDeletedMessageOverlayItem {
             forwardInfo: nil,
             author: self.author,
             text: text,
-            attributes: [
-                TextEntitiesMessageAttribute(entities: entities),
-                SpaceGramDeletedMessageAttribute(originalMessageId: self.originalMessageId),
-            ],
-            media: [],
+            attributes: attributes,
+            media: self.makeMedia(missingMediaLabel: missingMediaLabel),
             peers: peers,
             associatedMessages: SimpleDictionary<MessageId, Message>(),
             associatedMessageIds: [],
@@ -107,6 +103,49 @@ public struct SpaceGramDeletedMessageOverlayItem {
             associatedThreadInfo: nil,
             associatedStories: [:]
         )
+    }
+
+    private func makeMedia(missingMediaLabel: String) -> [Media] {
+        guard let metadata = self.snapshot.media.first else { return [] }
+        let primary = self.archivedMedia.first(where: { $0.asset.kind != "thumbnail" })
+        let assetNumber = primary.flatMap { UInt64($0.asset.id.replacingOccurrences(of: "-", with: "").prefix(16), radix: 16) }
+        let localNumber = assetNumber.map { Int64(bitPattern: $0) } ?? (self.originalMessageId.peerId.toInt64() ^ (Int64(self.originalMessageId.id) << 32))
+        let mediaId = MediaId(namespace: Namespaces.Media.LocalFile, id: localNumber)
+        guard let primary else {
+            // A local, unavailable document placeholder keeps the caption intact
+            // and never attempts to recover cloud bytes or claim a thumbnail is full media.
+            return [TelegramMediaFile(fileId: mediaId, partialReference: nil,
+                resource: LocalFileReferenceMediaResource(localFilePath: "", randomId: localNumber),
+                previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil,
+                mimeType: "application/octet-stream", size: metadata.size,
+                attributes: [.FileName(fileName: (metadata.filename ?? metadata.type) + " — " + missingMediaLabel)], alternativeRepresentations: [])]
+        }
+        func resource(_ value: SpaceGramArchivedMedia) -> LocalFileReferenceMediaResource {
+            let hex = value.asset.id.replacingOccurrences(of: "-", with: "")
+            let id = Int64(bitPattern: UInt64(hex.prefix(16), radix: 16) ?? 0)
+            return LocalFileReferenceMediaResource(localFilePath: value.url.path, randomId: id, size: value.asset.bytes)
+        }
+        let dimensions = PixelDimensions(width: max(1, min(16384, metadata.width ?? 512)), height: max(1, min(16384, metadata.height ?? 512)))
+        if primary.asset.kind == "photo" {
+            return [TelegramMediaImage(imageId: mediaId,
+                representations: [TelegramMediaImageRepresentation(dimensions: dimensions, resource: resource(primary), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)],
+                immediateThumbnailData: nil, reference: nil, partialReference: nil, flags: [])]
+        }
+        var fileAttributes: [TelegramMediaFileAttribute] = [.FileName(fileName: primary.asset.fileName)]
+        let rawDuration = metadata.duration ?? 0
+        let duration = rawDuration.isFinite ? max(0, min(rawDuration, Double(Int32.max))) : 0
+        if primary.asset.kind == "voice" || metadata.isVoice == true {
+            fileAttributes.append(.Audio(isVoice: true, duration: Int(duration), title: nil, performer: nil, waveform: nil))
+        } else if primary.asset.kind == "video" || primary.asset.kind == "videoMessage" {
+            fileAttributes.append(.Video(duration: duration, size: dimensions, flags: primary.asset.kind == "videoMessage" ? [.instantRoundVideo] : [], preloadSize: nil, coverTime: nil, videoCodec: nil))
+        }
+        if primary.asset.kind == "animation" || metadata.isAnimated == true { fileAttributes.append(.Animated) }
+        let previews = self.archivedMedia.filter { $0.asset.kind == "thumbnail" }.prefix(1).map {
+            TelegramMediaImageRepresentation(dimensions: dimensions, resource: resource($0), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
+        }
+        let mime = metadata.mimeType ?? (primary.asset.fileExtension == "mp4" ? "video/mp4" : (primary.asset.kind == "voice" ? "audio/ogg" : "application/octet-stream"))
+        return [TelegramMediaFile(fileId: mediaId, partialReference: nil, resource: resource(primary), previewRepresentations: previews,
+            videoThumbnails: [], immediateThumbnailData: nil, mimeType: mime, size: primary.asset.bytes, attributes: fileAttributes, alternativeRepresentations: [])]
     }
 }
 
@@ -136,21 +175,42 @@ public func spaceGramDeletedMessageOverlay(postbox: Postbox, peerId: PeerId, thr
                 }
                 let originalMessageId = MessageId(peerId: peerId, namespace: record.key.namespace, id: record.key.id)
                 let author = snapshot.authorPeerId.flatMap { transaction.getPeer(PeerId($0)) }
-                return SpaceGramDeletedMessageOverlayItem(
+                var item = SpaceGramDeletedMessageOverlayItem(
                     originalMessageId: originalMessageId,
                     threadId: record.threadId,
                     snapshot: snapshot,
                     author: author,
                     chatPeer: chatPeer,
                     hasArchivedMedia: !(deleteEvent.mediaAssetIds ?? []).isEmpty,
-                    stableVersion: UInt32(truncatingIfNeeded: deleteEvent.observedTimestamp)
+                    stableVersion: UInt32(truncatingIfNeeded: record.nextRevision) &+ UInt32(record.events.reduce(0) { $0 + ($1.mediaAssetIds?.count ?? 0) })
                 )
+                // A completed-download capture can predate deletion. Only reuse
+                // captures of the same attachment identity, never a previous edit.
+                item.assetIds = record.events.reversed().filter { event in
+                    guard !(event.mediaAssetIds ?? []).isEmpty,
+                          let revision = record.revisions.first(where: { $0.number == event.revisionNumber }) else { return false }
+                    return revision.snapshot.media.map(\.identifiers) == snapshot.media.map(\.identifiers)
+                }.flatMap { $0.mediaAssetIds ?? [] }
+                return item
             }.sorted { lhs, rhs in
                 if lhs.timestamp != rhs.timestamp {
                     return lhs.timestamp < rhs.timestamp
                 }
                 return lhs.originalMessageId.id < rhs.originalMessageId.id
             }
+        }
+    }
+    |> mapToSignal { items in
+        return Signal { subscriber in
+            SpaceGramMediaArchive.resolve(root: SpaceGramMediaArchive.root(mediaBoxPath: postbox.mediaBox.basePath), ids: Set(items.flatMap(\.assetIds))) { resources in
+                subscriber.putNext(items.map { item in
+                    var item = item
+                    item.archivedMedia = item.assetIds.compactMap { resources[$0] }
+                    return item
+                })
+                subscriber.putCompletion()
+            }
+            return EmptyDisposable
         }
     }
 }

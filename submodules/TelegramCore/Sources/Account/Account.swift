@@ -1545,6 +1545,8 @@ public class Account {
         self.restartConfigurationUpdates()
         
         self.automaticCacheEvictionContext = AutomaticCacheEvictionContext(postbox: postbox, accountManager: accountManager)
+        // MARK: NAGRAM — archive only completed native downloads for this account.
+        self.managedOperationsDisposable.add(spaceGramObserveMediaDownloads(postbox: postbox))
         
         /*#if DEBUG
         self.managedOperationsDisposable.add(debugFetchAllStickers(account: self).start(completed: {

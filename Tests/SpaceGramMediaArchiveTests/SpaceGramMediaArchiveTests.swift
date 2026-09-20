@@ -54,6 +54,32 @@ final class SpaceGramMediaArchiveTests: XCTestCase {
         wait(for: [done], timeout: 10)
     }
 
+    func testBubbleLeaseSurvivesArchiveClearWithoutChangingContent() throws {
+        let bytes = Data([1, 3, 5, 7])
+        let (root, asset) = try store(bytes)
+        let resolved = expectation(description: "bubble lease")
+        var lease: SpaceGramArchivedMedia?
+        SpaceGramMediaArchive.resolve(root: root, ids: [asset.id]) { resources in
+            lease = resources[asset.id]
+            resolved.fulfill()
+        }
+        wait(for: [resolved], timeout: 10)
+        let held = try XCTUnwrap(lease)
+        let cleared = expectation(description: "archive cleared")
+        SpaceGramMediaArchive.clear(root: root) { success in
+            XCTAssertTrue(success)
+            XCTAssertEqual(try? Data(contentsOf: held.url), bytes)
+            cleared.fulfill()
+        }
+        wait(for: [cleared], timeout: 10)
+        let missing = expectation(description: "cleared entries are not resurrected")
+        SpaceGramMediaArchive.resolve(root: root, ids: [asset.id]) { resources in
+            XCTAssertTrue(resources.isEmpty)
+            missing.fulfill()
+        }
+        wait(for: [missing], timeout: 10)
+    }
+
     func testLegacyArchiveMigrationPreservesHistoryAssetLookupAndPreview() throws {
         let bytes = Data([1, 2, 3, 4])
         let (root, asset) = try store(bytes)

@@ -26,6 +26,8 @@ swift_library(
         "//submodules/TelegramUI/Components/AnimationCache",
         "//submodules/TelegramUI/Components/MultiAnimationRenderer",
         # MARK: NAGRAM
+        "//SpaceGram/HistoryOverlay:SpaceGramHistoryOverlay",
+        "//SpaceGram/Strings:SpaceGramStrings",
         "//SpaceGram/Enhancements/Settings:NagramSettings",
     ],
     visibility = [

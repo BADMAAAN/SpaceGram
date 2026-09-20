@@ -7,6 +7,7 @@ swift_library(
     copts = ["-warnings-as-errors"],
     deps = [
         "//SpaceGram/HistoryStorage:SpaceGramHistoryStorage",
+        "//SpaceGram/MediaArchive:SpaceGramMediaArchive",
         "//submodules/Postbox:Postbox",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/TelegramCore:TelegramCore",

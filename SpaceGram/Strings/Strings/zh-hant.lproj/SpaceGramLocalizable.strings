@@ -380,3 +380,5 @@
 "SpaceGram.Hub.AboutProtected" = "受保護媒體\n只可儲存 Telegram 已向目前帳號提供資源的相片或影片，不會繞過成員資格、付費存取或伺服器授權。";
 "SpaceGram.Hub.AboutMenu" = "訊息選單\nSpaceGram 自訂操作預設關閉，可在進階設定中按需開啟。";
 "SpaceGram.Hub.AboutAppearance" = "外觀\n可使用 Telegram 主題和桌布，並選擇七種 App 圖示。";
+
+"SpaceGram.Hub.BuildInfo" = "Revision: %@\nBuilt: %@%@";

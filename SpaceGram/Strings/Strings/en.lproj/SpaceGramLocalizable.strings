@@ -949,7 +949,7 @@
 "SpaceGram.History.Author" = "Author";
 "SpaceGram.Hub.GhostButton" = "Ghost Mode button";
 "SpaceGram.Hub.DelayedSend" = "Delayed send";
-"SpaceGram.Hub.DelayedSendInfo" = "Sends messages after a short delay to reduce the chance of appearing online. Requires all four Ghost controls. Text: 12 seconds; media: based on size. Pending messages open in Telegram’s Scheduled Messages, where you can edit or cancel them. Slow uploads or an expired schedule can still reveal activity. Does not apply to secret chats, bots, forwards, paid messages or story replies.";
+"SpaceGram.Hub.DelayedSendInfo" = "Uses the Telegram server queue when Ghost and Delayed Send are enabled. The date is checked after upload with at least 30 seconds of margin; file size adds no extra delay. Stay in the chat and use Scheduled Messages to edit or cancel. Network transit can exceed the margin. Secret chats, bots, forwards, paid messages and story replies are not supported by automatic scheduling.";
 "SpaceGram.Hub.GhostOn" = "Ghost Mode on";
 "SpaceGram.Hub.GhostOff" = "Ghost Mode off";
 "SpaceGram.Hub.JumpToFirst" = "Jump to first message";
@@ -1040,8 +1040,10 @@
 "SpaceGram.MessageShot.RoundVideo" = "Video message";
 "SpaceGram.MessageShot.Sticker" = "Sticker";
 "SpaceGram.MessageShot.Unsupported" = "Unsupported media";
-"SpaceGram.Hub.AboutInteractions" = "Read on Interact and Delayed Send\nReading stays local until an explicit interaction. Optional delayed sends use Telegram scheduling and revalidate the server time after uploads.";
+"SpaceGram.Hub.AboutInteractions" = "Read on Interact and Delayed Send\nWith Read on Interact off, automatic actions do not mark chats read. When enabled, successful regular sends in the open chat and successful reactions in non-thread chats may acknowledge reads and reveal interaction. A scheduled ACK never triggers a read. Auto schedules are rechecked after upload using server time.";
 "SpaceGram.Hub.AboutMessageShot" = "Message Shot\nCreate a bounded, chat-only image from selected messages, including text, formatting, replies and locally available previews.";
 "SpaceGram.Hub.AboutProtected" = "Protected media\nOpt in to save a protected photo or video only when Telegram has already provided its resource to this account. Membership, paid access and server authorization are never bypassed.";
 "SpaceGram.Hub.AboutMenu" = "Message Menu\nSpaceGram actions are independent and off by default. Enable only the actions you want under Advanced.";
 "SpaceGram.Hub.AboutAppearance" = "Appearance\nUse Telegram themes and wallpapers and choose the Default, Moon, Earth, Mars, Sun, Saturn or Neptune app icon.";
+
+"SpaceGram.Hub.BuildInfo" = "Revision: %@\nBuilt: %@%@";

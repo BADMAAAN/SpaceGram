@@ -111,6 +111,8 @@ func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids
 func spaceGramHistorySnapshot(_ message: Message) -> SpaceGramHistorySnapshot {
     var snapshot = SpaceGramHistorySnapshot(text: message.text, originalMessageTimestamp: Int64(message.timestamp))
     snapshot.authorPeerId = message.author?.id.toInt64()
+    snapshot.groupingKey = message.groupingKey
+    snapshot.hasMediaSpoiler = message.attributes.contains(where: { $0 is MediaSpoilerMessageAttribute })
     snapshot.entities = spaceGramHistoryEntities(message.attributes)
     for attribute in message.attributes {
         if let edited = attribute as? EditedMessageAttribute {
@@ -141,6 +143,10 @@ func spaceGramHistorySnapshot(_ message: Message) -> SpaceGramHistorySnapshot {
            let index = snapshot.media.firstIndex(where: { $0.type == "file" && $0.identifiers == spaceGramHistoryMediaId(file.fileId) }) {
             snapshot.media[index].filename = file.fileName
             snapshot.media[index].size = file.size
+            snapshot.media[index].mimeType = file.mimeType
+            snapshot.media[index].isVoice = file.isVoice
+            snapshot.media[index].isInstantVideo = file.isInstantVideo
+            snapshot.media[index].isAnimated = file.isAnimated
             for attribute in file.attributes {
                 switch attribute {
                 case let .Video(duration, size, _, _, _, _):
@@ -172,6 +178,10 @@ private func spaceGramHistoryContentMedia(_ media: [Media]) -> [SpaceGramHistory
         if let image = media as? TelegramMediaImage {
             var result = SpaceGramHistoryMediaMetadata(type: "image")
             result.identifiers = spaceGramHistoryMediaId(image.imageId)
+            if let largest = image.representations.max(by: { Int64($0.dimensions.width) * Int64($0.dimensions.height) < Int64($1.dimensions.width) * Int64($1.dimensions.height) }) {
+                result.width = largest.dimensions.width
+                result.height = largest.dimensions.height
+            }
             return result
         } else if let file = media as? TelegramMediaFile {
             var result = SpaceGramHistoryMediaMetadata(type: "file")

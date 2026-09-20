@@ -3,6 +3,8 @@ import Postbox
 import SwiftSignalKit
 import TelegramApi
 import MtProtoKit
+// MARK: NAGRAM — read-on-interact is evaluated only after server success.
+import SpaceGramSettings
 
 public enum UpdateMessageReaction {
     case builtin(String)
@@ -376,6 +378,13 @@ private func requestUpdateMessageReaction(postbox: Postbox, network: Network, st
         }
         |> mapToSignal { result -> Signal<Never, RequestUpdateMessageReactionError> in
             return postbox.transaction { transaction -> Void in
+                // MARK: NAGRAM — only the successfully reacted-to message is
+                // acknowledged. Failure/cancellation never enters this block.
+                if SpaceGramGhostPolicy.shouldReadOnInteraction,
+                   let message = transaction.getMessage(messageId), message.threadId == nil,
+                   transaction.getPeer(messageId.peerId)?.isForumOrMonoForum != true {
+                    _internal_applyMaxReadIndexInteractively(transaction: transaction, stateManager: stateManager, index: message.index)
+                }
                 transaction.setPendingMessageAction(type: .updateReaction, id: messageId, action: UpdateMessageReactionsAction())
                 transaction.updateMessage(messageId, update: { currentMessage in
                     var storeForwardInfo: StoreMessageForwardInfo?

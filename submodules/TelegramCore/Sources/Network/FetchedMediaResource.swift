@@ -123,6 +123,12 @@ public func fetchedMediaResource(
             contentType: userContentType,
             isRandomAccessAllowed: isRandomAccessAllowed
         ), implNext: reportResultStatus)
+        // MARK: NAGRAM — no payload in this account-scoped completion event.
+        |> afterCompleted {
+            if case let .media(.message(message, _), _) = reference, let id = message.id {
+                NotificationCenter.default.post(name: spaceGramMediaDownloadCompleted, object: mediaBox, userInfo: ["messageId": id])
+            }
+        }
     }
 }
 

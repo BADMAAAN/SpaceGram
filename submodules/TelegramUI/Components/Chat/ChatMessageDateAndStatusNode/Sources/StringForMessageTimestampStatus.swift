@@ -6,6 +6,9 @@ import TelegramStringFormatting
 import TextFormat
 import LocalizedPeerData
 import AccountContext
+// MARK: NAGRAM — deleted is presentation metadata, never copied message text.
+import SpaceGramHistoryOverlay
+import SpaceGramStrings
 
 public enum MessageTimestampStatusFormat {
     case full
@@ -248,5 +251,9 @@ public func stringForMessageTimestampStatus(
         }
     }
     
+    // MARK: NAGRAM — reuse the native compact timestamp style for all renderers.
+    if message.attributes.contains(where: { $0 is SpaceGramDeletedMessageAttribute }) {
+        dateText = ngI18n("SpaceGram.History.Deleted", strings.baseLanguageCode) + " · " + dateText
+    }
     return dateText
 }

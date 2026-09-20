@@ -18,6 +18,7 @@ import AccountContext
 import NagramSettings // MARK: NAGRAM
 // MARK: NAGRAM — native scheduled sends while full Ghost Mode is active.
 import SpaceGramSettings
+import SpaceGramHistoryOverlay // MARK: NAGRAM — local archive media has no server row.
 import TelegramStringFormatting
 import OverlayStatusController
 import DeviceLocationManager
@@ -1464,7 +1465,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 chatFilterTag = value
             }
             
-            var standalone = false
+            // MARK: NAGRAM — gallery/player must use this presentation message,
+            // not query Postbox for an intentionally non-persisted local ID.
+            var standalone = message.attributes.contains(where: { $0 is SpaceGramDeletedMessageAttribute })
             if case .customChatContents = self.chatLocation {
                 standalone = true
             }
@@ -2251,9 +2254,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             })
                         }
                         
-                        // MARK: NAGRAM — acknowledge only after every reaction
-                        // guard has passed and an interaction will be submitted.
-                        strongSelf.chatDisplayNode.historyNode.spaceGramReadVisibleMessagesOnInteraction()
+                        // MARK: NAGRAM — read-on-interact belongs to the server
+                        // success path; enqueueing a reaction can still fail.
                         let _ = updateMessageReactionsInteractively(account: strongSelf.context.account, messageIds: [message.id], reactions: mappedUpdatedReactions, isLarge: false, storeAsRecentlyUsed: false).startStandalone()
                     }
                 }
@@ -9079,14 +9081,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             }
             
             if commit || !isScheduledMessages {
-                // MARK: NAGRAM — sending is an explicit interaction; merely
-                // opening or viewing this chat never reaches this path.
-                self.chatDisplayNode.historyNode.spaceGramReadVisibleMessagesOnInteraction()
                 // MARK: NAGRAM — explicit schedules are preserved by the policy guard.
                 if !isScheduledMessages {
                     let delayed = self.spaceGramDelayedMessages(messages)
                     messages = delayed.0
-                    shouldOpenScheduledMessages = shouldOpenScheduledMessages || delayed.1
+                    // MARK: NAGRAM — automatic scheduling stays in this chat.
                 }
                 self.commitPurposefulAction()
                 

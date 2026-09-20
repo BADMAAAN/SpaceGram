@@ -53,7 +53,9 @@ private enum SpaceGramQRToolsEntry: ItemListNodeEntry {
         case let .header(_, section, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
         case let .input(_, section, text):
-            return ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: arguments.textTitle, textColor: presentationData.theme.list.itemPrimaryTextColor), text: text, placeholder: arguments.placeholder, type: .regular(capitalization: false, autocorrection: false), clearType: .onFocus, sectionId: section, textUpdated: arguments.updateText, action: {})
+            let item = ItemListSingleLineInputItem(presentationData: presentationData, systemStyle: .glass, title: NSAttributedString(string: ""), text: text, placeholder: arguments.placeholder, type: .regular(capitalization: false, autocorrection: false), clearType: .onFocus, sectionId: section, textUpdated: arguments.updateText, action: {})
+            item.accessibilityLabel = arguments.textTitle
+            return item
         case let .generate(_, section, enabled):
             return ItemListActionItem(presentationData: presentationData, systemStyle: .glass, title: arguments.generateTitle, kind: enabled ? .generic : .disabled, alignment: .natural, sectionId: section, style: .blocks, action: arguments.generate)
         case let .result(_, section, image, _):
@@ -85,7 +87,7 @@ public func spaceGramQRToolsController(context: AccountContext) -> ViewControlle
     var text = ""
     var image: UIImage?
     var generation: Int32 = 0
-    var controller: ItemListController?
+    weak var controller: ItemListController?
     let bump: () -> Void = {
         updateValue += 1
         updatePromise.set(updateValue)
@@ -177,24 +179,30 @@ private final class SpaceGramQRImageItem: ListViewItem, ItemListItem {
     }
 }
 
-private final class SpaceGramQRImageItemNode: ListViewItemNode {
+public final class SpaceGramQRImageItemNode: ListViewItemNode {
     private let imageNode = ASImageNode()
     private let backgroundNode = ASDisplayNode()
 
-    init() {
+    public init() {
         super.init(layerBacked: false)
         self.addSubnode(self.backgroundNode)
         self.addSubnode(self.imageNode)
         self.imageNode.contentMode = .scaleAspectFit
+    }
+
+    override public func didLoad() {
+        super.didLoad()
+        // AsyncDisplayKit constructs list nodes off-main. Accessing .layer in
+        // init forces a view-backed node to load on that worker and can assert.
         self.imageNode.layer.magnificationFilter = .nearest
         self.imageNode.layer.minificationFilter = .nearest
     }
 
-    func layout(item: SpaceGramQRImageItem, params: ListViewItemLayoutParams, neighbors: ItemListNeighbors) -> ListViewItemNodeLayout {
+    fileprivate func layout(item: SpaceGramQRImageItem, params: ListViewItemLayoutParams, neighbors: ItemListNeighbors) -> ListViewItemNodeLayout {
         return ListViewItemNodeLayout(contentSize: CGSize(width: params.width, height: 252.0), insets: itemListNeighborsGroupedInsets(neighbors, params))
     }
 
-    func apply(item: SpaceGramQRImageItem, params: ListViewItemLayoutParams, neighbors: ItemListNeighbors) {
+    fileprivate func apply(item: SpaceGramQRImageItem, params: ListViewItemLayoutParams, neighbors: ItemListNeighbors) {
         self.backgroundNode.backgroundColor = item.theme.list.itemBlocksBackgroundColor
         self.backgroundNode.frame = CGRect(x: 0.0, y: 0.0, width: params.width, height: 252.0)
         self.imageNode.image = item.image

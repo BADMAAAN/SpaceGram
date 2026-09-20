@@ -3,11 +3,12 @@ import Foundation
 import UIKit
 
 public enum SpaceGramQRGenerator {
+    public static let maximumUTF8Bytes = 2000
     private static let context = CIContext(options: [.cacheIntermediates: false])
 
     public static func image(text: String, scale: CGFloat = 8.0) -> UIImage? {
-        guard scale.isFinite, scale > 0.0,
-              let data = text.data(using: .utf8), !data.isEmpty,
+        guard scale.isFinite, scale >= 1.0, scale <= 16.0, scale.rounded(.down) == scale,
+              let data = text.data(using: .utf8), !data.isEmpty, data.count <= maximumUTF8Bytes,
               let filter = CIFilter(name: "CIQRCodeGenerator") else {
             return nil
         }
@@ -21,7 +22,11 @@ public enum SpaceGramQRGenerator {
               extent.width <= 2048.0, extent.height <= 2048.0 else {
             return nil
         }
-        let scaled = output.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        // Four whole modules of opaque quiet zone on every side. Render at an
+        // integer scale, with a bounded allocation even for a dense QR code.
+        let paddedExtent = extent.insetBy(dx: -4.0, dy: -4.0)
+        let opaque = output.composited(over: CIImage(color: CIColor(red: 1, green: 1, blue: 1))).cropped(to: paddedExtent)
+        let scaled = opaque.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         guard let cgImage = context.createCGImage(scaled, from: scaled.extent.integral) else {
             return nil
         }

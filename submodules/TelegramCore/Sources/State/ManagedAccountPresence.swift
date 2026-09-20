@@ -1,5 +1,6 @@
 import Foundation
 // MARK: NAGRAM — SpaceGram presence policy.
+import SpaceGramSettings
 import SpaceGramSettingsSignal
 import TelegramApi
 import Postbox
@@ -62,6 +63,9 @@ private final class AccountPresenceManagerImpl {
     }
     
     private func updatePresence(_ isOnline: Bool) {
+        // MARK: NAGRAM — timers and queued signal callbacks must recheck the
+        // current policy at the RPC boundary, not only at subscription time.
+        let isOnline = isOnline && !SpaceGramGhostPolicy.suppressOnlinePresence
         let request: Signal<Api.Bool, MTRpcError>
         if isOnline {
             let timer = SignalKitTimer(timeout: 30.0, repeat: false, completion: { [weak self] in

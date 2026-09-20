@@ -1,10 +1,12 @@
 import Foundation
 import Postbox
+// MARK: NAGRAM — share the same post-upload margin with the composer.
+import SpaceGramSettings
 
 public let scheduleWhenOnlineTimestamp: Int32 = 0x7ffffffe
 
 // MARK: NAGRAM — SpaceGram delayed sends are revalidated after media upload.
-public let spaceGramDelayedSendMinimumInterval: Int32 = 12
+public let spaceGramDelayedSendMinimumInterval: Int32 = SpaceGramDelayedSendPolicy.minimumDelay
 
 public func spaceGramAdjustedScheduleTime(plannedTime: Int32?, currentServerTime: TimeInterval, minimumDelay: Int32?) -> Int32? {
     guard let plannedTime, let minimumDelay else {

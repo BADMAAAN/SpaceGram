@@ -380,3 +380,5 @@
 "SpaceGram.Hub.AboutProtected" = "保護されたメディア\nTelegram がこのアカウントに提供済みの写真または動画だけを保存できます。権限や有料アクセスは迂回しません。";
 "SpaceGram.Hub.AboutMenu" = "メッセージメニュー\nSpaceGram の追加操作は初期状態でオフです。詳細設定で必要なものだけを有効にできます。";
 "SpaceGram.Hub.AboutAppearance" = "外観\nTelegram のテーマと壁紙に加え、7 種類のアプリアイコンを選べます。";
+
+"SpaceGram.Hub.BuildInfo" = "Revision: %@\nBuilt: %@%@";

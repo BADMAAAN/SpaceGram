@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 180
     env:
       BUNDLE_ID: com.badmaaan.qwengram
-      BUILD_NUMBER: "1"
+      BUILD_NUMBER: ${{ github.run_number }}
 
     steps:
       - name: Check out SpaceGram sources and submodules
@@ -32,6 +32,12 @@ jobs:
 
       - name: Check SpaceGram source and asset consistency
         run: python3 tools/check_spacegram_consistency.py
+
+      - name: Check portable contracts and preflight
+        run: |
+          python3 tools/test_spacegram_feature_contracts.py
+          python3 tools/test_spacegram_build_info.py
+          python3 tools/check_spacegram_preflight.py
 
       - name: Set temporary build paths
         shell: bash
@@ -91,6 +97,8 @@ jobs:
           set -euo pipefail
           cat > local.bazelrc <<'RC'
           build --//Telegram:disableExtensions
+          build --apple_generate_dsym
+          build --output_groups=+dsyms
           RC
           python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
 
@@ -124,12 +132,19 @@ jobs:
           fi
           test -f "$ARTIFACTS_DIR/Telegram.ipa"
 
+      - name: Verify embedded source identity
+        run: |
+          python3 tools/spacegram_build_info.py --ipa "$ARTIFACTS_DIR/Telegram.ipa" --expected-sha "$GITHUB_SHA" --output "$ARTIFACTS_DIR/build-info.json"
+
       - name: Upload iPhone test IPA
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: SpaceGram-iPhone-test
-          path: ${{ runner.temp }}/spacegram-ios-artifacts/Telegram.ipa
+          path: |
+            ${{ runner.temp }}/spacegram-ios-artifacts/Telegram.ipa
+            ${{ runner.temp }}/spacegram-ios-artifacts/build-info.json
+            ${{ runner.temp }}/spacegram-ios-artifacts/Telegram.DSYMs.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -142,4 +157,29 @@ jobs:
             ${{ runner.temp }}/spacegram-ios-artifacts/build.log
             ${{ runner.temp }}/spacegram-ios-artifacts/build-failure-summary.txt
           if-no-files-found: warn
+          retention-days: 14
+
+      - name: Run SpaceGram simulator regression tests
+        id: tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > local.bazelrc <<'RC'
+          build --//Telegram:disableExtensions
+          build --//Telegram:disableProvisioningProfiles
+          RC
+          python3 -u build-system/Make/Make.py --cacheDir "$BAZEL_CACHE" test \
+            --configurationPath build-input/spacegram-test-configuration.json \
+            --xcodeManagedCodesigning \
+            --target Tests/SpaceGramMediaArchiveTests:SpaceGramMediaArchiveTests \
+            2>&1 | tee "$ARTIFACTS_DIR/tests.log"
+
+      - name: Upload simulator test results
+        if: always() && steps.tests.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpaceGram-simulator-tests
+          path: |
+            ${{ runner.temp }}/spacegram-ios-artifacts/tests.log
+            bazel-testlogs/Tests/SpaceGramMediaArchiveTests/**/test.*
           retention-days: 14

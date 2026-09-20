@@ -15,6 +15,7 @@ func spaceGramPinMessageMedia(postbox: Postbox, message: Message) -> [SpaceGramM
         guard result.count < 32, seen.insert(resource.id).inserted else { return }
         // resourcePath is the complete-file path, never the partial download path.
         if let capture = SpaceGramMediaArchive.pinCompletedFile(path: postbox.mediaBox.resourcePath(resource), fileName: name, kind: kind, fileExtension: ext) {
+            capture.resourceId = resource.id.stringRepresentation
             result.append(capture)
         }
     }
@@ -85,6 +86,10 @@ func spaceGramBeforeMediaExpiration(postbox: Postbox, transaction: Transaction, 
     let key = SpaceGramHistoryMessageKey(peerId: message.id.peerId.toInt64(), namespace: message.id.namespace, id: message.id.id)
     do {
         var record = try SpaceGramHistoryStore.load(transaction: transaction, key: key) ?? SpaceGramHistoryRecord(key: key, threadId: message.threadId)
+        let resourceIds = captures.compactMap(\.resourceId)
+        if source == "completedDownload", record.events.contains(where: {
+            Set($0.mediaResourceIds ?? []).isSuperset(of: resourceIds) && $0.mediaCaptureId != nil
+        }) { return }
         guard record.nextRevision < Int64.max else { throw SpaceGramHistoryStorageError.invalidRevisionSequence }
         let timestamp = Int64(Date().timeIntervalSince1970)
         let captureId = UUID().uuidString
@@ -93,10 +98,27 @@ func spaceGramBeforeMediaExpiration(postbox: Postbox, transaction: Transaction, 
         record.revisions.append(SpaceGramHistoryRevision(number: number, observedTimestamp: timestamp, snapshot: spaceGramHistorySnapshot(message)))
         var event = SpaceGramHistoryEvent(type: .cleanup, source: source, reason: .mediaArchive, observedTimestamp: timestamp, revisionNumber: number)
         event.mediaCaptureId = captureId
+        event.mediaResourceIds = resourceIds
         record.events.append(event)
         try SpaceGramHistoryStore.upsert(transaction: transaction, record: record)
         spaceGramStoreMessageMedia(postbox: postbox, key: key, captureId: captureId, captures: captures)
     } catch {
         NSLog("SpaceGramMediaArchive: capture event failed; Telegram continues")
     }
+}
+
+// Account-lifetime observation of completed fetches, including other chats.
+// Fetching remains native; this does not request or download additional bytes.
+let spaceGramMediaDownloadCompleted = Notification.Name("SpaceGram.MediaDownloadCompleted")
+
+func spaceGramObserveMediaDownloads(postbox: Postbox) -> Disposable {
+    let observer = NotificationCenter.default.addObserver(forName: spaceGramMediaDownloadCompleted, object: postbox.mediaBox, queue: nil) { [weak postbox] notification in
+        guard let postbox, SpaceGramSettings.shared.captureMedia,
+              let id = notification.userInfo?["messageId"] as? MessageId else { return }
+        let _ = postbox.transaction { transaction -> Void in
+            guard let message = transaction.getMessage(id) else { return }
+            spaceGramBeforeMediaExpiration(postbox: postbox, transaction: transaction, message: message, source: "completedDownload")
+        }.start()
+    }
+    return ActionDisposable { NotificationCenter.default.removeObserver(observer) }
 }

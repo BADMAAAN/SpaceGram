@@ -51,6 +51,8 @@ public class ItemListSingleLineInputItem: ListViewItem, ItemListItem {
     let title: NSAttributedString
     let text: String
     let placeholder: String
+    // MARK: NAGRAM — accessibility is independent of a visible row title.
+    public var accessibilityLabel: String?
     let label: String?
     let type: ItemListSingleLineInputItemType
     let returnKeyType: UIReturnKeyType
@@ -211,6 +213,8 @@ public class ItemListSingleLineInputItemNode: ListViewItemNode, UITextFieldDeleg
             self.textNode.textField.keyboardAppearance = item.presentationData.theme.rootController.keyboardColor.keyboardAppearance
             self.textNode.textField.tintColor = item.presentationData.theme.list.itemAccentColor
             self.textNode.textField.accessibilityHint = item.placeholder
+            // MARK: NAGRAM
+            self.textNode.textField.accessibilityLabel = item.accessibilityLabel
         } else {
             self.textNode.textField.typingAttributes = [NSAttributedString.Key.font: Font.regular(17.0)]
             self.textNode.textField.font = Font.regular(17.0)
@@ -465,6 +469,8 @@ public class ItemListSingleLineInputItemNode: ListViewItemNode, UITextFieldDeleg
                     if strongSelf.textNode.textField.attributedPlaceholder == nil || !strongSelf.textNode.textField.attributedPlaceholder!.isEqual(to: attributedPlaceholderText) {
                         strongSelf.textNode.textField.attributedPlaceholder = attributedPlaceholderText
                         strongSelf.textNode.textField.accessibilityHint = attributedPlaceholderText.string
+                        // MARK: NAGRAM
+                        strongSelf.textNode.textField.accessibilityLabel = item.accessibilityLabel
                     }
                     
                     strongSelf.textNode.isUserInteractionEnabled = item.enabled

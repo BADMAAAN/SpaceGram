@@ -1,205 +1,127 @@
 # SpaceGram Device Runtime Audit
 
-Updated: 2026-09-20
+Updated: 2026-09-20. This replaces the earlier source-complete claims with
+separate implementation, compilation, automated-test and device evidence.
 
-This document distinguishes source-complete work from behavior that still needs
-an iPhone build. It must not be read as a device-test result.
+## Baseline and publication
 
-## Completed in this pass
+- Local `main`, saved `main@origin`, and the GitHub API agree on
+  `cde2035fa095c46356334265c7ba9dfbdadd6055`.
+- Baseline iPhone workflow #14 succeeded:
+  https://github.com/BADMAAAN/SpaceGram/actions/runs/35485267376
+- Installed iPhone source SHA: **UNKNOWN**. No crash log or connected Apple
+  device is available in this Windows session. The old report does not prove
+  which binary the user tested, or that a QR runtime crash was fixed.
+- `jj` 0.45.1 is installed through WinGet; its absolute executable path works.
+  Existing working changes were snapshotted as `6024bf2b`; a baseline diff and
+  operation ID are in the local temporary `spacegram-stabilization-20260920`
+  checkpoint directory. The 159 pre-existing whitespace changes are excluded
+  from this task's commits and remain in the working copy.
+- `qwengram_run7_fix.patch` stays untracked through the local exclude file.
+  SHA-256 before edits: `1A375A8973C3F8C9CDB6C15AD12B52D0D78681DEF9978F80C57232A6094AF0E0`.
+- GitHub CLI login is confirmed as BADMAAAN with repo/workflow access. No Git
+  CLI command, force push, release or PR is used.
+- This pass's compilation and publication results are recorded below once the
+  exact revision has completed CI. Queued/running is not BUILD-PASSED.
 
-### Product identity
+## P0: findings and implementation
 
-- The main app and all six extension plist fragments now expose `SpaceGram` as
-  `CFBundleDisplayName` / `CFBundleName`. The operating-system capsule obtains
-  its label from the active app or extension bundle metadata; no capsule-color
-  workaround is used.
-- The product keeps the prepared `SpaceGramAppIcon` default catalog and the
-  Moon, Earth, Mars, Sun, Saturn and Neptune alternate identifiers. The removed
-  `SpaceGram-Primary` catalog was not restored.
-- User-facing Qwen settings, assistant, summarizer and message actions were
-  removed. Their old storage keys remain dormant to avoid a destructive
-  migration.
-- Visible localization values are checked for Nagram, NGram, AyuGram, AuraGram,
-  Qwengram and Qwen. Internal compatibility identifiers, attribution and
-  migration keys are intentionally retained.
-- The hard-coded Chinese gallery action was replaced by Telegram's localized
-  `Conversation.ContextMenuStickerPackInfo` string (`Info` / `Информация`).
-- The separate edit/deleted-history viewer module and its entry points were
-  removed. History storage schemas remain compatible and are not wiped.
+| Area | Evidence and change | Acceptance status |
+| --- | --- | --- |
+| QR input/preview | `SpaceGramQRImageItemNode.init` ran in the ItemList worker, then accessed a view-backed `ASImageNode.layer`. AsyncDisplayKit enforces main-thread loading. Layer configuration now runs in `didLoad`; input title is empty with a separate accessibility label. Controller capture is weak. Generator bounds UTF-8 to 2,000 bytes, integer scale 1...16, and adds an opaque four-module quiet zone. | IMPLEMENTED; actual user's crash cause remains a hypothesis pending a matching crash stack. DEVICE-VERIFICATION-REQUIRED. |
+| Branding | Baseline app/extension plist fragments already say SpaceGram, localized main-app display names inspected also say SpaceGram. No supplied screenshot identifies the reported blue NAGRAM surface. Searches are not visual proof and the previous claim that it must be a system capsule is withdrawn. | BLOCKED: need the actual offending image/live surface and its app context; IPA inspection alone cannot establish the source. |
+| Ghost presence | Existing aggregate master/settings and typing/group-call behavior retained. `updatePresence` now checks current policy immediately before forming the RPC, including timer/queued callback paths. | IMPLEMENTED; second-account online/typing/read observation required. No universal invisibility claim. |
+| Read on Interact | Removed reads at send/reaction enqueue. Regular cloud delivery events in the open chat trigger the guarded read; scheduled ACKs do not. Non-thread reactions read only after successful server response. Policy is rechecked after asynchronous UI delivery. Forum/thread reaction acknowledgment remains unimplemented; paid reactions are unchanged. | IMPLEMENTED for stated paths; DEVICE-VERIFICATION-REQUIRED. |
+| Auto delay | Existing persisted provenance marker, corrected network time and post-upload submit hooks retained. Margin is 30 seconds (10-second server threshold plus 20-second transit/rounding budget). Removed size-based additional delays. Explicit schedules retain their date. Auto delay no longer opens the scheduled-message screen. | IMPLEMENTED; network delay can exceed the margin. Unsupported-message rejection/draft-preserving choice remains an open P0 gap; existing unsupported cases still bypass auto scheduling. Exactly-once/offline/edit/cancel require server/device tests. |
+| Ordinary Ghost navigation | Initial construction uses the same upper-bound/top anchor as native scroll-to-end, after checking explicit message/pinned targets. Existing controller scroll is untouched; no read-state mutation. | IMPLEMENTED; DEVICE-VERIFICATION-REQUIRED for holes, restored chats and archive-only pages. |
+| Deleted text | Removed the appended emoji/italic deletion text. The common native timestamp formatter renders a small localized Deleted label from the local presentation attribute. Original caption/entities remain separate. | IMPLEMENTED; themes/Dynamic Type need device verification. |
+| Deleted media | Confirmed baseline defect: overlay always emitted `media: []` even with saved assets. It now resolves actual archive files, leases them through sandbox hard links, reconstructs native photo/video/voice/round/file media and opens them standalone instead of querying nonexistent Postbox IDs. Missing full files use a document placeholder without changing caption text. Spoilers, edited timestamp and album grouping are retained in optional v2 fields. | IMPLEMENTED; native renderer/playback is not yet device-proven. Unsupported/contact/complex media and old incomplete metadata are not fully reconstructed. |
+| Media lifetime | Account-scoped native full-fetch completion now requests an archive capture, including while another chat is open. Existing bounded file-descriptor pin, serial copy/hash and atomic publication are reused. Pending jobs attach only to their existing capture UUID. Deletion can reuse an earlier capture of the same media identity. | IMPLEMENTED; partial/ranged streaming, outgoing local-to-cloud reconciliation, delete-during-upload and force-quit matrices remain unverified. No background keepalive or extra download is added. |
+| Launch/auth/icons/send | No identity, signing credential, icon artwork or auth-store migration. | DEVICE-VERIFICATION-REQUIRED; seven-icon nil/default mapping unchanged. |
 
-### Settings and tools
+### Known archive boundaries
 
-- Telegram Settings has one SpaceGram product entry with the SpaceGram S art.
-- The account switcher is still Telegram's native switcher. Its source anchor
-  is now the navigation bar instead of the full settings controller view, which
-  previously placed the bottom-anchored card near the lower safe area.
-- QR generation moved to a bounded `SpaceGramQRGenerator`: non-empty UTF-8 is
-  required, invalid extents/scales fail without trapping, rendering uses a
-  reusable `CIContext`, and the result can be shared/saved through the system
-  activity sheet. Empty, UTF-8 and long-ish input have service tests.
-- Translator no longer depends on Qwen. It uses the retained translation
-  service, localized RU/EN labels, vertical source/target lists and a checkmark
-  selection model. Failures never replace the input with empty text.
-- App-icon UI selection changes only after a successful
-  `setAlternateIconName` callback. Default maps to `nil`; error leaves the old
-  selection in place and displays a localized alert. Debug builds log requested,
-  previous and resulting identifiers and the callback error.
-- About SpaceGram now covers Ghost Mode, Read on Interact, Delayed Send,
-  deleted/history retention, Media Archive, translator/QR tools, Message Shot,
-  protected saves, opt-in message actions, icons and iOS background limits. It
-  includes the app version/build and contains no Qwen/product-tier branding.
+Collection 1009, schema-v1/v2 reading, account Postbox separation, asset UUIDs,
+512 MiB/128 MiB/1,000-asset/30-day defaults and the existing secret-chat
+exclusion remain. New metadata fields are optional; runtime lease paths are not
+serialized. Only complete locally received files are captured. The existing
+archive switch explicitly discloses timed-media retention. Transport/TTL
+acknowledgments are unchanged.
 
-The original QR exception cannot be reproduced on this Windows host. The
-confirmed unsafe path was the controller-local Core Image/render-update path,
-which had no validated boundary and mixed generation with list updates. It has
-been replaced rather than patched around. The exact iOS exception type still
-must be confirmed from the next device crash log if any crash remains.
+The existing archive list is bounded to 1,000 records, but still scans that
+collection; this pass does not claim indexed pagination. Stale lease links from a terminated process are cleaned on the next archive use. Thread/reply reconstruction, detailed
+missing/evicted/corrupt status presentation, ranged-download capture and a full
+outgoing-resource reconciliation matrix remain open work. Current native
+missing-media placeholders do not distinguish every failure reason.
 
-### Ghost Mode
+## Build provenance and validation
 
-- `spacegram.settings.ghostModeEnabled` is the persisted master state. Settings
-  and the chat-list quick button read and mutate this same value.
-- Migration version 2 enables the new master only when an existing suppression
-  preference was already enabled. First-time master opt-in enables the complete
-  preset; later master toggles preserve customized subsettings.
-- Read, story, presence and activity policies require both the master and their
-  own subsetting. Group-call speaking remains exempt from activity suppression.
-- `Read on Interact` does not run on chat open/view/typing. It applies the latest
-  visible incoming read index only at an actual send enqueue or after all
-  reaction guards pass.
-- Presence suppression keeps MTProto connected, sends an explicit offline
-  status on transition, cancels the online refresh timer and optionally repeats
-  offline publication every 25 seconds.
-- A targeted send-pipeline audit found no second `account.updateStatus` caller:
-  foreground presence flows through `ManagedAccountPresence`, while typing,
-  recording and upload activity flows through `ManagedLocalInputActivities`.
-  With the Ghost presence/activity subsettings enabled, the former cannot
-  publish online and the latter drops ordinary chat activity at both the live
-  signal and RPC boundaries. Group-call speaking remains intentionally exempt.
+- Make.py stamps full source SHA, UTC build time and local dirty state into
+  `Telegram/SpaceGramBuildInfo.plist` before Bazel. About shows the short SHA.
+- CI verifies checkout SHA against GITHUB_SHA and checks embedded IPA metadata;
+  `build-info.json` is published beside the IPA. API credentials and device/account
+  identifiers are not included in this diagnostic artifact.
+- Existing manual `SpaceGram iPhone Test Build` signing/bundle settings are
+  unchanged (fake-profile, resignable debug_arm64 intermediate artifact).
+  This is not a verified full-profile device installation. Windows has no
+  xcrun/Keychain or paired-device inspection; build-input is empty here.
+  Bazel-rule directories are populated. No concurrency cancellation is configured.
+- dSYM generation and symbol artifact upload are enabled. The workflow also
+  runs SpaceGram simulator XCTest after the IPA is built, through Make.py.
+- AUTOMATED-TEST-PASSED (Windows): `python tools/check_spacegram_consistency.py`,
+  `python tools/check_spacegram_preflight.py`, and
+  `python tools/test_spacegram_feature_contracts.py` (16 tests), plus `python tools/test_spacegram_build_info.py` (3 identity-verification tests). Pillow pixel
+  checks, five catalogs, 775 BUILD files, 33 plists and 198 asset JSONs pass.
+  These are portable/static contracts, not Swift compilation or functional iOS tests.
+- Added XCTest: QR decode for text/URL/Cyrillic/emoji/multiline/limit, rejected
+  byte/scale boundaries, the actual preview node constructed off-main then loaded
+  on main repeatedly, updated scheduling margins, exact copied text, unavailable
+  media placeholder, and a live media lease surviving archive clear.
+  XCTest status remains NOT RUN until CI results are available.
 
-### Delayed Send
+## P1/P2
 
-- Delayed Send is active when the Ghost master and Delayed Send are on; it no
-  longer requires every Ghost subsetting to be enabled.
-- Messages use Telegram's native scheduled-message attribute, preserving the
-  native pending/edit/cancel/reconnect UI instead of an in-memory timer.
-- Device wall time was replaced by Telegram's corrected network time.
-- Text and every media estimate have a minimum schedule offset of 12 seconds.
-  Media uses a conservative size estimate and a bounded 4.5 seconds/MiB offset.
-- Explicit user schedules, secret chats, bots, paid messages, suggested posts,
-  story replies and autoremove messages are not rewritten.
-- SpaceGram-created schedule attributes now carry a persisted minimum-delay
-  marker. Immediately after upload and before every pending/standalone send RPC,
-  the planned date is compared with fresh Telegram server time and moved to at
-  least 12 seconds ahead if it became too close or passed.
-- Ordinary Telegram scheduled messages have no marker and remain unchanged.
-  Native random ids, pending-message state and retry paths are preserved, so
-  the recalculation does not create a second outgoing message.
+Existing independent opt-in actions, Message Shot renderer, translator,
+Accounts anchor and icon choices were preserved. They are not newly declared
+runtime-verified by this pass. Forward-as-new remains unimplemented; the retained
+forward-without-name action retains Telegram forwarding semantics. Outgoing
+translation is global, not per-chat. Full draft-race/entity/account-switch,
+inline regex/network consent and ID-copy acceptance work remains open.
+SpaceGram Cosmic and an approved wallpaper registry are not implemented. P2 is
+held behind the unresolved P0/device checks; no unapproved artwork is added.
 
-Post-upload timing and absence of online exposure are source-complete but still
-require the slow-upload and second-account iPhone matrix before runtime
-acceptance.
+## Reference mapping (inspection only, no foreign module copied)
 
-### Protected media and outgoing translation
+| Requirement | Inspected source revision/symbol | SpaceGram hook/change |
+| --- | --- | --- |
+| Runtime Ghost gate | Novagramorg/iOS main `268aa3be43a4f286d942162765d6e1f5740d3347`, `isFenixuzGhostModeActive` | Existing `SpaceGramGhostPolicy`; fresh presence-RPC gate |
+| Read on send distinction | Same SHA, `fenixuzForceReadHistory` | Unconditional direct readHistory bypass deliberately not copied; success-only opt-in paths |
+| Presence worker | AyuGram/AyuGramDesktop dev `db3b9891cb0b04ebb7d8c0e71ada3bcc669b910a`, `GhostModeAccountSettings`, `AyuWorker::runOnce` | Existing account presence manager; no three-second cross-client online/offline race |
+| Scheduling | Same Ayu SHA, `api_sending.cpp`/`applyGhostScheduling` and `ayu/utils/telegram_helpers.cpp` | Existing provenance attribute and post-upload server-clock adjustment; bounded 30-second margin |
+| Deleted storage | Same Ayu SHA, `AyuMessages::map`, `addDeletedMessage`, `getDeletedMessages` | Existing Postbox archive retained; local media bridge added |
+| Message Shot | Same Ayu SHA, `AyuFeatures::MessageShot::Make` in `features/message_shot/message_shot.cpp` | Existing SpaceGram bounded renderer preserved; no screenshot/watermark transplant |
 
-- **SOURCE COMPLETE / DEVICE VERIFICATION REQUIRED:** the opt-in protected-media
-  action now covers already-local photos and ordinary videos through Telegram's
-  camera-roll pipeline, and documents, animations, voice messages and round
-  videos through the lifetime-managed Files exporter. It appears only for a
-  protected, non-secret message whose primary resource status is local. Paid or
-  otherwise unavailable resources are not fetched around Telegram access
-  control; membership, access hashes and paywalls are not bypassed.
-- Forward without name remains a Telegram forward-options flow, is now a
-  separate SpaceGram action defaulting off, and does not claim to recreate the
-  media as a new upload.
-- Translate-before-send remains opt-in and uses the existing non-Qwen
-  translation service. The translated draft is shown before the user sends it;
-  empty/failing translations leave the draft intact. The current preference is
-  global rather than per-chat, so per-chat policy remains future work.
+Also consulted the supplied Ghost/features docs, Telegram scheduled-messages
+and inline-bot API documentation, and Apple's background notification page.
+Public-source behavior is not proof of an installed reference binary.
 
-### Message Shot and custom message menu
+## Device acceptance for the new SHA
 
-- **SOURCE COMPLETE / DEVICE VERIFICATION REQUIRED:** `SpaceGramMessageShot`
-  is a dedicated `UIGraphicsImageRenderer` module; it never snapshots the chat
-  view hierarchy. It renders sender/initials, timestamp, formatted text, reply
-  preview, photos/video/sticker cached thumbnails, and bounded placeholders for
-  files, voice, round video and unsupported media against the current theme and
-  locally available wallpaper image/color.
-- Rendering is capped at 50 messages, 1440 points wide, 8192 points high and a
-  20-megapixel bitmap budget. Larger selections are truncated with an omitted
-  count instead of allocating an unbounded image.
-- `SpaceGramMessageAction` is the data-driven action registry. Every custom
-  action has a stable id, localization key, symbol, persisted preference,
-  implementation state and applicability predicate. All custom actions default
-  off. Message Shot, Save Protected Media and Forward without Name are wired;
-  Forward as New is visibly marked not implemented in Settings and never
-  appears in the message menu.
-- Settings exposes `SpaceGram → Advanced → Message Menu`. Native Telegram
-  actions remain in the pre-existing managed list and are not gated by the new
-  SpaceGram preferences.
-
-## Not completed
-
-- **PARTIAL — Deleted live-chat overlay:** persisted server-delete snapshots are
-  now observed per account and merged into the normal chat presentation in
-  original timestamp order. The overlay deduplicates live server ids, is
-  thread/page bounded, survives relaunch through the existing Postbox archive,
-  uses local-namespace presentation messages marked `Deleted` / `Удалено`, and
-  is always passed to the UI as read. It never inserts a fake server message or
-  modifies Postbox unread state. Text, supported formatting and sender peers
-  are restored when available. Deleted media currently shows a graceful local
-  archive/unavailable label; rendering the retained photo/file bytes directly
-  in the bubble is **NOT IMPLEMENTED** and still requires a lifetime-safe media
-  resource bridge.
-- **NOT IMPLEMENTED — SpaceGram Cosmic:** no theme or approved wallpaper preset
-  exists.
-- **NOT IMPLEMENTED — Forward as New:** the retained repeat/forward paths still
-  use Telegram forwarding semantics. No local-content re-upload path is
-  advertised as a new message.
-- **PARTIAL — outgoing translator:** the safe opt-in draft translation exists,
-  but the preference is not per-chat.
-- **DEVICE VERIFICATION REQUIRED:** no physical-device build, install,
-  second-account presence matrix, or deleted-overlay runtime pass was run.
-
-These items must remain described as unavailable, not partially advertised in
-the UI.
-
-## Validation performed
-
-- `python tools/check_spacegram_consistency.py`
-- `python tools/check_spacegram_preflight.py`
-- `python tools/test_spacegram_feature_contracts.py`
-
-At the time of this audit these checks pass. They cover BUILD ownership,
-localization keys/branding, plist parsing, asset declarations, icon contracts,
-Ghost source-of-truth/presence boundaries, delayed-send post-upload RPC wiring
-deleted-overlay ownership/merge boundaries, Message Shot bounds, custom-action
-default/applicability rules, protected exporter routing, outgoing-translation
-failure behavior and portable service contracts.
-Swift compilation and iOS runtime behavior are not covered on this host. Swift
-unit coverage additionally includes slow upload, too-close/past dates,
-reconnect recalculation, deterministic retry behavior, overlay page boundaries,
-local identity and missing-media fallback; it requires the macOS/iOS test
-runner. Message Shot unit coverage includes one/many text messages, photo,
-unsupported-media fallback, empty input and bitmap bounds.
-
-## Required next iPhone pass
-
-1. Confirm the system capsule says SpaceGram and uses the S artwork.
-2. Generate/share QR for ASCII, Cyrillic, emoji and long text.
-3. Switch through every alternate icon and return to Default.
-4. Compare Ghost off, Ghost on/delay off and Ghost on/delay on from a second
-   account for online, typing, reads and delivery timing.
-5. Exercise text and slow media delayed sends, including edit, cancel and
-   reconnect; verify the final scheduled time remains at least 12 seconds after
-   upload completion.
-6. Confirm protected-photo/video save only for content the account can already
-   view.
-7. Delete text/formatted/media messages from a second account; confirm the text
-   overlay remains in chronology after pagination and relaunch, has no unread
-   effect, and missing media uses the fallback without crashing.
-8. Enable Message Shot, create one- and multi-message images, verify current
-   colors/wallpaper and share-sheet presentation, then test the 50-message cap.
-9. Confirm all SpaceGram message actions are absent by default, each toggle is
-   independent, and protected document/animation/voice/round-video export uses
-   only already-local resources.
+1. Upgrade with the same signing identity/bundle ID without deleting app data;
+   record About version/build/SHA/time. Verify login and icon selection remain.
+2. QR: ASCII, URL, Cyrillic, emoji, multiline, empty/limit/oversize, repeated
+   generation, Back, share and Photos permissions; decode the saved image.
+3. With a separate observer and other sessions quiet, record offline baseline;
+   test Ghost OFF/full ON, Read on Interact OFF/ON, relaunch and account switch.
+4. Send text/photo/large video/voice/round through slow upload and reconnect;
+   inspect queue date, edit/cancel, delivery with app closed and exactly one copy.
+5. Open a chat with old unread messages: newest first without read; then explicit
+   search/reply/pin/deep link, manual scrolling and return from gallery.
+6. Receive/edit/delete photo/video/voice/round/file/album; test ready vs thumbnail,
+   offline reopen, two accounts, archive cleanup and deletion during copying.
+7. Check compact Deleted/edited metadata in both themes and large text, launch,
+   normal sends/edits/replies/forwards/calls and all seven icon choices.
+8. If QR crashes, export the matching SpaceGram .ips from iPhone Settings >
+   Privacy & Security > Analytics & Improvements > Analytics Data, with build
+   number, timestamp and reproduction steps. Match binary UUID to the dSYM;
+   do not commit raw crash logs or personal screenshots.

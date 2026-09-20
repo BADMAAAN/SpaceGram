@@ -965,6 +965,8 @@ def resolve_watch_provisioning_profile(arguments, base_path):
 
 
 def build(bazel, arguments):
+    # MARK: NAGRAM — stamp source identity before Bazel snapshots its inputs.
+    subprocess.run([sys.executable, 'tools/spacegram_build_info.py'], check=True)
     bazel_command_line = BazelCommandLine(
         bazel=bazel,
         override_bazel_version=arguments.overrideBazelVersion,

@@ -43,6 +43,8 @@ public struct SpaceGramHistorySnapshot: Codable, Equatable {
     public var replyMetadata: [String: String]?
     public var threadMetadata: [String: String]?
     public var media: [SpaceGramHistoryMediaMetadata]
+    public var groupingKey: Int64?
+    public var hasMediaSpoiler: Bool?
 
     public init(text: String, originalMessageTimestamp: Int64) {
         self.text = text
@@ -75,6 +77,11 @@ public struct SpaceGramHistoryMediaMetadata: Codable, Equatable {
     public var duration: Double?
     public var width: Int32?
     public var height: Int32?
+    // Optional v2 additions; old snapshots continue to decode unchanged.
+    public var mimeType: String?
+    public var isVoice: Bool?
+    public var isInstantVideo: Bool?
+    public var isAnimated: Bool?
     // Descriptive identifiers only: no access hashes, credentials, file references,
     // local paths, resource retention, or encoded media payloads.
     public var identifiers: [String: String]
@@ -113,6 +120,7 @@ public struct SpaceGramHistoryEvent: Codable, Equatable {
     // V2 fields are optional so v1 records decode without rewriting on reads.
     public var mediaCaptureId: String?
     public var mediaAssetIds: [String]?
+    public var mediaResourceIds: [String]?
 
     public init(type: SpaceGramHistoryEventType, source: String, reason: SpaceGramHistoryReason, observedTimestamp: Int64, revisionNumber: Int64? = nil) {
         self.type = type

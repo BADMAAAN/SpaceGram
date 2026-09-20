@@ -1070,7 +1070,8 @@ extension ChatControllerImpl {
                 let _ = (strongSelf.shouldDivertMessagesToScheduled(messages: transformedMessages)
                 |> deliverOnMainQueue).start(next: { shouldDivert in
                     let signal: Signal<[MessageId?], NoError>
-                    var shouldOpenScheduledMessages = delayedMessages.1
+                    // MARK: NAGRAM — only explicit scheduling opens the queue.
+                    var shouldOpenScheduledMessages = false
                     if forwardSourcePeerIds.count > 1 {
                         var forwardedMessages = forwardedMessages
                         if shouldDivert {
@@ -5273,6 +5274,11 @@ extension ChatControllerImpl {
                         return
                     }
                     let inAppNotificationSettings = self.context.sharedContext.currentInAppNotificationSettings.with { $0 }
+                    // MARK: NAGRAM — a scheduled ACK is not delivery. Never
+                    // acknowledge reads merely because an upload was queued.
+                    if eventGroup.contains(where: { $0.id.namespace == Namespaces.Message.Cloud && !$0.isPendingProcessing }) {
+                        self.chatDisplayNode.historyNode.spaceGramReadVisibleMessagesOnInteraction()
+                    }
                     if inAppNotificationSettings.playSounds, let firstEvent = eventGroup.first, !firstEvent.isSilent {
                         serviceSoundManager.playMessageDeliveredSound()
                     }

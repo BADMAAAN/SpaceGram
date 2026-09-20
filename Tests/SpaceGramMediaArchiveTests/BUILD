@@ -17,6 +17,7 @@ swift_library(
         "//SpaceGram/Privacy:SpaceGramPrivacy",
         "//SpaceGram/QR:SpaceGramQR",
         "//SpaceGram/Settings:SpaceGramSettings",
+        "//SpaceGram/SettingsUI:SpaceGramSettingsUI",
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         "//submodules/Postbox:Postbox",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
