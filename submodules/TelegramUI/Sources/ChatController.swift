@@ -5132,10 +5132,14 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 guard let self, let message else {
                     return
                 }
+                // MARK: NAGRAM — the opt-in protected-media action also uses
+                // this lifetime-managed exporter for documents, animations,
+                // voice messages and round videos already available locally.
                 var file: TelegramMediaFile?
                 for media in message.media {
-                    if let mediaFile = media as? TelegramMediaFile, mediaFile.isMusic {
+                    if let mediaFile = media as? TelegramMediaFile {
                         file = mediaFile
+                        break
                     }
                 }
                 guard let file else {

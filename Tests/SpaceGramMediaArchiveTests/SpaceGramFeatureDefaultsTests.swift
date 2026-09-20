@@ -39,4 +39,34 @@ final class SpaceGramFeatureDefaultsTests: XCTestCase {
         XCTAssertTrue(SpaceGramMigrationCoordinator.migrateDefaults(defaults))
         XCTAssertFalse(defaults.bool(forKey: "spacegram.settings.saveEditedMessages"))
     }
+
+    func testCustomMessageActionsDefaultOffAndPersist() {
+        let action = SpaceGramMessageAction.messageShot
+        let key = "spacegram.settings.messageAction.messageShot"
+        let original = UserDefaults.standard.object(forKey: key)
+        defer {
+            if let original {
+                UserDefaults.standard.set(original, forKey: key)
+            } else {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+        UserDefaults.standard.removeObject(forKey: key)
+        XCTAssertFalse(SpaceGramSettings.shared.isMessageActionEnabled(action))
+        SpaceGramSettings.shared.setMessageActionEnabled(action, enabled: true)
+        XCTAssertTrue(SpaceGramSettings.shared.isMessageActionEnabled(action))
+    }
+
+    func testCustomMessageActionApplicability() {
+        let empty = SpaceGramMessageActionContext(hasMessages: false, hasRenderableContent: false, hasAvailableProtectedMedia: false, canForward: false)
+        XCTAssertFalse(SpaceGramMessageAction.messageShot.isApplicable(to: empty))
+        XCTAssertFalse(SpaceGramMessageAction.saveProtectedMedia.isApplicable(to: empty))
+        XCTAssertFalse(SpaceGramMessageAction.forwardAsNew.isApplicable(to: empty))
+
+        let available = SpaceGramMessageActionContext(hasMessages: true, hasRenderableContent: true, hasAvailableProtectedMedia: true, canForward: true)
+        XCTAssertTrue(SpaceGramMessageAction.messageShot.isApplicable(to: available))
+        XCTAssertTrue(SpaceGramMessageAction.saveProtectedMedia.isApplicable(to: available))
+        XCTAssertTrue(SpaceGramMessageAction.forwardWithoutName.isApplicable(to: available))
+        XCTAssertFalse(SpaceGramMessageAction.forwardAsNew.isApplicable(to: available))
+    }
 }

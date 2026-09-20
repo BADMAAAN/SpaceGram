@@ -149,6 +149,55 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertNotIn("SpaceGramSettings.shared.ghostMode.isFull", chat_list)
         self.assertIn("guard settings.ghostMode.enabled, settings.delayedSend", delayed)
 
+    def test_message_shot_and_custom_menu_are_bounded_and_opt_in(self):
+        renderer = (ROOT / "SpaceGram/MessageShot/SpaceGramMessageShotRenderer.swift").read_text(encoding="utf-8")
+        registry = (ROOT / "SpaceGram/Settings/SpaceGramMessageAction.swift").read_text(encoding="utf-8")
+        menu = (ROOT / "submodules/TelegramUI/Sources/ChatInterfaceStateContextMenus.swift").read_text(encoding="utf-8")
+        settings = (ROOT / "SpaceGram/SettingsUI/SpaceGramMessageMenuSettingsController.swift").read_text(encoding="utf-8")
+
+        self.assertIn("maximumMessages: Int = 50", renderer)
+        self.assertIn("maximumHeight: CGFloat = 8192.0", renderer)
+        self.assertIn("maximumPixelCount: CGFloat = 20_000_000.0", renderer)
+        self.assertNotIn("drawHierarchy", renderer)
+        self.assertIn("UIGraphicsImageRenderer", renderer)
+
+        self.assertIn("public enum SpaceGramMessageAction", registry)
+        self.assertIn("object(forKey: action.preferenceKey) != nil", registry)
+        self.assertIn("case .forwardAsNew:\n            return false", registry)
+        legacy_registry = (ROOT / "SpaceGram/Enhancements/Settings/NagramMessageMenuSettings.swift").read_text(encoding="utf-8")
+        for custom_id in (".saveStickerToCameraRoll", ".repeat", ".repeatWithoutQuote", ".saveToSavedMessages", ".forwardWithoutQuote", ".viewAuthorMessages", ".selectFromAuthor"):
+            self.assertIn(custom_id, legacy_registry[legacy_registry.index("nagramDefaultDisabledMessageMenuItemIds"):])
+        self.assertIn("action.isApplicable(to: spaceGramActionContext)", menu)
+        self.assertIn("SpaceGramMessageShotRenderer().render", menu)
+        self.assertNotIn("Qwen", settings)
+
+        for native_id in (".reply", ".copy", ".edit", ".pin", ".forward", ".select", ".delete"):
+            self.assertIn(f"actions.append({native_id}", menu)
+        for forbidden in ("SpaceGram AI", "Qwen", "Assistant"):
+            self.assertNotIn(forbidden, menu)
+
+    def test_outgoing_translation_is_opt_in_and_preserves_draft_on_failure(self):
+        defaults = (ROOT / "SpaceGram/Enhancements/Settings/NagramSettings.swift").read_text(encoding="utf-8")
+        send_options = (ROOT / "submodules/TelegramUI/Sources/Chat/ChatMessageDisplaySendMessageOptions.swift").read_text(encoding="utf-8")
+        self.assertIn('@NagramDefault("nagram.translateBeforeSend", false)', defaults)
+        self.assertIn("if NagramSettings.shared.translateBeforeSend", send_options)
+        self.assertIn("!translatedText.trimmingCharacters", send_options)
+        self.assertIn("presentTranslationFailed(selfController)", send_options)
+        update = send_options.index("withUpdatedEffectiveInputState")
+        translation_result = send_options.index("guard let (translatedText, translatedEntities) = result")
+        self.assertGreater(update, translation_result, "the draft must change only after a non-empty translation")
+
+    def test_protected_media_action_requires_local_resource_and_supports_files(self):
+        menu = (ROOT / "submodules/TelegramUI/Sources/ChatInterfaceStateContextMenus.swift").read_text(encoding="utf-8")
+        controller = (ROOT / "submodules/TelegramUI/Sources/ChatController.swift").read_text(encoding="utf-8")
+        exporter = (ROOT / "submodules/TelegramUI/Sources/SaveMediaToFiles.swift").read_text(encoding="utf-8")
+        self.assertIn("resourceAvailable && serverCopyProtected", menu)
+        self.assertIn("!message.containsSecretMedia", menu)
+        self.assertIn("case .files", menu)
+        self.assertIn("controllerInteraction.saveMediaToFiles(message.id)", menu)
+        self.assertIn("if let mediaFile = media as? TelegramMediaFile", controller)
+        self.assertIn("UTType(mimeType:", exporter)
+
 
 if __name__ == "__main__":
     unittest.main()

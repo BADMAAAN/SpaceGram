@@ -8,6 +8,7 @@ import OverlayStatusController
 import LegacyMediaPickerUI
 import SaveToCameraRoll
 import PresentationDataUtils
+import UniformTypeIdentifiers
 
 func saveMediaToFiles(context: AccountContext, fileReference: FileMediaReference, present: @escaping (ViewController, Any?) -> Void) -> Disposable {
     var title: String?
@@ -67,7 +68,10 @@ func saveMediaToFiles(context: AccountContext, fileReference: FileMediaReference
                 let audioUrl = URL(fileURLWithPath: symlinkPath)
                 let audioAsset = AVURLAsset(url: audioUrl)
                 
-                var fileExtension = "mp3"
+                // MARK: NAGRAM — protected documents, animations, voice and
+                // round-video exports keep a useful extension even without a
+                // server filename.
+                var fileExtension = UTType(mimeType: fileReference.media.mimeType)?.preferredFilenameExtension ?? "dat"
                 if let filename = fileReference.media.fileName {
                     if let dotIndex = filename.lastIndex(of: ".") {
                         fileExtension = String(filename[filename.index(after: dotIndex)...])
@@ -102,6 +106,9 @@ func saveMediaToFiles(context: AccountContext, fileReference: FileMediaReference
                             filename = String(filename[..<dotIndex])
                         }
                         nameComponents.append(filename)
+                    }
+                    if nameComponents.isEmpty {
+                        nameComponents.append("SpaceGram-\(fileReference.media.fileId.id)")
                     }
                 }
                 if !nameComponents.isEmpty {

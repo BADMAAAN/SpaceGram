@@ -31,6 +31,8 @@ import SpaceGramStrings
 import TranslateUI
 // MARK: NAGRAM — SpaceGram master switch.
 import SpaceGramSettings
+// MARK: NAGRAM — bounded, view-hierarchy-independent Message Shot renderer.
+import SpaceGramMessageShot
 // MARK: NAGRAM
 import DebugSettingsUI
 import ChatPresentationInterfaceState
@@ -127,6 +129,191 @@ private func nagramCleanMessageMenuSeparators(_ items: [ContextMenuItem]) -> [Co
         result.removeLast()
     }
     return result
+}
+
+// MARK: NAGRAM — SpaceGram custom message actions are opt-in and evaluated in
+// one registry pass so native Telegram actions remain untouched.
+private func spaceGramMessageShotInitials(_ title: String) -> String {
+    return title.split(separator: " ").prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
+}
+
+private func spaceGramMessageShotText(_ message: EngineRawMessage, color: UIColor) -> NSAttributedString {
+    let result = NSMutableAttributedString(string: message.text, attributes: [
+        .font: Font.regular(16.0),
+        .foregroundColor: color,
+    ])
+    guard let entities = message.attributes.first(where: { $0 is TextEntitiesMessageAttribute }) as? TextEntitiesMessageAttribute else {
+        return result
+    }
+    for entity in entities.entities {
+        let range = NSRange(location: entity.range.lowerBound, length: entity.range.count)
+        guard range.location >= 0, range.length >= 0, NSMaxRange(range) <= result.length else {
+            continue
+        }
+        switch entity.type {
+        case .Bold:
+            result.addAttribute(.font, value: Font.semibold(16.0), range: range)
+        case .Italic:
+            result.addAttribute(.font, value: Font.italic(16.0), range: range)
+        case .Code, .Pre(_):
+            result.addAttribute(.font, value: Font.monospace(15.0), range: range)
+        case .Strikethrough:
+            result.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        case .Underline:
+            result.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        case .Url, .TextUrl(_):
+            result.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        default:
+            break
+        }
+    }
+    return result
+}
+
+private func spaceGramMessageShotMedia(_ message: EngineRawMessage, language: String, image: UIImage?) -> SpaceGramMessageShotMedia? {
+    for media in message.effectiveMedia {
+        if media is TelegramMediaImage {
+            return SpaceGramMessageShotMedia(kind: .photo, title: ngI18n("SpaceGram.MessageShot.Photo", language), image: image)
+        } else if let file = media as? TelegramMediaFile {
+            if file.isInstantVideo {
+                return SpaceGramMessageShotMedia(kind: .roundVideo, title: ngI18n("SpaceGram.MessageShot.RoundVideo", language), image: image)
+            } else if file.isVoice {
+                return SpaceGramMessageShotMedia(kind: .voice, title: ngI18n("SpaceGram.MessageShot.Voice", language), image: nil)
+            } else if file.isSticker {
+                return SpaceGramMessageShotMedia(kind: .sticker, title: ngI18n("SpaceGram.MessageShot.Sticker", language), image: image)
+            } else if file.isVideo {
+                return SpaceGramMessageShotMedia(kind: .video, title: ngI18n("SpaceGram.MessageShot.Video", language), image: image)
+            } else {
+                return SpaceGramMessageShotMedia(kind: .file, title: file.fileName ?? ngI18n("SpaceGram.MessageShot.File", language), image: image)
+            }
+        } else if !(media is TelegramMediaAction) {
+            return SpaceGramMessageShotMedia(kind: .unsupported, title: ngI18n("SpaceGram.MessageShot.Unsupported", language), image: nil)
+        }
+    }
+    return nil
+}
+
+private func spaceGramMessageShotThumbnailResource(_ message: EngineRawMessage) -> TelegramMediaResource? {
+    for media in message.effectiveMedia {
+        if let image = media as? TelegramMediaImage {
+            return largestImageRepresentation(image.representations)?.resource
+        } else if let file = media as? TelegramMediaFile {
+            return largestImageRepresentation(file.previewRepresentations)?.resource
+        }
+    }
+    return nil
+}
+
+private func spaceGramMessageShotImages(context: AccountContext, messages: [EngineRawMessage]) -> Signal<[UIImage?], NoError> {
+    let signals: [Signal<UIImage?, NoError>] = messages.prefix(50).map { message in
+        guard let resource = spaceGramMessageShotThumbnailResource(message) else {
+            return .single(nil)
+        }
+        return context.account.postbox.mediaBox.resourceData(resource, option: .complete(waitUntilFetchStatus: false))
+        |> take(1)
+        |> map { data in
+            guard data.complete else {
+                return nil
+            }
+            return UIImage(contentsOfFile: data.path)
+        }
+    }
+    return combineLatest(signals)
+}
+
+private func spaceGramMessageShotWallpaperImage(context: AccountContext, wallpaper: TelegramWallpaper) -> Signal<UIImage?, NoError> {
+    let resource: TelegramMediaResource?
+    switch wallpaper {
+    case let .image(representations, _):
+        resource = largestImageRepresentation(representations)?.resource
+    case let .file(file):
+        resource = file.file.resource
+    default:
+        resource = nil
+    }
+    guard let resource else {
+        return .single(nil)
+    }
+    return context.account.postbox.mediaBox.resourceData(resource, option: .complete(waitUntilFetchStatus: false))
+    |> take(1)
+    |> map { data in
+        guard data.complete else {
+            return nil
+        }
+        return UIImage(contentsOfFile: data.path)
+    }
+}
+
+private func spaceGramMessageShotItems(context: AccountContext, presentationData: PresentationData, messages: [EngineRawMessage], images: [UIImage?]) -> [SpaceGramMessageShotItem] {
+    let language = presentationData.strings.baseLanguageCode
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: language)
+    formatter.dateFormat = presentationData.dateTimeFormat.timeFormat == .military ? "HH:mm" : "h:mm a"
+    return messages.enumerated().map { index, message in
+        let outgoing = !message.effectivelyIncoming(context.account.peerId)
+        let colors = outgoing ? presentationData.theme.chat.message.outgoing : presentationData.theme.chat.message.incoming
+        let sender = message.author.map { EnginePeer($0).displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder) } ?? ""
+        var replyPreview: String?
+        if let reply = message.attributes.first(where: { $0 is ReplyMessageAttribute }) as? ReplyMessageAttribute,
+           let repliedMessage = message.associatedMessages[reply.messageId] {
+            replyPreview = repliedMessage.text.isEmpty ? ngI18n("SpaceGram.MessageShot.Unsupported", language) : repliedMessage.text
+        }
+        return SpaceGramMessageShotItem(
+            outgoing: outgoing,
+            sender: sender,
+            avatarInitials: spaceGramMessageShotInitials(sender),
+            timestamp: formatter.string(from: Date(timeIntervalSince1970: TimeInterval(message.timestamp))),
+            text: spaceGramMessageShotText(message, color: colors.primaryTextColor),
+            replyPreview: replyPreview,
+            media: spaceGramMessageShotMedia(message, language: language, image: index < images.count ? images[index] : nil)
+        )
+    }
+}
+
+private func spaceGramMessageShotStyle(_ presentationData: PresentationData, wallpaperImage: UIImage?) -> SpaceGramMessageShotStyle {
+    let incoming = presentationData.theme.chat.message.incoming
+    let outgoing = presentationData.theme.chat.message.outgoing
+    let backgroundColor: UIColor
+    switch presentationData.chatWallpaper {
+    case let .color(color):
+        backgroundColor = UIColor(rgb: color)
+    case let .gradient(gradient):
+        backgroundColor = gradient.colors.first.map { UIColor(rgb: $0) } ?? presentationData.theme.chat.inputPanel.panelBackgroundColor
+    case let .file(file):
+        backgroundColor = file.settings.colors.first.map { UIColor(rgb: $0) } ?? presentationData.theme.chat.inputPanel.panelBackgroundColor
+    default:
+        backgroundColor = presentationData.theme.chat.inputPanel.panelBackgroundColor
+    }
+    return SpaceGramMessageShotStyle(
+        backgroundColor: backgroundColor,
+        backgroundImage: wallpaperImage,
+        incomingBubbleColor: incoming.bubble.withWallpaper.fill.first ?? presentationData.theme.chat.inputPanel.panelBackgroundColor,
+        outgoingBubbleColor: outgoing.bubble.withWallpaper.fill.first ?? presentationData.theme.chat.inputPanel.panelBackgroundColor,
+        incomingTextColor: incoming.primaryTextColor,
+        outgoingTextColor: outgoing.primaryTextColor,
+        secondaryTextColor: incoming.secondaryTextColor,
+        accentColor: incoming.accentTextColor
+    )
+}
+
+private enum SpaceGramProtectedMediaSaveTarget {
+    case cameraRoll(AnyMediaReference, isVideo: Bool)
+    case files
+}
+
+private func spaceGramProtectedMediaSaveTarget(_ message: EngineRawMessage) -> SpaceGramProtectedMediaSaveTarget? {
+    for media in message.effectiveMedia {
+        if let image = media as? TelegramMediaImage, largestImageRepresentation(image.representations) != nil {
+            return .cameraRoll(ImageMediaReference.standalone(media: image).abstract, isVideo: false)
+        } else if let file = media as? TelegramMediaFile {
+            if file.isVideo && !file.isInstantVideo && !file.isAnimated {
+                return .cameraRoll(FileMediaReference.standalone(media: file).abstract, isVideo: true)
+            } else {
+                return .files
+            }
+        }
+    }
+    return nil
 }
 
 func canEditMessage(context: AccountContext, limitsConfiguration: EngineConfiguration.Limits, message: EngineRawMessage) -> Bool {
@@ -1426,7 +1613,73 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         }
         
         // MARK: NAGRAM force-copy — 原条件追加 && !forceCopyEnabled，开启后无视 content protection 允许复制
-        let isCopyProtected = (chatPresentationInterfaceState.copyProtectionEnabled || message.isCopyProtected()) && !NagramSettings.shared.forceCopyEnabled
+        let serverCopyProtected = chatPresentationInterfaceState.copyProtectionEnabled || message.isCopyProtected()
+        let isCopyProtected = serverCopyProtected && !NagramSettings.shared.forceCopyEnabled
+        let spaceGramActionMessages = (selectAll ? messages : [message]).sorted { lhs, rhs in
+            if lhs.timestamp != rhs.timestamp {
+                return lhs.timestamp < rhs.timestamp
+            }
+            return lhs.id.id < rhs.id.id
+        }
+        let protectedMediaSaveTarget = resourceAvailable && serverCopyProtected && !message.containsSecretMedia ? spaceGramProtectedMediaSaveTarget(message) : nil
+        let spaceGramActionContext = SpaceGramMessageActionContext(
+            hasMessages: !spaceGramActionMessages.isEmpty,
+            hasRenderableContent: spaceGramActionMessages.contains(where: { !$0.text.isEmpty || !$0.effectiveMedia.isEmpty }),
+            hasAvailableProtectedMedia: protectedMediaSaveTarget != nil,
+            canForward: data.messageActions.options.contains(.forward) && !isCopyProtected
+        )
+        for action in SpaceGramMessageAction.allCases where SpaceGramSettings.shared.isMessageActionEnabled(action) && action.isApplicable(to: spaceGramActionContext) {
+            switch action {
+            case .messageShot:
+                actions.append(.action(ContextMenuActionItem(text: ngI18n(action.titleKey, chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
+                    return UIImage(systemName: action.symbolName)?.withTintColor(theme.actionSheet.primaryTextColor, renderingMode: .alwaysOriginal)
+                }, action: { _, f in
+                    f(.dismissWithoutContent)
+                    let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                    let assets = combineLatest(
+                        spaceGramMessageShotImages(context: context, messages: spaceGramActionMessages),
+                        spaceGramMessageShotWallpaperImage(context: context, wallpaper: presentationData.chatWallpaper)
+                    )
+                    let _ = (assets
+                    |> deliverOnMainQueue).startStandalone(next: { images, wallpaperImage in
+                        do {
+                            let items = spaceGramMessageShotItems(context: context, presentationData: presentationData, messages: spaceGramActionMessages, images: images)
+                            let image = try SpaceGramMessageShotRenderer().render(items: items, style: spaceGramMessageShotStyle(presentationData, wallpaperImage: wallpaperImage))
+                            let activityController = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+                            if let window = context.sharedContext.applicationBindings.getTopWindow() {
+                                activityController.popoverPresentationController?.sourceView = window
+                                activityController.popoverPresentationController?.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.maxY - 1.0, width: 1.0, height: 1.0)
+                            }
+                            context.sharedContext.applicationBindings.presentNativeController(activityController)
+                        } catch {
+                            controllerInteraction.presentController(textAlertController(context: context, title: "SpaceGram", text: ngI18n("SpaceGram.MessageShot.Failed", presentationData.strings.baseLanguageCode), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), nil)
+                        }
+                    })
+                })))
+            case .saveProtectedMedia:
+                if let protectedMediaSaveTarget {
+                    actions.append(.action(ContextMenuActionItem(text: ngI18n(action.titleKey, chatPresentationInterfaceState.strings.baseLanguageCode), icon: { theme in
+                        return UIImage(systemName: action.symbolName)?.withTintColor(theme.actionSheet.primaryTextColor, renderingMode: .alwaysOriginal)
+                    }, action: { _, f in
+                        switch protectedMediaSaveTarget {
+                        case let .cameraRoll(mediaReference, isVideo):
+                            let _ = (saveToCameraRoll(context: context, userLocation: .peer(message.id.peerId), mediaReference: mediaReference)
+                            |> deliverOnMainQueue).startStandalone(completed: {
+                                Queue.mainQueue().after(0.2) {
+                                    let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                                    controllerInteraction.presentControllerInCurrent(UndoOverlayController(presentationData: presentationData, content: .mediaSaved(text: isVideo ? presentationData.strings.Gallery_VideoSaved : presentationData.strings.Gallery_ImageSaved), elevatedLayout: false, animateInAsReplacement: false, action: { _ in return true }), nil)
+                                }
+                            })
+                        case .files:
+                            controllerInteraction.saveMediaToFiles(message.id)
+                        }
+                        f(.default)
+                    })))
+                }
+            case .forwardAsNew, .forwardWithoutName:
+                break
+            }
+        }
         // MARK: NAGRAM — 复读：参考 Android Nagram 的 Repeat，按原消息转发回当前会话
         if !isScheduled, data.messageActions.options.contains(.forward), !isCopyProtected, canSendMessagesToChat(chatPresentationInterfaceState), chatPresentationInterfaceState.chatLocation.peerId != nil {
             actions.append(.repeat, .action(ContextMenuActionItem(text: ngI18n("Nagram.MessageMenu.Item.repeat", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), icon: { theme in
@@ -2081,13 +2334,16 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     interfaceInteraction.forwardMessages(messagesToForward)
                     f(.dismissWithoutContent)
                 })))
-                // MARK: NAGRAM — 无引用转发：复用原转发流程，预置隐藏发送者名称。
-                actions.append(.forwardWithoutQuote, .action(ContextMenuActionItem(text: ngI18n("Nagram.MessageMenu.Item.forwardWithoutQuote", context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), icon: { theme in
-                    return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.actionSheet.primaryTextColor)
-                }, action: { _, f in
-                    interfaceInteraction.forwardMessagesWithOptions(messagesToForward, ChatInterfaceForwardOptionsState(hideNames: true, hideCaptions: false, unhideNamesOnCaptionChange: false))
-                    f(.dismissWithoutContent)
-                })))
+                // MARK: NAGRAM — SpaceGram custom action: opt-in and additive.
+                let forwardWithoutName = SpaceGramMessageAction.forwardWithoutName
+                if SpaceGramSettings.shared.isMessageActionEnabled(forwardWithoutName), forwardWithoutName.isApplicable(to: spaceGramActionContext) {
+                    actions.append(.action(ContextMenuActionItem(text: ngI18n(forwardWithoutName.titleKey, context.sharedContext.currentPresentationData.with { $0 }.strings.baseLanguageCode), icon: { theme in
+                        return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Forward"), color: theme.actionSheet.primaryTextColor)
+                    }, action: { _, f in
+                        interfaceInteraction.forwardMessagesWithOptions(messagesToForward, ChatInterfaceForwardOptionsState(hideNames: true, hideCaptions: false, unhideNamesOnCaptionChange: false))
+                        f(.dismissWithoutContent)
+                    })))
+                }
             }
         }
         

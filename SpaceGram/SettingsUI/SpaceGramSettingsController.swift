@@ -106,7 +106,6 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
         toggle(201, "SpaceGram.SaveDeletes", "trash.slash.fill", settings.saveServerDeletedMessages, { settings.saveServerDeletedMessages = $0 })
         toggle(203, "SpaceGram.Hub.GhostButton", "eye.slash", settings.showGhostButton, { settings.showGhostButton = $0 })
         toggle(204, "SpaceGram.Hub.JumpToFirst", "arrow.up.to.line", settings.showJumpToFirst, { settings.showJumpToFirst = $0 })
-        toggle(205, "SpaceGram.Hub.ForwardWithoutName", "arrowshape.turn.up.right", enhancements.isMessageMenuItemEnabled(.forwardWithoutQuote), { enhancements.setMessageMenuItemEnabled(.forwardWithoutQuote, enabled: $0) })
         toggle(206, "SpaceGram.Hub.TranslateBeforeSend", "character.bubble", enhancements.translateBeforeSend, { enhancements.translateBeforeSend = $0 })
         footer(290, "SpaceGram.Hub.HistoryInfo")
         header(3, "SpaceGram.Hub.Ghost")
@@ -147,6 +146,7 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
         link(1001, "SpaceGram.Hub.Enhancements", "slider.horizontal.3", { push?(nagramSettingsController(context: context, unified: true)) })
         toggle(1002, "SpaceGram.Enabled", "power", settings.spaceGramEnabled, { settings.spaceGramEnabled = $0 })
         toggle(1003, "SpaceGram.ToolsEnabled", "wrench.and.screwdriver", settings.botsHubEnabled, { settings.botsHubEnabled = $0 })
+        link(1004, "SpaceGram.MessageMenu.Title", "text.badge.checkmark", { push?(spaceGramMessageMenuSettingsController(context: context)) })
         if !settings.spaceGramEnabled { footer(1090, "SpaceGram.Disabled") }
         let data = spaceGramItemListPresentationData(presentationData)
         let state = ItemListControllerState(presentationData: data, title: .text("SpaceGram"), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
@@ -163,13 +163,13 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
 private func spaceGramAboutController(context: AccountContext) -> ViewController {
     let signal = context.sharedContext.presentationData |> map { presentationData -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let lang = presentationData.strings.baseLanguageCode
-        let keys = ["SpaceGram.Hub.AboutIntro", "SpaceGram.Hub.AboutGhost", "SpaceGram.Hub.AboutHistory", "SpaceGram.Hub.AboutMedia", "SpaceGram.Hub.AboutTools", "SpaceGram.Hub.AboutPrivacy"]
+        let keys = ["SpaceGram.Hub.AboutIntro", "SpaceGram.Hub.AboutGhost", "SpaceGram.Hub.AboutInteractions", "SpaceGram.Hub.AboutHistory", "SpaceGram.Hub.AboutMedia", "SpaceGram.Hub.AboutTools", "SpaceGram.Hub.AboutMessageShot", "SpaceGram.Hub.AboutProtected", "SpaceGram.Hub.AboutMenu", "SpaceGram.Hub.AboutAppearance", "SpaceGram.Hub.AboutPrivacy"]
         var entries = keys.enumerated().map { index, key in
             SpaceGramHubEntry(stableId: Int32(index), section: Int32(index), title: ngI18n(key, lang), footer: true)
         }
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
-        entries.append(SpaceGramHubEntry(stableId: 6, section: 6, title: String(format: ngI18n("SpaceGram.Hub.AboutVersion", lang), version, build), footer: true))
+        entries.append(SpaceGramHubEntry(stableId: 11, section: 11, title: String(format: ngI18n("SpaceGram.Hub.AboutVersion", lang), version, build), footer: true))
         let data = spaceGramItemListPresentationData(presentationData)
         let state = ItemListControllerState(presentationData: data, title: .text(ngI18n("SpaceGram.Hub.About", lang)), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
         return (state, (ItemListNodeState(presentationData: data, entries: entries, style: .blocks), NSNull()))

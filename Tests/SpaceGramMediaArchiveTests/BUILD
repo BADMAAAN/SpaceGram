@@ -12,6 +12,7 @@ swift_library(
         "//SpaceGram/HistoryStorage:SpaceGramHistoryStorage",
         "//SpaceGram/HistoryOverlay:SpaceGramHistoryOverlay",
         "//SpaceGram/MediaArchive:SpaceGramMediaArchive",
+        "//SpaceGram/MessageShot:SpaceGramMessageShot",
         "//SpaceGram/Migration:SpaceGramMigration",
         "//SpaceGram/Privacy:SpaceGramPrivacy",
         "//SpaceGram/QR:SpaceGramQR",

@@ -44,8 +44,10 @@ an iPhone build. It must not be read as a device-test result.
   `setAlternateIconName` callback. Default maps to `nil`; error leaves the old
   selection in place and displays a localized alert. Debug builds log requested,
   previous and resulting identifiers and the callback error.
-- About SpaceGram describes device-local retention limits and includes the app
-  version/build.
+- About SpaceGram now covers Ghost Mode, Read on Interact, Delayed Send,
+  deleted/history retention, Media Archive, translator/QR tools, Message Shot,
+  protected saves, opt-in message actions, icons and iOS background limits. It
+  includes the app version/build and contains no Qwen/product-tier branding.
 
 The original QR exception cannot be reproduced on this Windows host. The
 confirmed unsafe path was the controller-local Core Image/render-update path,
@@ -100,15 +102,41 @@ acceptance.
 
 ### Protected media and outgoing translation
 
-- Existing retained hooks allow saving already-accessible protected photos and
-  videos when local force-copy is enabled, but continue to reject paid content.
-  They use Telegram's received media/resource pipeline and do not bypass server
-  membership, access hashes or paywalls.
-- The existing forward-without-quote path remains available as a new outgoing
-  message path. It is not presented as an authentic server forward.
+- **SOURCE COMPLETE / DEVICE VERIFICATION REQUIRED:** the opt-in protected-media
+  action now covers already-local photos and ordinary videos through Telegram's
+  camera-roll pipeline, and documents, animations, voice messages and round
+  videos through the lifetime-managed Files exporter. It appears only for a
+  protected, non-secret message whose primary resource status is local. Paid or
+  otherwise unavailable resources are not fetched around Telegram access
+  control; membership, access hashes and paywalls are not bypassed.
+- Forward without name remains a Telegram forward-options flow, is now a
+  separate SpaceGram action defaulting off, and does not claim to recreate the
+  media as a new upload.
 - Translate-before-send remains opt-in and uses the existing non-Qwen
   translation service. The translated draft is shown before the user sends it;
-  failure leaves the draft intact.
+  empty/failing translations leave the draft intact. The current preference is
+  global rather than per-chat, so per-chat policy remains future work.
+
+### Message Shot and custom message menu
+
+- **SOURCE COMPLETE / DEVICE VERIFICATION REQUIRED:** `SpaceGramMessageShot`
+  is a dedicated `UIGraphicsImageRenderer` module; it never snapshots the chat
+  view hierarchy. It renders sender/initials, timestamp, formatted text, reply
+  preview, photos/video/sticker cached thumbnails, and bounded placeholders for
+  files, voice, round video and unsupported media against the current theme and
+  locally available wallpaper image/color.
+- Rendering is capped at 50 messages, 1440 points wide, 8192 points high and a
+  20-megapixel bitmap budget. Larger selections are truncated with an omitted
+  count instead of allocating an unbounded image.
+- `SpaceGramMessageAction` is the data-driven action registry. Every custom
+  action has a stable id, localization key, symbol, persisted preference,
+  implementation state and applicability predicate. All custom actions default
+  off. Message Shot, Save Protected Media and Forward without Name are wired;
+  Forward as New is visibly marked not implemented in Settings and never
+  appears in the message menu.
+- Settings exposes `SpaceGram → Advanced → Message Menu`. Native Telegram
+  actions remain in the pre-existing managed list and are not gated by the new
+  SpaceGram preferences.
 
 ## Not completed
 
@@ -123,11 +151,13 @@ acceptance.
   archive/unavailable label; rendering the retained photo/file bytes directly
   in the bubble is **NOT IMPLEMENTED** and still requires a lifetime-safe media
   resource bridge.
-- **NOT IMPLEMENTED — Message Shot:** no dedicated bounded renderer exists.
 - **NOT IMPLEMENTED — SpaceGram Cosmic:** no theme or approved wallpaper preset
   exists.
-- **PARTIAL — protected media:** photo/video hooks exist, but every file/voice/
-  round-video context-menu surface is not covered.
+- **NOT IMPLEMENTED — Forward as New:** the retained repeat/forward paths still
+  use Telegram forwarding semantics. No local-content re-upload path is
+  advertised as a new message.
+- **PARTIAL — outgoing translator:** the safe opt-in draft translation exists,
+  but the preference is not per-chat.
 - **DEVICE VERIFICATION REQUIRED:** no physical-device build, install,
   second-account presence matrix, or deleted-overlay runtime pass was run.
 
@@ -143,12 +173,15 @@ the UI.
 At the time of this audit these checks pass. They cover BUILD ownership,
 localization keys/branding, plist parsing, asset declarations, icon contracts,
 Ghost source-of-truth/presence boundaries, delayed-send post-upload RPC wiring
-deleted-overlay ownership/merge boundaries and portable service contracts.
+deleted-overlay ownership/merge boundaries, Message Shot bounds, custom-action
+default/applicability rules, protected exporter routing, outgoing-translation
+failure behavior and portable service contracts.
 Swift compilation and iOS runtime behavior are not covered on this host. Swift
 unit coverage additionally includes slow upload, too-close/past dates,
 reconnect recalculation, deterministic retry behavior, overlay page boundaries,
 local identity and missing-media fallback; it requires the macOS/iOS test
-runner.
+runner. Message Shot unit coverage includes one/many text messages, photo,
+unsupported-media fallback, empty input and bitmap bounds.
 
 ## Required next iPhone pass
 
@@ -165,3 +198,8 @@ runner.
 7. Delete text/formatted/media messages from a second account; confirm the text
    overlay remains in chronology after pagination and relaunch, has no unread
    effect, and missing media uses the fallback without crashing.
+8. Enable Message Shot, create one- and multi-message images, verify current
+   colors/wallpaper and share-sheet presentation, then test the 50-message cap.
+9. Confirm all SpaceGram message actions are absent by default, each toggle is
+   independent, and protected document/animation/voice/round-video export uses
+   only already-local resources.

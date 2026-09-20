@@ -85,6 +85,7 @@ swift_library(
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         # // MARK: NAGRAM — presentation-only deleted-message overlay.
         "//SpaceGram/HistoryOverlay:SpaceGramHistoryOverlay",
+        "//SpaceGram/MessageShot:SpaceGramMessageShot",
         # // MARK: NAGRAM
         "//submodules/MediaPlayer:UniversalMediaPlayer",
         "//submodules/TelegramVoip:TelegramVoip",
