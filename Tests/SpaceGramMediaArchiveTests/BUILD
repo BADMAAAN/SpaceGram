@@ -15,7 +15,6 @@ swift_library(
         "//SpaceGram/MessageShot:SpaceGramMessageShot",
         "//SpaceGram/Migration:SpaceGramMigration",
         "//SpaceGram/Privacy:SpaceGramPrivacy",
-        "//SpaceGram/QR:SpaceGramQR",
         "//SpaceGram/Settings:SpaceGramSettings",
         "//SpaceGram/SettingsUI:SpaceGramSettingsUI",
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",

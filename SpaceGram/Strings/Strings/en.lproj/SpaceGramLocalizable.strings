@@ -908,14 +908,13 @@
 "SpaceGram.Hub.Seconds" = "Seconds in message timestamps";
 "SpaceGram.Hub.HistoryMedia" = "History and media";
 "SpaceGram.Hub.Translator" = "Translator";
-"SpaceGram.Hub.QR" = "QR tools";
 "SpaceGram.Hub.ThemeIcons" = "Theme and app icon";
 "SpaceGram.Hub.Enhancements" = "Additional settings";
 "SpaceGram.Hub.AboutIntro" = "SpaceGram\nTelegram with native tools for privacy, saved history and everyday conversations.";
 "SpaceGram.Hub.AboutGhost" = "Ghost Mode\nControl read receipts, story views, typing and online presence. Server-side actions can still reveal activity.";
 "SpaceGram.Hub.AboutHistory" = "Deleted messages\nSpaceGram locally retains messages received by this device before deletion. iOS cannot recover data that never reached the device.";
 "SpaceGram.Hub.AboutMedia" = "Media archive\nKeep complete downloaded assets with storage limits, retention and cleanup controls. Unreceived files cannot be recovered.";
-"SpaceGram.Hub.AboutTools" = "Tools\nTranslate text with the configured Telegram-compatible translation service and generate QR codes locally.";
+"SpaceGram.Hub.AboutTools" = "Tools\nTranslate text with the configured Telegram-compatible translation service.";
 "SpaceGram.Hub.AboutPrivacy" = "Your choices\nFeatures use existing Telegram and SpaceGram settings. No subscription is required. History and media archives are local to each account.";
 "SpaceGram.Hub.AboutVersion" = "Version %@ (%@)";
 // History presentation
@@ -1000,14 +999,6 @@
 "SpaceGram.Language.pt-BR" = "Portuguese (Brazil)";
 "SpaceGram.Language.uk" = "Ukrainian";
 "SpaceGram.Language.ar" = "Arabic";
-"SpaceGram.QR.Title" = "QR Tools";
-"SpaceGram.QR.Text" = "Text";
-"SpaceGram.QR.Placeholder" = "Enter text";
-"SpaceGram.QR.Generate" = "Generate QR";
-"SpaceGram.QR.Result" = "Result";
-"SpaceGram.QR.Share" = "Share or Save";
-"SpaceGram.QR.Empty" = "Enter text to generate a QR code.";
-"SpaceGram.QR.Failed" = "Unable to generate a QR code for this text.";
 "SpaceGram.AppIcon.ChangeFailed" = "The Home Screen icon could not be changed. The previous icon is still selected.";
 "SpaceGram.UI.MediaUsageError" = "Unable to read Media Archive usage on this device.";
 "SpaceGram.UI.MediaSettingsError" = "Unable to update Media Archive settings.";

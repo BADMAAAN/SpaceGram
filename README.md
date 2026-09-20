@@ -44,7 +44,6 @@ Locations below are relative to `SpaceGram/`.
 | --- | --- | --- | --- |
 | SpaceGram Settings | Implemented | `SettingsUI/SpaceGramSettingsController.swift` | Separate settings page with toggles and tool navigation. |
 | Bots Hub | Implemented | `Bots/`, `SettingsUI/SpaceGramBotsController.swift` | Categorized launcher for internal tools. |
-| QR Tools | Implemented | `SettingsUI/SpaceGramQRToolsController.swift` | Generates a QR image locally from text. |
 | Qwen Assistant | Implemented | `SettingsUI/SpaceGramQwenAssistantController.swift` | Text conversation with Qwen. |
 | Streaming responses | Implemented | `AI/SpaceGramQwenProvider.swift` | Delivers incremental text to the assistant UI. |
 | Stop Generating | Implemented | Assistant controller and Qwen provider | Cancels the assistant stream and retains received text. |
@@ -81,16 +80,10 @@ Bots Hub is currently SpaceGram's internal tool and assistant launcher, not a ge
 | --- | --- |
 | AI | Qwen Assistant, Summarizer, Translator — functional. |
 | Media | Media Tools — disabled placeholder. |
-| Utilities | QR Tools — functional; Reminders — disabled placeholder. |
+| Utilities | Reminders — disabled placeholder. |
 | Custom | Shown as “My Bots”; Add Bot is a disabled placeholder. |
 
 The catalog holds descriptors such as title, category, and enabled state. Enabled entries route to local SpaceGram controllers. Remote bot execution and user-added bots are not implemented.
-
-## QR Tools
-
-Open **SpaceGram Settings → Open Bots Hub → QR Tools**, enter text, and tap **Generate QR**. The generated image appears on the same screen. Empty input and generation failures produce an error message.
-
-Generation uses CoreImage's `CIQRCodeGenerator` with UTF-8 text and happens entirely on the device. It requires no network request. The current tool generates and displays QR codes; it does not add a scanner or a dedicated export workflow.
 
 ## Qwen AI integration
 
@@ -191,7 +184,6 @@ The assistant controller tracks a generation identifier. Stopping advances that 
 | Execute an AI action | Submitted text and relevant assistant conversation context go to Qwen. |
 | Qwen API key | Persisted in iOS Keychain and used to authenticate provider requests. |
 | AI input, conversations, and results | Assistant conversations persist in account-local protected files; Summarizer/Translator results remain in controller memory. |
-| QR generation | Local CoreImage processing; no network dependency. |
 | Upstream integration | Small documented hooks into SpaceGram controllers. |
 
 These statements describe the inspected SpaceGram features, not a claim that the entire Telegram client is offline or “completely private.” Telegram continues to communicate with its infrastructure, and optional AI functions communicate with Qwen. Local in-memory handling does not establish the external provider's retention policy or guarantee immediate memory erasure.
@@ -289,7 +281,7 @@ SpaceGram/
 | `SpaceGram/Core/` | Product identity constant, including the SpaceGram display name. |
 | `SpaceGram/Settings/` | UserDefaults-backed toggles and model preference. |
 | `SpaceGram/SettingsSignal/` | Reactive updates for the two boolean settings. |
-| `SpaceGram/SettingsUI/` | Settings, launcher, QR, AI, and message-review controllers. |
+| `SpaceGram/SettingsUI/` | Settings, launcher, AI, and message-review controllers. |
 | `SpaceGram/Enhancements/` | Retained inherited functions, with documented compatibility identifiers. |
 | `Telegram/`, `submodules/` | App targets and upstream libraries. |
 | `build-system/` | Existing build tooling. |

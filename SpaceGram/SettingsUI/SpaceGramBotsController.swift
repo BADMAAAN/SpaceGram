@@ -62,8 +62,6 @@ public func spaceGramBotsController(context: AccountContext) -> ViewController {
         guard SpaceGramSettings.shared.toolsEnabled else { return }
         if bot.id == "translator" {
             pushControllerImpl?(spaceGramTranslatorController(context: context))
-        } else if bot.id == "qr-tools" {
-            pushControllerImpl?(spaceGramQRToolsController(context: context))
         }
     })
     let signal = combineLatest(context.sharedContext.presentationData, spaceGramToolsEnabledSignal())

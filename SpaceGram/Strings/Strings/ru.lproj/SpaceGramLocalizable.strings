@@ -154,14 +154,13 @@
 "SpaceGram.Hub.Seconds" = "Секунды во времени сообщений";
 "SpaceGram.Hub.HistoryMedia" = "История и медиа";
 "SpaceGram.Hub.Translator" = "Переводчик";
-"SpaceGram.Hub.QR" = "QR-инструменты";
 "SpaceGram.Hub.ThemeIcons" = "Тема и значок приложения";
 "SpaceGram.Hub.Enhancements" = "Дополнительные настройки";
 "SpaceGram.Hub.AboutIntro" = "SpaceGram\nTelegram с нативными инструментами приватности, сохранённой истории и повседневного общения.";
 "SpaceGram.Hub.AboutGhost" = "Режим «Призрак»\nУправляйте подтверждениями чтения, просмотрами историй, набором текста и статусом в сети. Действия на сервере могут раскрывать активность.";
 "SpaceGram.Hub.AboutHistory" = "Удалённые сообщения\nSpaceGram локально сохраняет сообщения, полученные этим устройством до удаления. iOS не может восстановить данные, которые устройство не получило.";
 "SpaceGram.Hub.AboutMedia" = "Медиаархив\nСохраняйте полностью загруженные файлы с настройками объёма, срока хранения и очистки. Неполученные файлы восстановить нельзя.";
-"SpaceGram.Hub.AboutTools" = "Инструменты\nПереводите текст через выбранный совместимый сервис Telegram и создавайте QR-коды локально.";
+"SpaceGram.Hub.AboutTools" = "Инструменты\nПереводите текст через выбранный совместимый сервис Telegram.";
 "SpaceGram.Hub.AboutPrivacy" = "Ваш выбор\nФункции используют настройки Telegram и SpaceGram. Подписка не требуется. История и медиаархив хранятся локально отдельно для каждого аккаунта.";
 "SpaceGram.Hub.AboutVersion" = "Версия %@ (%@)";
 // History presentation
@@ -389,14 +388,6 @@
 "SpaceGram.Language.pt-BR" = "Португальский (Бразилия)";
 "SpaceGram.Language.uk" = "Украинский";
 "SpaceGram.Language.ar" = "Арабский";
-"SpaceGram.QR.Title" = "QR-инструменты";
-"SpaceGram.QR.Text" = "Текст";
-"SpaceGram.QR.Placeholder" = "Введите текст";
-"SpaceGram.QR.Generate" = "Создать QR-код";
-"SpaceGram.QR.Result" = "Результат";
-"SpaceGram.QR.Share" = "Поделиться или сохранить";
-"SpaceGram.QR.Empty" = "Введите текст для создания QR-кода.";
-"SpaceGram.QR.Failed" = "Не удалось создать QR-код для этого текста.";
 "SpaceGram.AppIcon.ChangeFailed" = "Не удалось изменить значок на экране «Домой». Предыдущий значок остаётся выбранным.";
 "SpaceGram.UI.MediaUsageError" = "Не удалось определить объём медиаархива на устройстве.";
 "SpaceGram.UI.MediaSettingsError" = "Не удалось обновить настройки медиаархива.";

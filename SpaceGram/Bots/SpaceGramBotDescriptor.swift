@@ -29,7 +29,6 @@ public enum SpaceGramBotCatalog {
     public static let defaultBots: [SpaceGramBotDescriptor] = [
         SpaceGramBotDescriptor(id: "translator", title: "Translator", subtitle: "Translate text", username: nil, category: .utilities, isEnabled: true),
         SpaceGramBotDescriptor(id: "media-tools", title: "Media Tools", subtitle: "Coming soon", username: nil, category: .media, isEnabled: false),
-        SpaceGramBotDescriptor(id: "qr-tools", title: "QR Tools", subtitle: "Generate QR codes", username: nil, category: .utilities, isEnabled: true),
         SpaceGramBotDescriptor(id: "reminders", title: "Reminders", subtitle: "Coming soon", username: nil, category: .utilities, isEnabled: false),
         SpaceGramBotDescriptor(id: "add-bot", title: "Add Bot", subtitle: "Coming soon", username: nil, category: .custom, isEnabled: false),
     ]

@@ -134,7 +134,6 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
         header(8, "SpaceGram.Tools")
         if settings.toolsEnabled {
             link(803, "SpaceGram.Hub.Translator", "character.bubble", { push?(spaceGramTranslatorController(context: context)) })
-            link(804, "SpaceGram.Hub.QR", "qrcode", { push?(spaceGramQRToolsController(context: context)) })
         }
         header(9, "SpaceGram.Appearance")
         link(901, "SpaceGram.Hub.ThemeIcons", "paintpalette.fill", { push?(themeSettingsController(context: context)) })

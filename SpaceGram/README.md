@@ -15,7 +15,7 @@ symbols and storage keys preserve existing users’ preferences.
   requests and disables Ghost policies. Existing history, settings and Keychain
   management remain accessible; stored preferences/data are not erased.
 - Tools Hub (existing `Bots` module and IDs retained), with Qwen Assistant,
-  Summarizer, Translator and local QR generation. Unimplemented tools are disabled.
+  Summarizer and Translator. Unimplemented tools are disabled.
 - Qwen streaming and Stop; model selection and a device-only, when-unlocked
   Keychain API key. Assistant conversations persist per account; summaries and
   translations remain in controller memory.
