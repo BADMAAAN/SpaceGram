@@ -11,6 +11,7 @@ public enum SpaceGramMetadataSanitizer {
         kCGImagePropertyExifPixelXDimension as String,
         kCGImagePropertyExifPixelYDimension as String
     ]
+    private static let xmpDictionaryKey: CFString = "XMP" as CFString
 
     // Re-encodes one still image into the same supported container. Orientation
     // is baked into a fresh pixel buffer; no source metadata is copied.
@@ -74,7 +75,7 @@ public enum SpaceGramMetadataSanitizer {
         guard outputProperties[kCGImagePropertyGPSDictionary] == nil,
               outputProperties[kCGImagePropertyIPTCDictionary] == nil,
               outputProperties[kCGImagePropertyTIFFDictionary] == nil,
-              outputProperties[kCGImagePropertyXMPDictionary] == nil,
+              outputProperties[xmpDictionaryKey] == nil,
               outputProperties[kCGImagePropertyOrientation] == nil,
               exifKeys.isSubset(of: allowedEncoderExifKeys) else {
             let dictionaries = metadataDictionaryNames(in: outputProperties)
@@ -164,7 +165,7 @@ public enum SpaceGramMetadataSanitizer {
             ("EXIF", kCGImagePropertyExifDictionary),
             ("IPTC", kCGImagePropertyIPTCDictionary),
             ("TIFF", kCGImagePropertyTIFFDictionary),
-            ("XMP", kCGImagePropertyXMPDictionary)
+            ("XMP", xmpDictionaryKey)
         ].compactMap { name, key in properties[key] == nil ? nil : name }.joined(separator: ",")
     }
 
