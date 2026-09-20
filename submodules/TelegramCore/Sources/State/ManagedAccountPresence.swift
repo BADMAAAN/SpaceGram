@@ -27,9 +27,20 @@ private final class AccountPresenceManagerImpl {
         self.network = network
         
         // MARK: NAGRAM — preserve the connection; only change explicit presence.
-        self.shouldKeepOnlinePresenceDisposable = (combineLatest(shouldKeepOnlinePresence, spaceGramSuppressOnlinePresenceSignal(), spaceGramGoOfflineAutomaticallySignal())
-        |> map { online, suppressed, automaticOffline in (online && !suppressed, automaticOffline) }
-        |> distinctUntilChanged(isEqual: { $0.0 == $1.0 && $0.1 == $1.1 })
+        let presenceInputs: Signal<(Bool, Bool, Bool), NoError> = combineLatest(
+            shouldKeepOnlinePresence,
+            spaceGramSuppressOnlinePresenceSignal(),
+            spaceGramGoOfflineAutomaticallySignal()
+        )
+        let resolvedPresence: Signal<(Bool, Bool), NoError> = presenceInputs
+        |> map { value in
+            return (value.0 && !value.1, value.2)
+        }
+        let distinctPresence: Signal<(Bool, Bool), NoError> = resolvedPresence
+        |> distinctUntilChanged(isEqual: { lhs, rhs in
+            return lhs.0 == rhs.0 && lhs.1 == rhs.1
+        })
+        self.shouldKeepOnlinePresenceDisposable = (distinctPresence
         |> deliverOn(self.queue)).start(next: { [weak self] value in
             guard let `self` = self else {
                 return

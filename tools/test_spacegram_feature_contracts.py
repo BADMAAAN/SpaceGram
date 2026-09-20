@@ -114,7 +114,8 @@ class SpaceGramFeatureContracts(unittest.TestCase):
 
     def test_ghost_presence_and_activity_send_boundaries(self):
         presence = (ROOT / "submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift").read_text(encoding="utf-8")
-        self.assertIn("online && !suppressed", presence)
+        self.assertIn("return (value.0 && !value.1, value.2)", presence)
+        self.assertIn("let presenceInputs: Signal<(Bool, Bool, Bool), NoError>", presence)
         self.assertIn("self.onlineTimer?.invalidate()", presence)
         self.assertEqual(presence.count("Api.functions.account.updateStatus"), 2)
 
