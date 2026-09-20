@@ -385,6 +385,8 @@ private func sendUploadedMessageContent(
             var replyPollOption: Buffer?
             var scheduleTime: Int32?
             var scheduleRepeatPeriod: Int32?
+            // MARK: NAGRAM — only SpaceGram delayed sends carry this marker.
+            var spaceGramMinimumDelay: Int32?
             var videoTimestamp: Int32?
             var sendAsPeerId: PeerId?
             var bubbleUpEmojiOrStickersets = false
@@ -430,6 +432,7 @@ private func sendUploadedMessageContent(
                 } else if let attribute = attribute as? OutgoingScheduleInfoMessageAttribute {
                     flags |= Int32(1 << 10)
                     scheduleTime = attribute.scheduleTime
+                    spaceGramMinimumDelay = attribute.spaceGramMinimumDelay
                     if let repeatPeriod = attribute.repeatPeriod {
                         flags |= Int32(1 << 24)
                         scheduleRepeatPeriod = repeatPeriod
@@ -448,6 +451,9 @@ private func sendUploadedMessageContent(
                     flags |= Int32(1 << 23)
                 }
             }
+
+            // MARK: NAGRAM — refresh the corrected server clock after upload.
+            let requestScheduleTime = spaceGramAdjustedScheduleTime(plannedTime: scheduleTime, currentServerTime: network.globalTime, minimumDelay: spaceGramMinimumDelay)
             
             if uniqueId == 0 {
                 uniqueId = Int64.random(in: Int64.min ... Int64.max)
@@ -519,7 +525,7 @@ private func sendUploadedMessageContent(
                         flags |= 1 << 22
                     }
                 
-                    sendMessageRequest = network.requestWithAdditionalInfo(Api.functions.messages.sendMessage(flags: flags, peer: inputPeer, replyTo: replyTo, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: scheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: suggestedPost, richMessage: apiRichMessage), info: .acknowledgement, tag: dependencyTag)
+                    sendMessageRequest = network.requestWithAdditionalInfo(Api.functions.messages.sendMessage(flags: flags, peer: inputPeer, replyTo: replyTo, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: requestScheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: suggestedPost, richMessage: apiRichMessage), info: .acknowledgement, tag: dependencyTag)
                 case let .media(inputMedia, text):
                     if bubbleUpEmojiOrStickersets {
                         flags |= Int32(1 << 15)
@@ -554,7 +560,7 @@ private func sendUploadedMessageContent(
                         flags |= 1 << 22
                     }
                     
-                    sendMessageRequest = network.request(Api.functions.messages.sendMedia(flags: flags, peer: inputPeer, replyTo: replyTo, media: inputMedia, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: scheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: suggestedPost), tag: dependencyTag)
+                    sendMessageRequest = network.request(Api.functions.messages.sendMedia(flags: flags, peer: inputPeer, replyTo: replyTo, media: inputMedia, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: requestScheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: suggestedPost), tag: dependencyTag)
                     |> map(NetworkRequestResult.result)
                 case let .forward(sourceInfo):
                     if topMsgId != nil {
@@ -562,7 +568,7 @@ private func sendUploadedMessageContent(
                     }
                 
                     if let forwardSourceInfoAttribute = forwardSourceInfoAttribute, let sourcePeer = transaction.getPeer(forwardSourceInfoAttribute.messageId.peerId), let sourceInputPeer = apiInputPeer(sourcePeer) {
-                        sendMessageRequest = network.request(Api.functions.messages.forwardMessages(flags: flags, fromPeer: sourceInputPeer, id: [sourceInfo.messageId.id], randomId: [uniqueId], toPeer: inputPeer, topMsgId: topMsgId, replyTo: nil, scheduleDate: scheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, videoTimestamp: videoTimestamp, allowPaidStars: allowPaidStars, suggestedPost: nil), tag: dependencyTag)
+                        sendMessageRequest = network.request(Api.functions.messages.forwardMessages(flags: flags, fromPeer: sourceInputPeer, id: [sourceInfo.messageId.id], randomId: [uniqueId], toPeer: inputPeer, topMsgId: topMsgId, replyTo: nil, scheduleDate: requestScheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, videoTimestamp: videoTimestamp, allowPaidStars: allowPaidStars, suggestedPost: nil), tag: dependencyTag)
                         |> map(NetworkRequestResult.result)
                     } else {
                         sendMessageRequest = .fail(MTRpcError(errorCode: 400, errorDescription: "internal"))
@@ -591,7 +597,7 @@ private func sendUploadedMessageContent(
                         }
                     }
 
-                    sendMessageRequest = network.request(Api.functions.messages.sendInlineBotResult(flags: flags, peer: inputPeer, replyTo: replyTo, randomId: uniqueId, queryId: chatContextResult.queryId, id: chatContextResult.id, scheduleDate: scheduleTime, sendAs: sendAsInputPeer, quickReplyShortcut: nil, allowPaidStars: allowPaidStars))
+                    sendMessageRequest = network.request(Api.functions.messages.sendInlineBotResult(flags: flags, peer: inputPeer, replyTo: replyTo, randomId: uniqueId, queryId: chatContextResult.queryId, id: chatContextResult.id, scheduleDate: requestScheduleTime, sendAs: sendAsInputPeer, quickReplyShortcut: nil, allowPaidStars: allowPaidStars))
                     |> map(NetworkRequestResult.result)
                 case .messageScreenshot:
                     let replyTo: Api.InputReplyTo
@@ -704,6 +710,8 @@ private func sendMessageContent(account: Account, peerId: PeerId, attributes: [M
             var replyToStoryId: StoryId?
             var scheduleTime: Int32?
             var scheduleRepeatPeriod: Int32?
+            // MARK: NAGRAM — only SpaceGram delayed sends carry this marker.
+            var spaceGramMinimumDelay: Int32?
             var sendAsPeerId: PeerId?
             var allowPaidStars: Int64?
             var suggestedPost: Api.SuggestedPost?
@@ -729,6 +737,7 @@ private func sendMessageContent(account: Account, peerId: PeerId, attributes: [M
                 } else if let attribute = attribute as? OutgoingScheduleInfoMessageAttribute {
                     flags |= Int32(1 << 10)
                     scheduleTime = attribute.scheduleTime
+                    spaceGramMinimumDelay = attribute.spaceGramMinimumDelay
                     if let repeatPeriod = attribute.repeatPeriod {
                         flags |= Int32(1 << 24)
                         scheduleRepeatPeriod = repeatPeriod
@@ -744,6 +753,9 @@ private func sendMessageContent(account: Account, peerId: PeerId, attributes: [M
                     flags |= Int32(1 << 23)
                 }
             }
+
+            // MARK: NAGRAM — refresh the corrected server clock after upload.
+            let requestScheduleTime = spaceGramAdjustedScheduleTime(plannedTime: scheduleTime, currentServerTime: account.network.globalTime, minimumDelay: spaceGramMinimumDelay)
             
             if let _ = messageEntities {
                 flags |= Int32(1 << 3)
@@ -778,7 +790,7 @@ private func sendMessageContent(account: Account, peerId: PeerId, attributes: [M
                         replyTo = .inputReplyToMessage(.init(flags: flags, replyToMsgId: threadId, topMsgId: threadId, replyToPeerId: nil, quoteText: nil, quoteEntities: nil, quoteOffset: nil, monoforumPeerId: nil, todoItemId: nil, pollOption: nil))
                     }
 
-                    sendMessageRequest = account.network.request(Api.functions.messages.sendMessage(flags: flags, peer: inputPeer, replyTo: replyTo, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: scheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: nil, richMessage: apiRichMessage))
+                    sendMessageRequest = account.network.request(Api.functions.messages.sendMessage(flags: flags, peer: inputPeer, replyTo: replyTo, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: requestScheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: nil, richMessage: apiRichMessage))
                     |> `catch` { _ -> Signal<Api.Updates, NoError> in
                         return .complete()
                     }
@@ -803,7 +815,7 @@ private func sendMessageContent(account: Account, peerId: PeerId, attributes: [M
                         flags |= 1 << 22
                     }
                 
-                    sendMessageRequest = account.network.request(Api.functions.messages.sendMedia(flags: flags, peer: inputPeer, replyTo: replyTo, media: inputMedia, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: scheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: suggestedPost))
+                    sendMessageRequest = account.network.request(Api.functions.messages.sendMedia(flags: flags, peer: inputPeer, replyTo: replyTo, media: inputMedia, message: text, randomId: uniqueId, replyMarkup: nil, entities: messageEntities, scheduleDate: requestScheduleTime, scheduleRepeatPeriod: scheduleRepeatPeriod, sendAs: sendAsInputPeer, quickReplyShortcut: nil, effect: nil, allowPaidStars: allowPaidStars, suggestedPost: suggestedPost))
                     |> `catch` { _ -> Signal<Api.Updates, NoError> in
                         return .complete()
                     }

@@ -17,6 +17,7 @@ swift_library(
         "//SpaceGram/Settings:SpaceGramSettings",
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
+        "//submodules/TelegramCore:TelegramCore",
     ],
 )
 

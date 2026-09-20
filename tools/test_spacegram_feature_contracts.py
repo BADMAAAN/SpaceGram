@@ -95,6 +95,34 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         activity = (ROOT / "submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift").read_text(encoding="utf-8")
         self.assertIn("if !isSpeakingInGroupCall(activity)", activity)
 
+    def test_delayed_send_revalidates_after_upload(self):
+        attribute = (ROOT / "submodules/TelegramCore/Sources/SyncCore/SyncCore_OutgoingScheduleInfoMessageAttribute.swift").read_text(encoding="utf-8")
+        self.assertIn("spaceGramMinimumDelay: Int32? = nil", attribute)
+        self.assertIn('decodeOptionalInt32ForKey("sgmd")', attribute)
+        self.assertIn("max(spaceGramDelayedSendMinimumInterval, minimumDelay)", attribute)
+
+        chat = (ROOT / "submodules/TelegramUI/Sources/ChatController.swift").read_text(encoding="utf-8")
+        self.assertIn("spaceGramMinimumDelay: spaceGramDelayedSendMinimumInterval", chat)
+
+        pending = (ROOT / "submodules/TelegramCore/Sources/State/PendingMessageManager.swift").read_text(encoding="utf-8")
+        standalone = (ROOT / "submodules/TelegramCore/Sources/PendingMessages/StandaloneSendMessage.swift").read_text(encoding="utf-8")
+        self.assertEqual(pending.count("scheduleDate: requestScheduleTime"), 6)
+        self.assertEqual(standalone.count("scheduleDate: requestScheduleTime"), 6)
+        self.assertNotIn("scheduleDate: scheduleTime", pending)
+        self.assertNotIn("scheduleDate: scheduleTime", standalone)
+        self.assertIn("currentServerTime: network.globalTime", pending)
+
+    def test_ghost_presence_and_activity_send_boundaries(self):
+        presence = (ROOT / "submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift").read_text(encoding="utf-8")
+        self.assertIn("online && !suppressed", presence)
+        self.assertIn("self.onlineTimer?.invalidate()", presence)
+        self.assertEqual(presence.count("Api.functions.account.updateStatus"), 2)
+
+        activity = (ROOT / "submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift").read_text(encoding="utf-8")
+        self.assertIn("combineLatest(activities, spaceGramSuppressChatActivitySignal())", activity)
+        self.assertIn("if SpaceGramGhostPolicy.suppressChatActivity", activity)
+        self.assertIn("if !isSpeakingInGroupCall(activity)", activity)
+
     def test_ghost_quick_button_uses_the_persisted_master(self):
         settings = (ROOT / "SpaceGram/Settings/SpaceGramSettings.swift").read_text(encoding="utf-8")
         chat_list = (ROOT / "submodules/ChatListUI/Sources/ChatListController.swift").read_text(encoding="utf-8")

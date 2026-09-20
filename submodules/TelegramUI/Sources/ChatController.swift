@@ -9034,7 +9034,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         let serverNow = Int64(self.context.account.network.globalTime)
         guard let timestamp = SpaceGramDelayedSendPolicy.timestamp(now: serverNow, ghost: settings.ghostMode, enabled: settings.delayedSend, mediaBytes: mediaBytes) else { return (messages, false) }
         return (messages.map { message in
-            message.withUpdatedAttributes { $0 + [OutgoingScheduleInfoMessageAttribute(scheduleTime: timestamp, repeatPeriod: nil)] }
+            message.withUpdatedAttributes { $0 + [OutgoingScheduleInfoMessageAttribute(scheduleTime: timestamp, repeatPeriod: nil, spaceGramMinimumDelay: spaceGramDelayedSendMinimumInterval)] }
         }, true)
     }
 

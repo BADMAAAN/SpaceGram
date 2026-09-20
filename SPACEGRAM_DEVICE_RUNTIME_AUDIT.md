@@ -68,6 +68,12 @@ must be confirmed from the next device crash log if any crash remains.
 - Presence suppression keeps MTProto connected, sends an explicit offline
   status on transition, cancels the online refresh timer and optionally repeats
   offline publication every 25 seconds.
+- A targeted send-pipeline audit found no second `account.updateStatus` caller:
+  foreground presence flows through `ManagedAccountPresence`, while typing,
+  recording and upload activity flows through `ManagedLocalInputActivities`.
+  With the Ghost presence/activity subsettings enabled, the former cannot
+  publish online and the latter drops ordinary chat activity at both the live
+  signal and RPC boundaries. Group-call speaking remains intentionally exempt.
 
 ### Delayed Send
 
@@ -80,12 +86,17 @@ must be confirmed from the next device crash log if any crash remains.
   Media uses a conservative size estimate and a bounded 4.5 seconds/MiB offset.
 - Explicit user schedules, secret chats, bots, paid messages, suggested posts,
   story replies and autoremove messages are not rewritten.
+- SpaceGram-created schedule attributes now carry a persisted minimum-delay
+  marker. Immediately after upload and before every pending/standalone send RPC,
+  the planned date is compared with fresh Telegram server time and moved to at
+  least 12 seconds ahead if it became too close or passed.
+- Ordinary Telegram scheduled messages have no marker and remain unchanged.
+  Native random ids, pending-message state and retry paths are preserved, so
+  the recalculation does not create a second outgoing message.
 
-Known limitation: the schedule date is computed at enqueue. The current patch
-does not yet tag SpaceGram schedules and re-normalize them immediately before a
-post-upload RPC. A very slow upload can therefore consume the remaining offset.
-Online invisibility and final media timing require the second-account iPhone
-matrix before acceptance.
+Post-upload timing and absence of online exposure are source-complete but still
+require the slow-upload and second-account iPhone matrix before runtime
+acceptance.
 
 ### Protected media and outgoing translation
 
@@ -121,9 +132,11 @@ the UI.
 
 At the time of this audit these checks pass. They cover BUILD ownership,
 localization keys/branding, plist parsing, asset declarations, icon contracts,
-Ghost source-of-truth wiring, delayed-send structure and portable service
-contracts. Swift compilation and iOS runtime behavior are not covered on this
-host.
+Ghost source-of-truth/presence boundaries, delayed-send post-upload RPC wiring
+and portable service contracts. Swift compilation and iOS runtime behavior are
+not covered on this host. Swift unit coverage additionally includes slow upload,
+too-close/past dates, reconnect recalculation and deterministic retry behavior;
+it requires the macOS/iOS test runner.
 
 ## Required next iPhone pass
 
@@ -133,6 +146,7 @@ host.
 4. Compare Ghost off, Ghost on/delay off and Ghost on/delay on from a second
    account for online, typing, reads and delivery timing.
 5. Exercise text and slow media delayed sends, including edit, cancel and
-   reconnect.
+   reconnect; verify the final scheduled time remains at least 12 seconds after
+   upload completion.
 6. Confirm protected-photo/video save only for content the account can already
    view.
