@@ -986,8 +986,9 @@ extension ChatControllerImpl {
             }, messageCorrelationId)
         }
         
-        self.chatDisplayNode.sendMessages = { [weak self] messages, silentPosting, scheduleTime, repeatPeriod, isAnyMessageTextPartitioned, postpone in
+        self.chatDisplayNode.sendMessages = { [weak self] messages, silentPosting, scheduleTime, repeatPeriod, isAnyMessageTextPartitioned, postpone, enqueueCompletion in
             guard let strongSelf = self else {
+                enqueueCompletion?(false)
                 return
             }
             
@@ -1038,6 +1039,7 @@ extension ChatControllerImpl {
                             ]
                         )
                         strongSelf.present(alertController, in: .window(.root))
+                        enqueueCompletion?(false)
                         return
                     }
                 }
@@ -1047,9 +1049,15 @@ extension ChatControllerImpl {
                 // native transforms so explicit schedules are never replaced.
                 guard let delayedMessages = strongSelf.spaceGramDelayedMessages(strongSelf.transformEnqueueMessages(messages, silentPosting: effectiveSilentPosting, scheduleTime: scheduleTime, repeatPeriod: repeatPeriod, postpone: postpone)) else {
                     strongSelf.spaceGramPresentSchedulingUnavailable()
+                    enqueueCompletion?(false)
                     return
                 }
                 let transformedMessages = delayedMessages.0
+                let isSpaceGramDelayedSend = transformedMessages.contains { message in
+                    message.attributes.contains { attribute in
+                        (attribute as? OutgoingScheduleInfoMessageAttribute)?.spaceGramMinimumDelay != nil
+                    }
+                }
                 
                 var forwardedMessages: [[EnqueueMessage]] = []
                 var forwardSourcePeerIds = Set<PeerId>()
@@ -1123,11 +1131,18 @@ extension ChatControllerImpl {
                     let _ = (signal
                     |> deliverOnMainQueue).startStandalone(next: { messageIds in
                         guard let strongSelf = self else {
+                            enqueueCompletion?(false)
                             return
                         }
+                        // MARK: NAGRAM — local Postbox acceptance is the enqueue
+                        // ACK. Clear exactly this draft now; actual delivery remains
+                        // in Telegram's native scheduled-message pipeline.
+                        enqueueCompletion?(true)
                         if case .scheduledMessages = strongSelf.presentationInterfaceState.subject {
                         } else {
-                            strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
+                            if !isSpaceGramDelayedSend {
+                                strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
+                            }
                             
                             if shouldOpenScheduledMessages {
                                 if let layoutActionOnViewTransitionAction = strongSelf.layoutActionOnViewTransitionAction {

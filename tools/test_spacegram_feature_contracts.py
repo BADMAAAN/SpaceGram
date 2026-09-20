@@ -155,6 +155,40 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertNotIn("scheduleDate: scheduleTime", standalone)
         self.assertIn("currentServerTime: network.globalTime", pending)
 
+    def test_delayed_send_ack_clears_once_without_local_ghost_transition(self):
+        node = (ROOT / "submodules/TelegramUI/Sources/ChatControllerNode.swift").read_text(encoding="utf-8")
+        controller = (ROOT / "submodules/TelegramUI/Sources/ChatController.swift").read_text(encoding="utf-8")
+        loader = (ROOT / "submodules/TelegramUI/Sources/Chat/ChatControllerLoadDisplayNode.swift").read_text(encoding="utf-8")
+        self.assertIn("spaceGramDelayedDraftEnqueueInFlight", node)
+        self.assertIn("textInputPanelNode.text != sentComposerText", node)
+        self.assertIn("spaceGramDelayedMediaEnqueueInFlight", controller)
+        self.assertIn("enqueueCompletion?(true)", loader)
+        self.assertIn("enqueueCompletion?(false)", loader)
+        self.assertIn("if !isAutomaticDelayedSend", node)
+        self.assertIn("if automaticDelayedCandidate", controller)
+        self.assertIn("skipAddingTransitions = true", controller)
+        self.assertIn("if !isSpaceGramDelayedSend", loader)
+
+    def test_push_registration_and_entitlement_contract(self):
+        delegate = (ROOT / "submodules/TelegramUI/Sources/AppDelegate.swift").read_text(encoding="utf-8")
+        accounts = (ROOT / "submodules/TelegramUI/Sources/SharedAccountContext.swift").read_text(encoding="utf-8")
+        build = (ROOT / "Telegram/BUILD").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/spacegram-ios-test.yml").read_text(encoding="utf-8")
+        build_notes = (ROOT / "SpaceGram/IOS_TEST_BUILD.md").read_text(encoding="utf-8")
+        for token in ("requestAuthorization", "registerForRemoteNotifications", "didRegisterForRemoteNotificationsWithDeviceToken", "notificationTokenPromise.set"):
+            self.assertIn(token, delegate)
+        self.assertIn("self.activeAccountContexts", accounts)
+        self.assertIn("registerNotificationToken", accounts)
+        self.assertIn("unregisterNotificationToken", accounts)
+        self.assertIn("otherAccountUserIds", accounts)
+        self.assertIn("<key>aps-environment</key>", build)
+        self.assertIn("group.{telegram_bundle_id}", build)
+        self.assertIn(":NotificationContentExtension", build)
+        self.assertIn(":NotificationServiceExtension", build)
+        self.assertIn("build --//Telegram:disableExtensions", workflow)
+        self.assertIn("intermediate artifact for re-signing", build_notes)
+        self.assertIn("APNs", build_notes)
+
     def test_ghost_presence_and_activity_send_boundaries(self):
         presence = (ROOT / "submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift").read_text(encoding="utf-8")
         self.assertIn("return (value.0 && !value.1, value.2)", presence)
@@ -166,6 +200,16 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn("combineLatest(activities, spaceGramSuppressChatActivitySignal())", activity)
         self.assertIn("if SpaceGramGhostPolicy.suppressChatActivity", activity)
         self.assertIn("if !isSpeakingInGroupCall(activity)", activity)
+
+    def test_ghost_restores_local_scroll_and_self_profile_label(self):
+        history = (ROOT / "submodules/TelegramUI/Sources/ChatHistoryViewForLocation.swift").read_text(encoding="utf-8")
+        navigation = (ROOT / "submodules/TelegramUI/Sources/NavigateToChatController.swift").read_text(encoding="utf-8")
+        header = (ROOT / "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoHeaderNode.swift").read_text(encoding="utf-8")
+        self.assertIn("SpaceGramGhostPolicy.suppressAutomaticReads", history)
+        self.assertLess(history.index("SpaceGramGhostPolicy.suppressAutomaticReads"), history.index("else if let maxReadIndex"))
+        self.assertNotIn("SpaceGramGhostPolicy", navigation)
+        self.assertIn("SpaceGramGhostPolicy.suppressOnlinePresence", header)
+        self.assertIn('ngI18n("SpaceGram.Hub.Ghost"', header)
 
     def test_deleted_messages_use_presentation_only_overlay(self):
         overlay = (ROOT / "SpaceGram/HistoryOverlay/SpaceGramDeletedMessageOverlay.swift").read_text(encoding="utf-8")
@@ -182,6 +226,23 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn("entries.append(.MessageEntry(message, presentationData, true", entries)
         self.assertIn("entries.sort()", entries)
         self.assertIn("SpaceGramSettings.shared.captureDeletedMessages ? items : []", node)
+
+    def test_deleted_media_and_marker_defaults_are_visible(self):
+        settings = (ROOT / "SpaceGram/Settings/SpaceGramSettings.swift").read_text(encoding="utf-8")
+        status = (ROOT / "submodules/TelegramUI/Components/Chat/ChatMessageDateAndStatusNode/Sources/StringForMessageTimestampStatus.swift").read_text(encoding="utf-8")
+        russian = (ROOT / "SpaceGram/Strings/Strings/ru.lproj/SpaceGramLocalizable.strings").read_text(encoding="utf-8")
+        self.assertIn('@SpaceGramDefault("spacegram.settings.mediaArchiveEnabled", true)', settings)
+        self.assertIn('"\\u{1F5D1}\\u{FE0E} "', status)
+        self.assertIn('"SpaceGram.History.Deleted" = "Удалено";', russian)
+
+    def test_edit_history_is_user_facing_and_read_only(self):
+        menu = (ROOT / "submodules/TelegramUI/Sources/ChatInterfaceStateContextMenus.swift").read_text(encoding="utf-8")
+        self.assertIn("SpaceGramHistoryStore.load", menu)
+        self.assertIn('ngI18n("SpaceGram.History.EditHistory"', menu)
+        self.assertIn('ngI18n("SpaceGram.History.Previous"', menu)
+        self.assertIn('ngI18n("SpaceGram.History.Current"', menu)
+        self.assertIn("historyRecord.revisions.sorted", menu)
+        self.assertNotIn("SpaceGramHistoryStore.upsert", menu)
 
     def test_ghost_quick_button_uses_the_persisted_master(self):
         settings = (ROOT / "SpaceGram/Settings/SpaceGramSettings.swift").read_text(encoding="utf-8")

@@ -35,6 +35,9 @@ import ComponentDisplayAdapters
 import ChatAvatarNavigationNode
 // MARK: NAGRAM
 import NagramSettings
+// MARK: NAGRAM — truthful local self-profile presentation while Ghost is active.
+import SpaceGramSettings
+import SpaceGramStrings
 import MultiScaleTextNode
 import PeerInfoCoverComponent
 import PeerInfoPaneNode
@@ -1257,7 +1260,12 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 let subtitleColor: UIColor
                 subtitleColor = .white
                 
-                subtitleStringText = presentationData.strings.Presence_online
+                // MARK: NAGRAM — foreground UI is not proof of server presence.
+                // Do not claim the user is online while Ghost suppresses it, and
+                // do not invent a historical last-seen timestamp.
+                subtitleStringText = SpaceGramGhostPolicy.suppressOnlinePresence
+                    ? ngI18n("SpaceGram.Hub.Ghost", presentationData.strings.baseLanguageCode)
+                    : presentationData.strings.Presence_online
                 subtitleAttributes = MultiScaleTextState.Attributes(font: Font.regular(17.0), color: subtitleColor)
                 smallSubtitleAttributes = MultiScaleTextState.Attributes(font: Font.regular(16.0), color: .white, shadowColor: titleShadowColor)
                 

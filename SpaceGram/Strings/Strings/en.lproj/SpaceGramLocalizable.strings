@@ -926,6 +926,9 @@
 "SpaceGram.History.DeleteChatConfirm" = "Delete chat history?";
 "SpaceGram.History.DeleteChatInfo" = "All saved history and linked media for this chat will be removed from this device.";
 "SpaceGram.History.EditEvent" = "Edit";
+"SpaceGram.History.EditHistory" = "Edit History";
+"SpaceGram.History.Previous" = "Previous version";
+"SpaceGram.History.Current" = "Current version";
 "SpaceGram.History.ServerDeleted" = "Deleted on server";
 "SpaceGram.History.Cleanup" = "Cleanup";
 "SpaceGram.History.TextMissing" = "Saved text is no longer available.";

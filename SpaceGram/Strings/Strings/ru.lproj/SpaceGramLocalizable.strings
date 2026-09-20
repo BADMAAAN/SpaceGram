@@ -37,7 +37,7 @@
 "SpaceGram.History.SearchPlaceholder" = "Поиск по сохранённому тексту";
 "SpaceGram.History.All" = "Все";
 "SpaceGram.History.Edited" = "Изменённые";
-"SpaceGram.History.Deleted" = "Удалённые";
+"SpaceGram.History.Deleted" = "Удалено";
 "SpaceGram.History.Media" = "Медиа";
 "SpaceGram.History.Sort" = "Сортировка по времени";
 "SpaceGram.History.Newest" = "Сначала новые";
@@ -172,6 +172,9 @@
 "SpaceGram.History.DeleteChatConfirm" = "Удалить историю чата?";
 "SpaceGram.History.DeleteChatInfo" = "Вся сохранённая история и связанные медиа этого чата будут удалены с устройства.";
 "SpaceGram.History.EditEvent" = "Правка";
+"SpaceGram.History.EditHistory" = "История изменений";
+"SpaceGram.History.Previous" = "Предыдущая версия";
+"SpaceGram.History.Current" = "Текущая версия";
 "SpaceGram.History.ServerDeleted" = "Удалено на сервере";
 "SpaceGram.History.Cleanup" = "Очистка";
 "SpaceGram.History.TextMissing" = "Сохранённый текст больше недоступен.";

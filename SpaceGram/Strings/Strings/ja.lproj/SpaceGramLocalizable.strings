@@ -357,6 +357,9 @@
 "Nagram.Share.FileTooBig" = "ファイルが大きすぎるため共有できません。小さいファイルを選択して再試行してください。";
 "Nagram.Share.SendFailed" = "共有を完了できませんでした。重複送信を避けるため、再試行する前に送信先のチャットを確認してください。";
 "SpaceGram.History.DeletedIndicator" = "削除済み";
+"SpaceGram.History.EditHistory" = "編集履歴";
+"SpaceGram.History.Previous" = "以前のバージョン";
+"SpaceGram.History.Current" = "現在のバージョン";
 "SpaceGram.History.MediaArchived" = "ローカル保存済みメディア";
 "SpaceGram.History.MediaUnavailable" = "メディアを利用できません";
 "SpaceGram.MessageMenu.Title" = "メッセージメニュー";

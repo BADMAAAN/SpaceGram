@@ -129,7 +129,10 @@ public final class SpaceGramSettings {
     @SpaceGramDefault("spacegram.settings.showJumpToFirst", false)
     public var showJumpToFirst: Bool
 
-    @SpaceGramDefault("spacegram.settings.mediaArchiveEnabled", false)
+    // Deleted media can only survive a later server deletion when completed
+    // bytes are retained at download time. Keep this on with the already-on
+    // deleted-message feature; users can still opt out explicitly.
+    @SpaceGramDefault("spacegram.settings.mediaArchiveEnabled", true)
     public var mediaArchiveEnabled: Bool
 
     @SpaceGramDefault("spacegram.settings.showHistoryIndicator", true)

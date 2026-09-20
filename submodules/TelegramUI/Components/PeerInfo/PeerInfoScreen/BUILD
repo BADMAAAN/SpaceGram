@@ -103,6 +103,8 @@ swift_library(
         "//SpaceGram/SettingsUI:SpaceGramSettingsUI",
         "//SpaceGram/Enhancements/Settings:NagramSettings",
         "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        # MARK: NAGRAM — truthful self-profile Ghost status.
+        "//SpaceGram/Settings:SpaceGramSettings",
         "//SpaceGram/Strings:SpaceGramStrings",
         "//submodules/ShareController",
         "//submodules/TelegramUI/Components/ShareWithPeersScreen",

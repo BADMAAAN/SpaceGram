@@ -6,6 +6,8 @@ import SwiftSignalKit
 import Display
 import AccountContext
 import ChatInterfaceState
+// MARK: NAGRAM — Ghost keeps server unread state separate from local navigation.
+import SpaceGramSettings
 
 func preloadedChatHistoryViewForLocation(_ location: ChatHistoryLocationInput, context: AccountContext, chatLocation: ChatLocation, subject: ChatControllerSubject?, chatLocationContextHolder: Atomic<ChatLocationContextHolder?>, fixedCombinedReadStates: MessageHistoryViewReadState?, tag: HistoryViewInputTag?, additionalData: [AdditionalMessageHistoryViewData], orderStatistics: MessageHistoryViewOrderStatistics = []) -> Signal<ChatHistoryViewUpdate, NoError> {
     var isScheduled = false
@@ -179,7 +181,16 @@ func chatHistoryViewForLocation(
                             }
                         }
                         
-                        if let maxReadIndex = view.maxReadIndex, tag == nil, canScrollToRead {
+                        // MARK: NAGRAM — Telegram's stored anchor is the user's local
+                        // navigation state. Ghost intentionally leaves server unread state
+                        // behind, so that unread anchor must not override a valid saved
+                        // position. Explicit search/message locations use other cases above.
+                        let storedHistoryScrollState = effectiveIsAddedToChatList && tag == nil
+                            ? (initialData?.storedInterfaceState).flatMap(_internal_decodeStoredChatInterfaceState).flatMap(ChatInterfaceState.parse)?.historyScrollState
+                            : nil
+                        if SpaceGramGhostPolicy.suppressAutomaticReads, let historyScrollState = storedHistoryScrollState {
+                            scrollPosition = .positionRestoration(index: historyScrollState.messageIndex, relativeOffset: CGFloat(historyScrollState.relativeOffset))
+                        } else if let maxReadIndex = view.maxReadIndex, tag == nil, canScrollToRead {
                             let aroundIndex = maxReadIndex
                             scrollPosition = .unread(index: maxReadIndex)
                             
@@ -218,7 +229,7 @@ func chatHistoryViewForLocation(
                                     }
                                 }
                             }
-                        } else if effectiveIsAddedToChatList, tag == nil, let historyScrollState = (initialData?.storedInterfaceState).flatMap(_internal_decodeStoredChatInterfaceState).flatMap(ChatInterfaceState.parse)?.historyScrollState {
+                        } else if let historyScrollState = storedHistoryScrollState {
                             scrollPosition = .positionRestoration(index: historyScrollState.messageIndex, relativeOffset: CGFloat(historyScrollState.relativeOffset))
                         } else {
                             if let _ = chatLocation.peerId, !effectiveIsAddedToChatList {

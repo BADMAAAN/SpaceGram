@@ -16,5 +16,9 @@ the generated `Telegram.ipa` for development testing.
 The current workflow disables extensions, imports the repository's fake signing
 certificates and uses its fake provisioning inputs. The resulting IPA is an
 intermediate artifact for re-signing, not a verified installable device build.
+It cannot validate APNs delivery: a final device build must be signed with a
+profile that carries the push entitlement and must embed the notification
+service/content extensions. AltStore-style re-signing only supports push when
+the final signing profile and installed extension set preserve those capabilities.
 It does not disable provisioning profiles. Personal signing and installation
 require the separate device preflight documented in `docs/build.md`.

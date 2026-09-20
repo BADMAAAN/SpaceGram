@@ -22,21 +22,26 @@ public func spaceGramSettingsIcon() -> UIImage? {
 }
 
 private func spaceGramTile(_ symbol: String, section: Int32) -> UIImage? {
-    let colors: [Int32: UIColor] = [
-        0: .darkGray,
-        1: .systemBlue,
-        2: .systemGreen,
-        3: .systemPurple,
-        4: .systemOrange,
-        5: .systemTeal,
-        6: .systemIndigo,
-        7: .systemCyan,
-        8: .systemIndigo,
-        9: .systemPurple,
-        10: .systemGray,
-    ]
+    let color: UIColor
+    switch symbol {
+    case let value where value.hasPrefix("trash"):
+        color = .systemRed
+    case let value where value.contains("clock"):
+        color = .systemOrange
+    case let value where value.contains("eye") || value.contains("wifi"):
+        color = .systemPurple
+    case let value where value.contains("character") || value == "globe":
+        color = .systemPink
+    case let value where value.contains("photo") || value.contains("message"):
+        color = .systemBlue
+    case let value where value.contains("archive"):
+        color = .systemTeal
+    default:
+        let colors: [Int32: UIColor] = [0: .darkGray, 1: .systemBlue, 2: .systemGreen, 4: .systemOrange, 5: .systemTeal, 6: .systemIndigo, 7: .systemCyan, 8: .systemIndigo, 9: .systemPurple, 10: .systemGray]
+        color = colors[section] ?? .systemGray
+    }
     return UIGraphicsImageRenderer(size: CGSize(width: 29, height: 29)).image { _ in
-        (colors[section] ?? .systemGray).setFill()
+        color.setFill()
         UIBezierPath(roundedRect: CGRect(x: 0, y: 0, width: 29, height: 29), cornerRadius: 7).fill()
         let configuration = UIImage.SymbolConfiguration(pointSize: 17, weight: .medium)
         if let image = UIImage(systemName: symbol, withConfiguration: configuration)?.withTintColor(.white, renderingMode: .alwaysOriginal) {

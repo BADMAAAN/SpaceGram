@@ -85,6 +85,8 @@ swift_library(
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
         # // MARK: NAGRAM — presentation-only deleted-message overlay.
         "//SpaceGram/HistoryOverlay:SpaceGramHistoryOverlay",
+        # // MARK: NAGRAM — read-only edit-history records for the message menu.
+        "//SpaceGram/HistoryStorage:SpaceGramHistoryStorage",
         "//SpaceGram/MessageShot:SpaceGramMessageShot",
         # // MARK: NAGRAM
         "//submodules/MediaPlayer:UniversalMediaPlayer",

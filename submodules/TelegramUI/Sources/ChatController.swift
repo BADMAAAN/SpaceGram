@@ -646,6 +646,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var layoutActionOnViewTransitionAction: (() -> Void)?
     
     var lastPostedScheduledMessagesToastTimestamp: Double = 0.0
+    // MARK: NAGRAM — media-preview taps are locked only until the current
+    // draft is accepted into Telegram's scheduled queue.
+    var spaceGramDelayedMediaEnqueueInFlight = false
     var postedScheduledMessagesEventsDisposable: Disposable?
     
     var globalControlPanelsContext: GlobalControlPanelsContext?
@@ -9071,13 +9074,15 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             actions: [TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Common_OK, action: {})]), in: .window(.root))
     }
 
-    func sendMessages(_ messages: [EnqueueMessage], media: Bool = false, postpone: Bool = false, commit: Bool = false) {
+    func sendMessages(_ messages: [EnqueueMessage], media: Bool = false, postpone: Bool = false, commit: Bool = false, enqueueCompletion: ((Bool) -> Void)? = nil) {
         if case let .customChatContents(customChatContents) = self.subject {
             customChatContents.enqueueMessages(messages: messages)
+            enqueueCompletion?(true)
             return
         }
         
         guard let peerId = self.chatLocation.peerId else {
+            enqueueCompletion?(false)
             return
         }
         
@@ -9112,6 +9117,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 if !isScheduledMessages {
                     guard let delayed = self.spaceGramDelayedMessages(messages) else {
                         self.spaceGramPresentSchedulingUnavailable()
+                        enqueueCompletion?(false)
                         return
                     }
                     messages = delayed.0
@@ -9119,9 +9125,16 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 }
                 self.commitPurposefulAction()
                 
-                let _ = (enqueueMessages(account: self.context.account, peerId: peerId, messages: self.transformEnqueueMessages(messages, postpone: postpone))
+                let transformedMessages = self.transformEnqueueMessages(messages, postpone: postpone)
+                let isSpaceGramDelayedSend = transformedMessages.contains { message in
+                    message.attributes.contains { attribute in
+                        (attribute as? OutgoingScheduleInfoMessageAttribute)?.spaceGramMinimumDelay != nil
+                    }
+                }
+                let _ = (enqueueMessages(account: self.context.account, peerId: peerId, messages: transformedMessages)
                 |> deliverOnMainQueue).startStandalone(next: { [weak self] _ in
-                    if let strongSelf = self, strongSelf.presentationInterfaceState.subject != .scheduledMessages {
+                    enqueueCompletion?(true)
+                    if let strongSelf = self, strongSelf.presentationInterfaceState.subject != .scheduledMessages, !isSpaceGramDelayedSend {
                         strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
                     }
                 })
@@ -9211,6 +9224,22 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 var skipAddingTransitions = false
                 
                 if shouldDivert {
+                    skipAddingTransitions = true
+                }
+                // MARK: NAGRAM — an automatic scheduled message has no bubble
+                // in this history. Suppress the preview-to-bubble transition that
+                // otherwise leaves a stale local round-video node behind.
+                let automaticDelayedCandidate: Bool
+                if scheduleTime == nil {
+                    guard let delayed = strongSelf.spaceGramDelayedMessages(items.map(\.message)) else {
+                        strongSelf.spaceGramPresentSchedulingUnavailable()
+                        return
+                    }
+                    automaticDelayedCandidate = delayed.1
+                } else {
+                    automaticDelayedCandidate = false
+                }
+                if automaticDelayedCandidate {
                     skipAddingTransitions = true
                 }
                 if !animateTransition {
@@ -9372,9 +9401,21 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             return message.withUpdatedThreadId(overrideThreadId)
                         }
                     }
-                    
-                    strongSelf.chatDisplayNode.setupSendActionOnViewUpdate({
-                        if let strongSelf = self {
+
+                    if automaticDelayedCandidate {
+                        guard !strongSelf.spaceGramDelayedMediaEnqueueInFlight else {
+                            return
+                        }
+                        guard let delayed = strongSelf.spaceGramDelayedMessages(messages) else {
+                            strongSelf.spaceGramPresentSchedulingUnavailable()
+                            return
+                        }
+                        messages = delayed.0
+                        strongSelf.spaceGramDelayedMediaEnqueueInFlight = true
+                    }
+
+                    let clearMediaDraft: () -> Void = { [weak strongSelf] in
+                        if let strongSelf {
                             strongSelf.chatDisplayNode.collapseInput()
 
                             strongSelf.updateChatPresentationInterfaceState(animated: true, interactive: false, {
@@ -9382,10 +9423,23 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             })
                         }
                         completionImpl?()
-                    }, usedCorrelationId)
+                    }
+                    if !automaticDelayedCandidate {
+                        strongSelf.chatDisplayNode.setupSendActionOnViewUpdate(clearMediaDraft, usedCorrelationId)
+                    }
 
                     addTransitionNodes()
-                    strongSelf.sendMessages(messages.map { $0.withUpdatedReplyToMessageId(replyMessageSubject?.subjectModel) }, media: true)
+                    strongSelf.sendMessages(
+                        messages.map { $0.withUpdatedReplyToMessageId(replyMessageSubject?.subjectModel) },
+                        media: true,
+                        enqueueCompletion: automaticDelayedCandidate ? { [weak strongSelf] accepted in
+                            guard let strongSelf else { return }
+                            strongSelf.spaceGramDelayedMediaEnqueueInFlight = false
+                            if accepted {
+                                clearMediaDraft()
+                            }
+                        } : nil
+                    )
                 }
                 
                 if let targetThreadId {

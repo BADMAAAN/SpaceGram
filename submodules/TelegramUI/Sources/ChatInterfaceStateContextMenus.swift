@@ -33,6 +33,9 @@ import TranslateUI
 import SpaceGramSettings
 // MARK: NAGRAM — bounded, view-hierarchy-independent Message Shot renderer.
 import SpaceGramMessageShot
+// MARK: NAGRAM — read-only per-message edit history presentation.
+import SpaceGramHistoryOverlay
+import SpaceGramHistoryStorage
 // MARK: NAGRAM
 import DebugSettingsUI
 import ChatPresentationInterfaceState
@@ -1224,9 +1227,20 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         return (data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, messageViewsPrivacyTips, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer)
     }
     
-    return dataSignal
+    // MARK: NAGRAM — deleted overlay messages use a local synthetic id. Resolve
+    // the stable cloud id before reading the account-local history record.
+    let historyMessageId = message.attributes.compactMap { ($0 as? SpaceGramDeletedMessageAttribute)?.originalMessageId }.first ?? message.id
+    let historyRecord = context.account.postbox.transaction { transaction -> SpaceGramHistoryRecord? in
+        guard historyMessageId.namespace == Namespaces.Message.Cloud else {
+            return nil
+        }
+        let key = SpaceGramHistoryMessageKey(peerId: historyMessageId.peerId.toInt64(), namespace: historyMessageId.namespace, id: historyMessageId.id)
+        return try? SpaceGramHistoryStore.load(transaction: transaction, key: key)
+    }
+
+    return combineLatest(dataSignal, historyRecord)
     |> deliverOnMainQueue
-    |> map { menuData -> ContextController.Items in
+    |> map { menuData, historyRecord -> ContextController.Items in
         // MARK: NAGRAM
         let (data, updatingMessageMedia, infoSummaryData, appConfig, isMessageRead, _, availableReactions, translationSettings, loggingSettings, notificationSoundList, accountPeer) = menuData
         let isPremium = accountPeer?.isPremium ?? false
@@ -1242,6 +1256,34 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             }, action: { _, f in
                 f(.dismissWithoutContent)
                 controllerInteraction.navigateToFirstDateMessage(1, false)
+            })))
+        }
+
+        // MARK: NAGRAM — expose only genuine saved edit revisions. The current
+        // message remains separate and is never written back to the archive.
+        if let historyRecord, historyRecord.events.contains(where: { $0.type == .edit }), !historyRecord.revisions.isEmpty {
+            let language = chatPresentationInterfaceState.strings.baseLanguageCode
+            actions.append(.action(ContextMenuActionItem(text: ngI18n("SpaceGram.History.EditHistory", language), icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.actionSheet.primaryTextColor)
+            }, action: { _, f in
+                f(.dismissWithoutContent)
+                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                let actionSheet = ActionSheetController(presentationData: presentationData)
+                var items: [ActionSheetItem] = [ActionSheetTextItem(title: ngI18n("SpaceGram.History.EditHistory", language))]
+                for revision in historyRecord.revisions.sorted(by: { lhs, rhs in
+                    lhs.observedTimestamp == rhs.observedTimestamp ? lhs.number < rhs.number : lhs.observedTimestamp < rhs.observedTimestamp
+                }) {
+                    let time = DateFormatter.localizedString(from: Date(timeIntervalSince1970: TimeInterval(revision.observedTimestamp)), dateStyle: .short, timeStyle: .short)
+                    let text = revision.snapshot.text.isEmpty ? ngI18n("SpaceGram.History.NoText", language) : revision.snapshot.text
+                    items.append(ActionSheetTextItem(title: "\(ngI18n("SpaceGram.History.Previous", language)) · \(time)\n\(text)"))
+                }
+                let currentText = message.text.isEmpty ? ngI18n("SpaceGram.History.NoText", language) : message.text
+                items.append(ActionSheetTextItem(title: "\(ngI18n("SpaceGram.History.Current", language))\n\(currentText)"))
+                items.append(ActionSheetButtonItem(title: presentationData.strings.Common_Close, color: .accent, font: .bold, action: { [weak actionSheet] in
+                    actionSheet?.dismissAnimated()
+                }))
+                actionSheet.setItemGroups([ActionSheetItemGroup(items: items)])
+                controllerInteraction?.presentController(actionSheet, nil)
             })))
         }
 

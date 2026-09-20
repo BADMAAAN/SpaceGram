@@ -341,7 +341,10 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
     
     var requestUpdateChatInterfaceState: (ContainedViewLayoutTransition, Bool, (ChatInterfaceState) -> ChatInterfaceState) -> Void = { _, _, _ in }
     var requestUpdateInterfaceState: (ContainedViewLayoutTransition, Bool, (ChatPresentationInterfaceState) -> ChatPresentationInterfaceState) -> Void = { _, _, _ in }
-    var sendMessages: ([EnqueueMessage], Bool?, Int32?, Int32?, Bool, Bool) -> Void = { _, _, _, _, _, _ in }
+    var sendMessages: ([EnqueueMessage], Bool?, Int32?, Int32?, Bool, Bool, ((Bool) -> Void)?) -> Void = { _, _, _, _, _, _, completion in completion?(false) }
+    // MARK: NAGRAM — blocks repeat taps only for the draft currently being
+    // accepted into Telegram's scheduled queue. It is released on enqueue ACK.
+    private var spaceGramDelayedDraftEnqueueInFlight = false
     var displayAttachmentMenu: () -> Void = { }
     var paste: (ChatTextInputPanelPasteData) -> Void = { _ in }
     var updateTypingActivity: (Bool) -> Void = { _ in }
@@ -4864,7 +4867,7 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                     if !resolved.entities.isEmpty {
                         attributes.append(TextEntitiesMessageAttribute(entities: resolved.entities))
                     }
-                    self.sendMessages([.message(text: resolved.text, attributes: attributes, inlineStickers: [:], mediaReference: nil, threadId: self.chatLocation.threadId, replyToMessageId: replyMessageSubject?.subjectModel, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])], nil, nil, nil, false, false)
+                    self.sendMessages([.message(text: resolved.text, attributes: attributes, inlineStickers: [:], mediaReference: nil, threadId: self.chatLocation.threadId, replyToMessageId: replyMessageSubject?.subjectModel, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])], nil, nil, nil, false, false, nil)
                 } else {
                     sendNormally()
                 }
@@ -5251,12 +5254,26 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                         }
                     }
                     
-                    // MARK: NAGRAM — validate before registering draft cleanup or send animations.
-                    if scheduleTime == nil, let controller = self.controller, !controller.spaceGramValidateAutoSchedule(messages) {
-                        return
+                    // MARK: NAGRAM — prepare the canonical scheduled entity before
+                    // registering transitions. Scheduled messages do not enter the
+                    // current history, so its view update cannot acknowledge cleanup.
+                    var isAutomaticDelayedSend = false
+                    if scheduleTime == nil, let controller = self.controller {
+                        guard let delayed = controller.spaceGramDelayedMessages(messages) else {
+                            controller.spaceGramPresentSchedulingUnavailable()
+                            return
+                        }
+                        messages = delayed.0
+                        isAutomaticDelayedSend = delayed.1
+                        if isAutomaticDelayedSend {
+                            guard !self.spaceGramDelayedDraftEnqueueInFlight else {
+                                return
+                            }
+                            self.spaceGramDelayedDraftEnqueueInFlight = true
+                        }
                     }
                     var usedCorrelationId: Int64?
-                    if !messages.isEmpty, case .message = messages[messages.count - 1] {
+                    if !isAutomaticDelayedSend, !messages.isEmpty, case .message = messages[messages.count - 1] {
                         let correlationId = Int64.random(in: 0 ..< Int64.max)
                         messages[messages.count - 1] = messages[messages.count - 1].withUpdatedCorrelationId(correlationId)
                         
@@ -5275,9 +5292,16 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                             })
                         }
                     }
+
+                    // MARK: NAGRAM — an enqueue ACK may arrive after the user has
+                    // begun the next draft. Only clear the composer we actually sent.
+                    let sentComposerText = (self.inputPanelNode as? ChatTextInputPanelNode)?.text
                     
-                    self.setupSendActionOnViewUpdate({ [weak self] in
+                    let clearComposer: () -> Void = { [weak self] in
                         guard let self, let textInputPanelNode = self.inputPanelNode as? ChatTextInputPanelNode else {
+                            return
+                        }
+                        if isAutomaticDelayedSend, let sentComposerText, textInputPanelNode.text != sentComposerText {
                             return
                         }
                         self.collapseInput()
@@ -5300,10 +5324,25 @@ class ChatControllerNode: ASDisplayNode, ASScrollViewDelegate {
                             return state
                         })
                         self.ignoreUpdateHeight = false
-                    }, usedCorrelationId)
+                    }
+                    if !isAutomaticDelayedSend {
+                        self.setupSendActionOnViewUpdate(clearComposer, usedCorrelationId)
+                    }
                     completion()
-                    
-                    self.sendMessages(messages, silentPosting, scheduleTime, repeatPeriod, messages.count > 1, postpone)
+
+                    let enqueueCompletion: ((Bool) -> Void)?
+                    if isAutomaticDelayedSend {
+                        enqueueCompletion = { [weak self] accepted in
+                            guard let self else { return }
+                            self.spaceGramDelayedDraftEnqueueInFlight = false
+                            if accepted {
+                                clearComposer()
+                            }
+                        }
+                    } else {
+                        enqueueCompletion = nil
+                    }
+                    self.sendMessages(messages, silentPosting, scheduleTime, repeatPeriod, messages.count > 1, postpone, enqueueCompletion)
                 }
                 
                 var targetThreadId: Int64?

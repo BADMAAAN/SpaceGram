@@ -253,7 +253,9 @@ public func stringForMessageTimestampStatus(
     
     // MARK: NAGRAM — reuse the native compact timestamp style for all renderers.
     if message.attributes.contains(where: { $0 is SpaceGramDeletedMessageAttribute }) {
-        dateText = ngI18n("SpaceGram.History.Deleted", strings.baseLanguageCode) + " · " + dateText
+        // Text presentation selector keeps the trash glyph monochrome and at
+        // the native muted timestamp size instead of rendering a large emoji.
+        dateText = "\u{1F5D1}\u{FE0E} " + ngI18n("SpaceGram.History.Deleted", strings.baseLanguageCode) + " · " + dateText
     }
     return dateText
 }

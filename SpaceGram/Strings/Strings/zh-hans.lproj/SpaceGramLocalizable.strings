@@ -357,6 +357,9 @@
 "Nagram.Share.FileTooBig" = "文件过大，无法分享。请选择较小的文件后重试。";
 "Nagram.Share.SendFailed" = "分享未能完成。请先检查目标聊天，再决定是否重试，以免重复发送。";
 "SpaceGram.History.DeletedIndicator" = "已删除";
+"SpaceGram.History.EditHistory" = "编辑历史";
+"SpaceGram.History.Previous" = "以前的版本";
+"SpaceGram.History.Current" = "当前版本";
 "SpaceGram.History.MediaArchived" = "媒体已保存在本地";
 "SpaceGram.History.MediaUnavailable" = "媒体不可用";
 "SpaceGram.MessageMenu.Title" = "消息菜单";
