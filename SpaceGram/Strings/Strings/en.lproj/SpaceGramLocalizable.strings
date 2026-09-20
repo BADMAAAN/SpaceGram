@@ -1021,3 +1021,6 @@
 "SpaceGram.UI.MediaClearRetry" = "Unable to clear saved media. Try again.";
 "SpaceGram.UI.MessageHistory" = "Message History";
 "SpaceGram.UI.HistoryRemoveRetry" = "Unable to remove saved history. Try again.";
+"SpaceGram.History.DeletedIndicator" = "Deleted";
+"SpaceGram.History.MediaArchived" = "Archived media";
+"SpaceGram.History.MediaUnavailable" = "Media unavailable";

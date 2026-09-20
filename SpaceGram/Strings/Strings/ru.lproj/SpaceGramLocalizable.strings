@@ -410,3 +410,6 @@
 "SpaceGram.UI.MediaClearRetry" = "Не удалось удалить сохранённые медиа. Повторите попытку.";
 "SpaceGram.UI.MessageHistory" = "История сообщений";
 "SpaceGram.UI.HistoryRemoveRetry" = "Не удалось удалить историю. Повторите попытку.";
+"SpaceGram.History.DeletedIndicator" = "Удалено";
+"SpaceGram.History.MediaArchived" = "Медиа сохранено локально";
+"SpaceGram.History.MediaUnavailable" = "Медиа недоступно";

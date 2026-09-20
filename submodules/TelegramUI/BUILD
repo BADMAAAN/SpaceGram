@@ -83,6 +83,8 @@ swift_library(
         "//SpaceGram/Settings:SpaceGramSettings",
         # // MARK: NAGRAM — reactive automatic read policy.
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
+        # // MARK: NAGRAM — presentation-only deleted-message overlay.
+        "//SpaceGram/HistoryOverlay:SpaceGramHistoryOverlay",
         # // MARK: NAGRAM
         "//submodules/MediaPlayer:UniversalMediaPlayer",
         "//submodules/TelegramVoip:TelegramVoip",

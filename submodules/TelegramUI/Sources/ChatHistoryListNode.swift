@@ -2,6 +2,7 @@ import Foundation
 // MARK: NAGRAM — SpaceGram automatic read policy.
 import SpaceGramSettings
 import SpaceGramSettingsSignal
+import SpaceGramHistoryOverlay
 import UIKit
 import SwiftSignalKit
 import Display
@@ -1917,8 +1918,28 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
                 return historyViewUpdateValue
             }
         }
-        historyViewUpdate = combineLatest(queue: .mainQueue(), historyViewUpdate, nagramRegexFiltersSignal()) // MARK: NAGRAM — 规则变化时重算聊天条目。
-        |> map { update, _ in
+        // MARK: NAGRAM — observe the account-scoped archive without inserting
+        // synthetic records into Postbox message history.
+        let spaceGramDeletedOverlayItems = Atomic<[SpaceGramDeletedMessageOverlayItem]>(value: [])
+        let spaceGramDeletedOverlaySignal: Signal<[SpaceGramDeletedMessageOverlayItem], NoError>
+        var spaceGramDeletedOverlayEligible = mode == .bubbles && tag == nil && !isScheduledMessages
+        if let subject, case .pinnedMessages = subject {
+            spaceGramDeletedOverlayEligible = false
+        }
+        if let peerId = self.chatLocation.peerId, spaceGramDeletedOverlayEligible {
+            spaceGramDeletedOverlaySignal = combineLatest(
+                spaceGramDeletedMessageOverlay(postbox: context.account.postbox, peerId: peerId, threadId: self.chatLocation.threadId),
+                spaceGramSettingsChangesSignal()
+            )
+            |> map { items, _ in
+                return SpaceGramSettings.shared.captureDeletedMessages ? items : []
+            }
+        } else {
+            spaceGramDeletedOverlaySignal = .single([])
+        }
+        historyViewUpdate = combineLatest(queue: .mainQueue(), historyViewUpdate, nagramRegexFiltersSignal(), spaceGramDeletedOverlaySignal) // MARK: NAGRAM — 规则或 local overlay 变化时重算聊天条目。
+        |> map { update, _, deletedItems in
+            let _ = spaceGramDeletedOverlayItems.swap(deletedItems)
             return update
         }
                 
@@ -2255,6 +2276,7 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
                     cachedData: data.cachedData,
                     adMessage: allAdMessages.fixed,
                     dynamicAdMessages: allAdMessages.opportunistic,
+                    spaceGramDeletedMessages: spaceGramDeletedOverlayItems.with { $0 },
                     isMusicPlaylist: isMusicPlaylist,
                     pinToTopStableId: pinToTopStableId
                 )

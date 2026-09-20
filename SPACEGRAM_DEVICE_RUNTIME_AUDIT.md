@@ -112,14 +112,24 @@ acceptance.
 
 ## Not completed
 
-- Deleted-message snapshots are captured before server deletion and downloaded
-  media can be retained, but they are not yet merged back into normal chat
-  chronology as a supplemental overlay. No fake server message is inserted.
-- Message Shot and its dedicated bounded renderer are not implemented.
-- `SpaceGram Cosmic` and approved cosmic wallpaper presets are not implemented.
-- The protected-media hooks above have not been extended to every file/voice/
-  round-video context-menu surface in this pass.
-- No physical-device build, install or second-account behavior matrix was run.
+- **PARTIAL — Deleted live-chat overlay:** persisted server-delete snapshots are
+  now observed per account and merged into the normal chat presentation in
+  original timestamp order. The overlay deduplicates live server ids, is
+  thread/page bounded, survives relaunch through the existing Postbox archive,
+  uses local-namespace presentation messages marked `Deleted` / `Удалено`, and
+  is always passed to the UI as read. It never inserts a fake server message or
+  modifies Postbox unread state. Text, supported formatting and sender peers
+  are restored when available. Deleted media currently shows a graceful local
+  archive/unavailable label; rendering the retained photo/file bytes directly
+  in the bubble is **NOT IMPLEMENTED** and still requires a lifetime-safe media
+  resource bridge.
+- **NOT IMPLEMENTED — Message Shot:** no dedicated bounded renderer exists.
+- **NOT IMPLEMENTED — SpaceGram Cosmic:** no theme or approved wallpaper preset
+  exists.
+- **PARTIAL — protected media:** photo/video hooks exist, but every file/voice/
+  round-video context-menu surface is not covered.
+- **DEVICE VERIFICATION REQUIRED:** no physical-device build, install,
+  second-account presence matrix, or deleted-overlay runtime pass was run.
 
 These items must remain described as unavailable, not partially advertised in
 the UI.
@@ -133,10 +143,12 @@ the UI.
 At the time of this audit these checks pass. They cover BUILD ownership,
 localization keys/branding, plist parsing, asset declarations, icon contracts,
 Ghost source-of-truth/presence boundaries, delayed-send post-upload RPC wiring
-and portable service contracts. Swift compilation and iOS runtime behavior are
-not covered on this host. Swift unit coverage additionally includes slow upload,
-too-close/past dates, reconnect recalculation and deterministic retry behavior;
-it requires the macOS/iOS test runner.
+deleted-overlay ownership/merge boundaries and portable service contracts.
+Swift compilation and iOS runtime behavior are not covered on this host. Swift
+unit coverage additionally includes slow upload, too-close/past dates,
+reconnect recalculation, deterministic retry behavior, overlay page boundaries,
+local identity and missing-media fallback; it requires the macOS/iOS test
+runner.
 
 ## Required next iPhone pass
 
@@ -150,3 +162,6 @@ it requires the macOS/iOS test runner.
    upload completion.
 6. Confirm protected-photo/video save only for content the account can already
    view.
+7. Delete text/formatted/media messages from a second account; confirm the text
+   overlay remains in chronology after pagination and relaunch, has no unread
+   effect, and missing media uses the fallback without crashing.

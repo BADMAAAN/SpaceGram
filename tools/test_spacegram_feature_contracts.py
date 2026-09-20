@@ -123,6 +123,22 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn("if SpaceGramGhostPolicy.suppressChatActivity", activity)
         self.assertIn("if !isSpeakingInGroupCall(activity)", activity)
 
+    def test_deleted_messages_use_presentation_only_overlay(self):
+        overlay = (ROOT / "SpaceGram/HistoryOverlay/SpaceGramDeletedMessageOverlay.swift").read_text(encoding="utf-8")
+        entries = (ROOT / "submodules/TelegramUI/Sources/ChatHistoryEntriesForView.swift").read_text(encoding="utf-8")
+        node = (ROOT / "submodules/TelegramUI/Sources/ChatHistoryListNode.swift").read_text(encoding="utf-8")
+
+        self.assertIn("PostboxViewKey.orderedItemList", overlay)
+        self.assertIn("SpaceGramHistoryPresentationModel.deletedSnapshot", overlay)
+        self.assertIn("namespace: Namespaces.Message.Local", overlay)
+        self.assertIn("SpaceGramDeletedMessageAttribute", overlay)
+        self.assertNotIn("transaction.addMessages", overlay)
+        self.assertNotIn("transaction.updateMessage", overlay)
+        self.assertIn("!liveMessageIds.contains(item.originalMessageId)", entries)
+        self.assertIn("entries.append(.MessageEntry(message, presentationData, true", entries)
+        self.assertIn("entries.sort()", entries)
+        self.assertIn("SpaceGramSettings.shared.captureDeletedMessages ? items : []", node)
+
     def test_ghost_quick_button_uses_the_persisted_master(self):
         settings = (ROOT / "SpaceGram/Settings/SpaceGramSettings.swift").read_text(encoding="utf-8")
         chat_list = (ROOT / "submodules/ChatListUI/Sources/ChatListController.swift").read_text(encoding="utf-8")

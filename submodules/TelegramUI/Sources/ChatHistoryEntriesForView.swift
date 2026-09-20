@@ -13,6 +13,7 @@ import Markdown
 import Display
 import TelegramStringFormatting
 import NagramSettings // MARK: NAGRAM
+import SpaceGramHistoryOverlay // MARK: NAGRAM
 import SpaceGramStrings // MARK: NAGRAM
 
 struct ChatHistoryEntriesForViewState {
@@ -61,6 +62,7 @@ func chatHistoryEntriesForView(
     cachedData: CachedPeerData?,
     adMessage: Message?,
     dynamicAdMessages: [Message],
+    spaceGramDeletedMessages: [SpaceGramDeletedMessageOverlayItem],
     isMusicPlaylist: Bool,
     pinToTopStableId: EngineMessage.StableId?
 ) -> ([ChatHistoryEntry], ChatHistoryEntriesForViewState) {
@@ -886,6 +888,39 @@ func chatHistoryEntriesForView(
         }
     }
     
+    // MARK: NAGRAM — merge persisted deleted snapshots only into the current
+    // presentation page. They remain local-namespace items and never affect
+    // Postbox read state, unread counters or server message tables.
+    if !spaceGramDeletedMessages.isEmpty {
+        let liveMessageIds = Set(view.entries.map { $0.message.id })
+        let lowerTimestamp = view.entries.first?.message.timestamp
+        let upperTimestamp = view.entries.last?.message.timestamp
+        let canExtendEarlier = view.earlierId == nil && !view.holeEarlier
+        let canExtendLater = view.laterId == nil && !view.holeLater
+        let deletedLabel = ngI18n("SpaceGram.History.DeletedIndicator", presentationData.strings.baseLanguageCode)
+        let archivedMediaLabel = ngI18n("SpaceGram.History.MediaArchived", presentationData.strings.baseLanguageCode)
+        let missingMediaLabel = ngI18n("SpaceGram.History.MediaUnavailable", presentationData.strings.baseLanguageCode)
+        let pageItems = spaceGramDeletedMessages.filter { item in
+            !liveMessageIds.contains(item.originalMessageId) && SpaceGramDeletedOverlayPolicy.includes(
+                timestamp: item.timestamp,
+                lowerTimestamp: lowerTimestamp,
+                upperTimestamp: upperTimestamp,
+                canExtendEarlier: canExtendEarlier,
+                canExtendLater: canExtendLater
+            )
+        }.suffix(200)
+        for item in pageItems {
+            let message = item.makeMessage(
+                accountPeerId: context.account.peerId,
+                deletedLabel: deletedLabel,
+                archivedMediaLabel: archivedMediaLabel,
+                missingMediaLabel: missingMediaLabel
+            )
+            entries.append(.MessageEntry(message, presentationData, true, nil, .none, ChatMessageEntryAttributes()))
+        }
+        entries.sort()
+    }
+
     if isMusicPlaylist && entries.count == 1 {
         return ([], currentState)
     }
