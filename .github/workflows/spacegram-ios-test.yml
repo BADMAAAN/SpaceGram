@@ -9,7 +9,7 @@ permissions:
 jobs:
   build:
     name: Build unsigned debug ARM64 IPA
-    runs-on: macos-26
+    runs-on: macos-15
     timeout-minutes: 180
     env:
       BUNDLE_ID: com.badmaaan.qwengram
@@ -97,17 +97,36 @@ jobs:
         id: tests
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mkdir -p "$ARTIFACTS_DIR"
           cat > local.bazelrc <<'RC'
           build --//Telegram:disableExtensions
           build --//Telegram:disableProvisioningProfiles
           RC
+          set +e
           python3 -u build-system/Make/Make.py --cacheDir "$BAZEL_CACHE" test \
             --configurationPath build-input/spacegram-test-configuration.json \
             --xcodeManagedCodesigning \
             --target Tests/SpaceGramMediaArchiveTests:SpaceGramMediaArchiveTests \
             2>&1 | tee "$ARTIFACTS_DIR/tests.log"
+          test_status="${PIPESTATUS[0]}"
+          set -e
+
+          if [ -d bazel-testlogs/Tests/SpaceGramMediaArchiveTests ]; then
+            find bazel-testlogs/Tests/SpaceGramMediaArchiveTests \
+              -type f \( -name 'test.log' -o -name 'test.xml' \) \
+              -exec cp -f {} "$ARTIFACTS_DIR/" \; 2>/dev/null || true
+          fi
+
+          mkdir -p "$ARTIFACTS_DIR/DiagnosticReports"
+          if [ -d "$HOME/Library/Logs/DiagnosticReports" ]; then
+            find "$HOME/Library/Logs/DiagnosticReports" \
+              -type f \( -name '*.crash' -o -name '*.ips' \) \
+              -mmin -30 \
+              -exec cp -f {} "$ARTIFACTS_DIR/DiagnosticReports/" \; 2>/dev/null || true
+          fi
+
+          exit "$test_status"
 
       - name: Upload simulator test results
         if: always() && steps.tests.outcome != 'skipped'
@@ -116,6 +135,9 @@ jobs:
           name: SpaceGram-simulator-tests
           path: |
             ${{ runner.temp }}/spacegram-ios-artifacts/tests.log
+            ${{ runner.temp }}/spacegram-ios-artifacts/test.log
+            ${{ runner.temp }}/spacegram-ios-artifacts/test.xml
+            ${{ runner.temp }}/spacegram-ios-artifacts/DiagnosticReports/
             bazel-testlogs/Tests/SpaceGramMediaArchiveTests/**/test.*
           retention-days: 14
 
