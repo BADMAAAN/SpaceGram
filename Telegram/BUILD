@@ -1313,7 +1313,7 @@ plist_fragment(
                 <string>INStartAudioCallIntent</string>
                 <string>INSearchForMessagesIntent</string>
                 <string>INSetMessageAttributeIntent</string>
-                <string>INSearchCallHistoryIntent</string>
+                <!-- MARK: NAGRAM — Xcode 26 removed Search Call History Siri APIs. -->
                 <string>SelectFriendsIntent</string>
                 <string>SelectAvatarFriendsIntent</string>
             </array>
