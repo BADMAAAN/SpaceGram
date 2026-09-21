@@ -1216,10 +1216,17 @@ func peerInfoScreenData(
                     var updateManager: QueueLocalObject<PeerPresenceStatusManager>? = nil
                 }
                 let manager = Atomic<Manager>(value: Manager())
-                let notify: () -> Void = {
+                // MARK: NAGRAM — the retained presence timer must not retain its owner.
+                let notify: () -> Void = { [weak manager] in
+                    guard let manager else { return }
                     let data = manager.with { manager -> PeerInfoStatusData? in
                         if let presence = manager.currentValue {
-                            let timestamp = CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970
+                            // MARK: NAGRAM — render self last-seen against server time;
+                            // an ACK in this same second is still offline in Ghost.
+                            var timestamp = userPeerId == context.account.peerId ? context.account.network.globalTime : CFAbsoluteTimeGetCurrent() + NSTimeIntervalSince1970
+                            if userPeerId == context.account.peerId, case let .present(until) = presence.status {
+                                timestamp = max(timestamp, Double(until) + 1.0)
+                            }
                             let (text, isActivity) = stringAndActivityForUserPresence(strings: strings, dateTimeFormat: dateTimeFormat, presence: EnginePeer.Presence(presence), relativeTo: Int32(timestamp), expanded: true)
                             var isHiddenStatus = false
                             switch presence.status {
@@ -1235,13 +1242,16 @@ func peerInfoScreenData(
                     }
                     subscriber.putNext(data)
                 }
-                let disposable = (context.account.viewTracker.peerView(userPeerId, updateData: false)
-                |> map { view -> StatusInputData in
+                // MARK: NAGRAM — the self profile uses its account's server cache.
+                let selfPresence: Signal<TelegramUserPresence?, NoError> = userPeerId == context.account.peerId
+                    ? spaceGramSelfPresenceSignal(postbox: context.account.postbox) : .single(nil)
+                let disposable = (combineLatest(context.account.viewTracker.peerView(userPeerId, updateData: false), selfPresence)
+                |> map { view, selfPresence -> StatusInputData in
                     guard let user = view.peers[userPeerId] as? TelegramUser else {
                         return .none
                     }
                     if user.id == context.account.peerId {
-                        return .none
+                        return selfPresence.map { .presence($0) } ?? .none
                     }
                     if user.isDeleted {
                         return .none
@@ -1272,6 +1282,8 @@ func peerInfoScreenData(
                         if case let .presence(value) = inputData {
                             presence = value
                         }
+                        // MARK: NAGRAM — keep a weak reference to the atomic owner.
+                        let owner = manager
                         let _ = manager.with { manager -> Void in
                             manager.currentValue = presence
                             if let presence = presence {
@@ -1280,14 +1292,21 @@ func peerInfoScreenData(
                                     updateManager = current
                                 } else {
                                     updateManager = QueueLocalObject<PeerPresenceStatusManager>(queue: .mainQueue(), generate: {
-                                        return PeerPresenceStatusManager(update: {
+                                        // MARK: NAGRAM — native presence refresh is one-shot.
+                                        return PeerPresenceStatusManager(update: { [weak owner] in
                                             notify()
+                                            let state = owner?.with { ($0.currentValue, $0.updateManager) }
+                                            if let presence = state?.0 {
+                                                state?.1?.with { $0.reset(presence: EnginePeer.Presence(presence)) }
+                                            }
                                         })
                                     })
                                 }
                                 updateManager.with { updateManager in
                                     updateManager.reset(presence: EnginePeer.Presence(presence))
                                 }
+                                // MARK: NAGRAM — retain the timer so last-seen ages.
+                                manager.updateManager = updateManager
                             } else if let _ = manager.updateManager {
                                 manager.updateManager = nil
                             }
@@ -1295,7 +1314,14 @@ func peerInfoScreenData(
                         notify()
                     }
                 })
-                return disposable
+                // MARK: NAGRAM — stop profile timers when leaving/switching accounts.
+                return ActionDisposable {
+                    disposable.dispose()
+                    manager.with { manager in
+                        manager.updateManager = nil
+                        manager.currentValue = nil
+                    }
+                }
             }
             |> distinctUntilChanged
             

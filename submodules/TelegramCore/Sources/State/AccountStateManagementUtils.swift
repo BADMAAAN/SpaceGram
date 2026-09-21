@@ -4443,7 +4443,7 @@ func replayFinalState(
                 }
             case let .DeleteMessagesWithGlobalIds(ids):
                 // MARK: NAGRAM
-                spaceGramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: transaction.messageIdsForGlobalIds(ids), source: .updateDeleteMessages)
+                spaceGramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: spaceGramServerDeleteIds(transaction: transaction, globalIds: ids), source: .updateDeleteMessages)
                 var resourceIds: [MediaResourceId] = []
                 transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
                     addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)

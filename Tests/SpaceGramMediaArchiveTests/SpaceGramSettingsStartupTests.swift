@@ -7,6 +7,66 @@ import SwiftSignalKit
 import XCTest
 
 final class SpaceGramSettingsStartupTests: XCTestCase {
+    // Can also be selected alone in a fresh runner to cover first subscription.
+    func testPersistedReadOnInteractOnAndOffSurvivePolicySubscription() {
+        let defaults = UserDefaults.standard
+        let keys = ["enabled", "ghostModeEnabled", "readOnInteract"].map { "spacegram.settings." + $0 }
+        let previous = keys.map { defaults.object(forKey: $0) }
+        defer {
+            for (key, value) in zip(keys, previous) {
+                if let value { defaults.set(value, forKey: key) }
+                else { defaults.removeObject(forKey: key) }
+            }
+        }
+        defaults.set(true, forKey: keys[0])
+        defaults.set(true, forKey: keys[1])
+        for persisted in [false, true] {
+            defaults.set(persisted, forKey: keys[2])
+            var emitted: Bool?
+            let disposable = spaceGramSuppressAutomaticReadsSignal().start(next: { emitted = $0 })
+            XCTAssertEqual(emitted, true)
+            XCTAssertEqual(SpaceGramGhostPolicy.shouldReadOnInteraction, persisted)
+            XCTAssertEqual(defaults.bool(forKey: keys[2]), persisted)
+            disposable.dispose()
+        }
+    }
+
+    func testSettingsWritesDoNotRecursivelyEnterPolicySubscriber() {
+        _ = SpaceGramSettings.shared
+        let key = "spacegram.settings.toolsEnabled"
+        let defaults = UserDefaults.standard
+        let previous = defaults.object(forKey: key)
+        defer {
+            if let previous { defaults.set(previous, forKey: key) }
+            else { defaults.removeObject(forKey: key) }
+        }
+        defaults.set(false, forKey: key)
+        let completed = expectation(description: "ON and OFF propagated")
+        let lock = NSRecursiveLock()
+        var values: [Bool] = []
+        var depth = 0
+        var maxDepth = 0
+        let disposable = spaceGramToolsEnabledSignal().start(next: { value in
+            lock.lock()
+            defer { depth -= 1; lock.unlock() }
+            depth += 1
+            maxDepth = max(maxDepth, depth)
+            values.append(value)
+            if values.count < 3 {
+                defaults.set(!value, forKey: key)
+                NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: defaults)
+            } else {
+                completed.fulfill()
+            }
+        })
+        wait(for: [completed], timeout: 5.0)
+        disposable.dispose()
+        lock.lock()
+        XCTAssertEqual(values, [false, true, false])
+        XCTAssertEqual(maxDepth, 1)
+        lock.unlock()
+    }
+
     func testOutOfRangeEnhancementPreferenceFallsBackWithoutTrapping() {
         let key = "SpaceGramTests." + UUID().uuidString
         let defaults = NagramDemoMode.userDefaults

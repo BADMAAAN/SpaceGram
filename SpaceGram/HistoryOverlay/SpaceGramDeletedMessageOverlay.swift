@@ -106,8 +106,16 @@ public struct SpaceGramDeletedMessageOverlayItem {
     }
 
     private func makeMedia(missingMediaLabel: String) -> [Media] {
-        guard let metadata = self.snapshot.media.first else { return [] }
-        let primary = self.archivedMedia.filter { $0.asset.kind != "thumbnail" }.max { $0.asset.bytes < $1.asset.bytes }
+        return self.snapshot.media.flatMap { self.makeMedia(metadata: $0, missingMediaLabel: missingMediaLabel) }
+    }
+
+    private func makeMedia(metadata: SpaceGramHistoryMediaMetadata, missingMediaLabel: String) -> [Media] {
+        let resourceIds = Set(metadata.resourceIds ?? [])
+        let mediaAssets = self.archivedMedia.filter {
+            resourceIds.isEmpty || $0.asset.resourceId.map(resourceIds.contains) == true
+                || ($0.asset.resourceId == nil && self.snapshot.media.count == 1)
+        }
+        let primary = mediaAssets.filter { metadata.type == "image" || $0.asset.kind != "thumbnail" }.max { $0.asset.bytes < $1.asset.bytes }
         let assetNumber = primary.flatMap { UInt64($0.asset.id.replacingOccurrences(of: "-", with: "").prefix(16), radix: 16) }
         let localNumber = assetNumber.map { Int64(bitPattern: $0) } ?? (self.originalMessageId.peerId.toInt64() ^ (Int64(self.originalMessageId.id) << 32))
         let mediaId = MediaId(namespace: Namespaces.Media.LocalFile, id: localNumber)
@@ -126,7 +134,7 @@ public struct SpaceGramDeletedMessageOverlayItem {
             return LocalFileReferenceMediaResource(localFilePath: value.url.path, randomId: id, size: value.asset.bytes)
         }
         let dimensions = PixelDimensions(width: max(1, min(16384, metadata.width ?? 512)), height: max(1, min(16384, metadata.height ?? 512)))
-        if primary.asset.kind == "photo" {
+        if primary.asset.kind == "photo" || metadata.type == "image" {
             return [TelegramMediaImage(imageId: mediaId,
                 representations: [TelegramMediaImageRepresentation(dimensions: dimensions, resource: resource(primary), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)],
                 immediateThumbnailData: nil, reference: nil, partialReference: nil, flags: [])]
@@ -140,14 +148,14 @@ public struct SpaceGramDeletedMessageOverlayItem {
         let duration = rawDuration.isFinite ? max(0, min(rawDuration, Double(Int32.max))) : 0
         if primary.asset.kind == "voice" || metadata.isVoice == true {
             fileAttributes.append(.Audio(isVoice: true, duration: Int(duration), title: nil, performer: nil, waveform: nil))
-        } else if primary.asset.kind == "video" || primary.asset.kind == "videoMessage" || (primary.asset.kind == "animation" && metadata.mimeType == "video/mp4") {
-            fileAttributes.append(.Video(duration: duration, size: dimensions, flags: primary.asset.kind == "videoMessage" ? [.instantRoundVideo] : [], preloadSize: nil, coverTime: nil, videoCodec: nil))
+        } else if primary.asset.kind == "video" || primary.asset.kind == "videoMessage" || metadata.isInstantVideo == true || (primary.asset.kind == "animation" && metadata.mimeType == "video/mp4") {
+            fileAttributes.append(.Video(duration: duration, size: dimensions, flags: primary.asset.kind == "videoMessage" || metadata.isInstantVideo == true ? [.instantRoundVideo] : [], preloadSize: nil, coverTime: nil, videoCodec: nil))
         }
         if primary.asset.kind == "animation" || metadata.isAnimated == true { fileAttributes.append(.Animated) }
-        let previews = self.archivedMedia.filter { $0.asset.kind == "thumbnail" }.prefix(1).map {
+        let previews = mediaAssets.filter { $0.asset.kind == "thumbnail" }.prefix(1).map {
             TelegramMediaImageRepresentation(dimensions: dimensions, resource: resource($0), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
         }
-        let mime = metadata.mimeType ?? (primary.asset.fileExtension == "mp4" ? "video/mp4" : (primary.asset.kind == "voice" ? "audio/ogg" : "application/octet-stream"))
+        let mime = metadata.isInstantVideo == true ? "video/mp4" : (metadata.mimeType ?? (primary.asset.fileExtension == "mp4" ? "video/mp4" : (primary.asset.kind == "voice" ? "audio/ogg" : "application/octet-stream")))
         return [TelegramMediaFile(fileId: mediaId, partialReference: nil, resource: resource(primary), previewRepresentations: previews,
             videoThumbnails: [], immediateThumbnailData: nil, mimeType: mime, size: primary.asset.bytes, attributes: fileAttributes, alternativeRepresentations: [])]
     }

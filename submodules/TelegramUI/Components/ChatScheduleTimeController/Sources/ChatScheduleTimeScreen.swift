@@ -1111,6 +1111,8 @@ public class ChatScheduleTimeScreen: ViewControllerComponentContainer {
     }
     
     fileprivate let completion: (Result) -> Void
+    // MARK: NAGRAM — let recording callers release a cancelled pending send.
+    public var dismissed: (() -> Void)?
     
     public init(
         context: AccountContext,
@@ -1157,6 +1159,14 @@ public class ChatScheduleTimeScreen: ViewControllerComponentContainer {
         super.viewDidAppear(animated)
         
         self.view.disablesInteractiveModalDismiss = true
+    }
+
+    // MARK: NAGRAM
+    override public func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        let dismissed = self.dismissed
+        self.dismissed = nil
+        dismissed?()
     }
 }
 

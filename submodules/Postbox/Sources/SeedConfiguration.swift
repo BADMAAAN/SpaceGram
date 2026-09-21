@@ -65,6 +65,7 @@ public final class SeedConfiguration {
     // MARK: NAGRAM
     // Synchronous, non-throwing, transaction-scoped. Must not re-enter message writes.
     public let beforeMessageUpdate: ((Transaction, Message, StoreMessage, MessageUpdateSource) -> Void)?
+    public let afterMessagesStored: ((Transaction, [StoreMessage]) -> Void)?
     public let globalMessageIdsPeerIdNamespaces: Set<GlobalMessageIdsNamespace>
     public let initializeChatListWithHole: (topLevel: ChatListHole?, groups: ChatListHole?)
     public let messageHoles: [PeerId.Namespace: [MessageId.Namespace: Set<MessageTags>]]
@@ -122,10 +123,12 @@ public final class SeedConfiguration {
         customTagsFromAttributes: @escaping ([MessageAttribute]) -> [MemoryBuffer],
         displaySavedMessagesAsTopicListPreferencesKey: ValueBoxKey,
         // MARK: NAGRAM
-        beforeMessageUpdate: ((Transaction, Message, StoreMessage, MessageUpdateSource) -> Void)? = nil
+        beforeMessageUpdate: ((Transaction, Message, StoreMessage, MessageUpdateSource) -> Void)? = nil,
+        afterMessagesStored: ((Transaction, [StoreMessage]) -> Void)? = nil
     ) {
         // MARK: NAGRAM
         self.beforeMessageUpdate = beforeMessageUpdate
+        self.afterMessagesStored = afterMessagesStored
         self.globalMessageIdsPeerIdNamespaces = globalMessageIdsPeerIdNamespaces
         self.initializeChatListWithHole = initializeChatListWithHole
         self.messageHoles = messageHoles

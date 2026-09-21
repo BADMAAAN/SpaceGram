@@ -5,6 +5,23 @@ import SpaceGramMediaArchive
 import SpaceGramSettings
 import SwiftSignalKit
 
+func spaceGramAfterMessagesStored(transaction: Transaction, messages: [StoreMessage]) {
+    guard SpaceGramSettings.shared.captureDeletedMessages || SpaceGramSettings.shared.captureMedia else { return }
+    for stored in messages {
+        guard case let .Id(id) = stored.id, id.namespace == Namespaces.Message.Cloud,
+              id.peerId.namespace != Namespaces.Peer.SecretChat,
+              let message = transaction.getMessage(id),
+              !message.media.contains(where: { $0 is TelegramMediaExpiredContent || $0 is TelegramMediaAction }) else { continue }
+        let key = SpaceGramHistoryMessageKey(peerId: id.peerId.toInt64(), namespace: id.namespace, id: id.id)
+        do {
+            try SpaceGramMessageSnapshotStore.store(transaction: transaction,
+                value: SpaceGramReceivedMessageSnapshot(key: key, threadId: message.threadId, snapshot: spaceGramHistorySnapshot(message)))
+        } catch {
+            NSLog("SpaceGramHistory: received snapshot write failed")
+        }
+    }
+}
+
 // Compiled inside TelegramCore. Never retain the transaction or re-enter message writes.
 func spaceGramBeforeMessageUpdate(transaction: Transaction, old: Message, new: StoreMessage, source: MessageUpdateSource) {
     guard SpaceGramSettings.shared.captureEditedMessages else {
@@ -54,6 +71,21 @@ enum SpaceGramHistoryServerDeleteSource: String {
     case channelDifference
 }
 
+func spaceGramServerDeleteIds(transaction: Transaction, globalIds: [Int32]) -> [MessageId] {
+    var ids = Set(transaction.messageIdsForGlobalIds(globalIds))
+    guard SpaceGramSettings.shared.captureDeletedMessages else { return Array(ids) }
+    let globalIds = Set(globalIds)
+    for received in SpaceGramMessageSnapshotStore.list(transaction: transaction) {
+        let peerId = PeerId(received.key.peerId)
+        if received.key.namespace == Namespaces.Message.Cloud,
+           peerId.namespace == Namespaces.Peer.CloudUser || peerId.namespace == Namespaces.Peer.CloudGroup,
+           globalIds.contains(received.key.id) {
+            ids.insert(MessageId(peerId: peerId, namespace: received.key.namespace, id: received.key.id))
+        }
+    }
+    return Array(ids)
+}
+
 // A server deletion confirms disappearance, not who initiated it.
 // Called in the live transaction immediately before Telegram's normal deletion.
 func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids: [MessageId], source: SpaceGramHistoryServerDeleteSource) {
@@ -64,14 +96,16 @@ func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids
     for id in ids {
         guard seen.insert(id).inserted,
               id.namespace == Namespaces.Message.Cloud,
-              id.peerId.namespace == Namespaces.Peer.CloudUser || id.peerId.namespace == Namespaces.Peer.CloudGroup || id.peerId.namespace == Namespaces.Peer.CloudChannel,
-              let old = transaction.getMessage(id) else {
-            // Local deletes and repeated server echoes have no live OLD to capture.
+              id.peerId.namespace == Namespaces.Peer.CloudUser || id.peerId.namespace == Namespaces.Peer.CloudGroup || id.peerId.namespace == Namespaces.Peer.CloudChannel else {
             continue
         }
+        let key = SpaceGramHistoryMessageKey(peerId: id.peerId.toInt64(), namespace: id.namespace, id: id.id)
+        let old = transaction.getMessage(id)
+        let received = SpaceGramMessageSnapshotStore.load(transaction: transaction, key: key)
+        guard let snapshot = old.map(spaceGramHistorySnapshot) ?? received?.snapshot else { continue }
         // A server update confirms disappearance, including timed messages; its
         // cause is unknown. Never attribute it to a sender or infer expiration.
-        guard !old.media.contains(where: { media in
+        guard old?.media.contains(where: { media in
                   if media is TelegramMediaExpiredContent {
                       return true
                   }
@@ -79,20 +113,20 @@ func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids
                       return true
                   }
                   return false
-              }) else {
+              }) != true else {
             continue
         }
         do {
-            let key = SpaceGramHistoryMessageKey(peerId: id.peerId.toInt64(), namespace: id.namespace, id: id.id)
-            var record = try SpaceGramHistoryStore.load(transaction: transaction, key: key) ?? SpaceGramHistoryRecord(key: key, threadId: old.threadId)
+            var record = try SpaceGramHistoryStore.load(transaction: transaction, key: key) ?? SpaceGramHistoryRecord(key: key, threadId: old?.threadId ?? received?.threadId)
+            guard !record.events.contains(where: { $0.type == .delete }) else { continue }
             guard record.nextRevision < Int64.max else {
                 throw SpaceGramHistoryStorageError.invalidRevisionSequence
             }
             let number = record.nextRevision
             let observedTimestamp = Int64(Date().timeIntervalSince1970)
-            record.threadId = old.threadId
-            record.revisions.append(SpaceGramHistoryRevision(number: number, observedTimestamp: observedTimestamp, snapshot: spaceGramHistorySnapshot(old)))
-            let captures = spaceGramPinMessageMedia(postbox: postbox, message: old)
+            record.threadId = old?.threadId ?? received?.threadId
+            record.revisions.append(SpaceGramHistoryRevision(number: number, observedTimestamp: observedTimestamp, snapshot: snapshot))
+            let captures = old.map { spaceGramPinMessageMedia(postbox: postbox, message: $0) } ?? []
             var event = SpaceGramHistoryEvent(type: .delete, source: source.rawValue, reason: .serverDelete, observedTimestamp: observedTimestamp, revisionNumber: number)
             event.mediaCaptureId = captures.isEmpty ? nil : UUID().uuidString
             record.events.append(event)
@@ -141,13 +175,15 @@ func spaceGramHistorySnapshot(_ message: Message) -> SpaceGramHistorySnapshot {
     for media in message.effectiveMedia {
         if let image = media as? TelegramMediaImage,
            let index = snapshot.media.firstIndex(where: { $0.type == "image" && $0.identifiers == spaceGramHistoryMediaId(image.imageId) }) {
-            snapshot.media[index].resourceIds = image.representations.map { $0.resource.id.stringRepresentation }
+            snapshot.media[index].resourceIds = image.representations.sorted {
+                Int64($0.dimensions.width) * Int64($0.dimensions.height) > Int64($1.dimensions.width) * Int64($1.dimensions.height)
+            }.map { $0.resource.id.stringRepresentation }
         } else if let file = media as? TelegramMediaFile,
            let index = snapshot.media.firstIndex(where: { $0.type == "file" && $0.identifiers == spaceGramHistoryMediaId(file.fileId) }) {
             snapshot.media[index].resourceIds = [file.resource.id.stringRepresentation] + file.previewRepresentations.map { $0.resource.id.stringRepresentation }
             snapshot.media[index].filename = file.fileName
             snapshot.media[index].size = file.size
-            snapshot.media[index].mimeType = file.mimeType
+            snapshot.media[index].mimeType = file.isInstantVideo ? "video/mp4" : file.mimeType
             snapshot.media[index].isVoice = file.isVoice
             snapshot.media[index].isInstantVideo = file.isInstantVideo
             snapshot.media[index].isAnimated = file.isAnimated

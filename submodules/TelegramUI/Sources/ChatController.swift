@@ -399,6 +399,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var videoRecorderDisposable: Disposable?
     
     var recorderDataDisposable = MetaDisposable()
+    // MARK: NAGRAM — one enqueue per voice draft, including asynchronous routing.
+    var audioSendInFlight = false
     
     var chatUnreadCountDisposable: Disposable?
     var buttonUnreadCountDisposable: Disposable?
@@ -9074,7 +9076,12 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             actions: [TextAlertAction(type: .defaultAction, title: self.presentationData.strings.Common_OK, action: {})]), in: .window(.root))
     }
 
-    func sendMessages(_ messages: [EnqueueMessage], media: Bool = false, postpone: Bool = false, commit: Bool = false, enqueueCompletion: ((Bool) -> Void)? = nil) {
+    // MARK: NAGRAM — recording validity is rechecked after asynchronous routing.
+    func sendMessages(_ messages: [EnqueueMessage], media: Bool = false, postpone: Bool = false, commit: Bool = false, enqueueIsValid: (() -> Bool)? = nil, enqueueCompletion: ((Bool) -> Void)? = nil) {
+        guard enqueueIsValid?() != false else {
+            enqueueCompletion?(false)
+            return
+        }
         if case let .customChatContents(customChatContents) = self.subject {
             customChatContents.enqueueMessages(messages: messages)
             enqueueCompletion?(true)
@@ -9089,6 +9096,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         let _ = (self.shouldDivertMessagesToScheduled(messages: messages)
         |> deliverOnMainQueue).startStandalone(next: { [weak self] shouldDivert in
             guard let self else {
+                return
+            }
+            // MARK: NAGRAM — cancelled/replaced recordings must not enqueue late.
+            guard enqueueIsValid?() != false else {
+                enqueueCompletion?(false)
                 return
             }
             
@@ -9132,8 +9144,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     }
                 }
                 let _ = (enqueueMessages(account: self.context.account, peerId: peerId, messages: transformedMessages)
-                |> deliverOnMainQueue).startStandalone(next: { [weak self] _ in
-                    enqueueCompletion?(true)
+                |> deliverOnMainQueue).startStandalone(next: { [weak self] ids in
+                    // MARK: NAGRAM — acknowledge actual local enqueue identities.
+                    let accepted = !ids.isEmpty && ids.count == transformedMessages.count && ids.allSatisfy { $0 != nil }
+                    enqueueCompletion?(accepted)
+                    guard accepted else { return }
                     if let strongSelf = self, strongSelf.presentationInterfaceState.subject != .scheduledMessages, !isSpaceGramDelayedSend {
                         strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
                     }
@@ -9153,9 +9168,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                     })
                 }
             } else {
-                self.presentScheduleTimePicker(style: media ? .media : .default, dismissByTapOutside: false, completion: { [weak self] result in
+                // MARK: NAGRAM — release recording state on picker cancellation too.
+                self.presentScheduleTimePicker(style: media ? .media : .default, dismissByTapOutside: false, cancelled: { enqueueCompletion?(false) }, completion: { [weak self] result in
                     if let strongSelf = self {
-                        strongSelf.sendMessages(strongSelf.transformEnqueueMessages(messages, silentPosting: result.silentPosting, scheduleTime: result.time, repeatPeriod: result.repeatPeriod, postpone: postpone), commit: true)
+                        strongSelf.sendMessages(strongSelf.transformEnqueueMessages(messages, silentPosting: result.silentPosting, scheduleTime: result.time, repeatPeriod: result.repeatPeriod, postpone: postpone), commit: true, enqueueIsValid: enqueueIsValid, enqueueCompletion: enqueueCompletion)
                     }
                 })
             }
@@ -10810,14 +10826,17 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         })
     }
     
-    func presentScheduleTimePicker(style: ChatScheduleTimeControllerStyle = .default, selectedTime: Int32? = nil, selectedRepeatPeriod: Int32? = nil, dismissByTapOutside: Bool = true, presentInOverlay: Bool = false, completion: @escaping (ChatScheduleTimeScreen.Result) -> Void) {
+    // MARK: NAGRAM — cancellation is a terminal outcome for recording sends.
+    func presentScheduleTimePicker(style: ChatScheduleTimeControllerStyle = .default, selectedTime: Int32? = nil, selectedRepeatPeriod: Int32? = nil, dismissByTapOutside: Bool = true, presentInOverlay: Bool = false, cancelled: (() -> Void)? = nil, completion: @escaping (ChatScheduleTimeScreen.Result) -> Void) {
         guard let peerId = self.chatLocation.peerId else {
+            cancelled?()
             return
         }
         let _ = (self.context.account.viewTracker.peerView(peerId)
         |> take(1)
         |> deliverOnMainQueue).startStandalone(next: { [weak self] peerView in
             guard let strongSelf = self, let peer = peerViewMainPeer(peerView) else {
+                cancelled?()
                 return
             }
             var sendWhenOnlineAvailable = false
@@ -10835,6 +10854,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 mode = .scheduledMessages(peerId: peer.id, sendWhenOnlineAvailable: sendWhenOnlineAvailable)
             }
             
+            var didComplete = false
             let controller = ChatScheduleTimeScreen(
                 context: strongSelf.context,
                 mode: mode,
@@ -10844,9 +10864,13 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 silentPosting: strongSelf.presentationInterfaceState.interfaceState.silentPosting,
                 isDark: style == .media,
                 completion: { result in
+                    didComplete = true
                     completion(result)
                 }
             )
+            controller.dismissed = {
+                if !didComplete { cancelled?() }
+            }
             strongSelf.chatDisplayNode.dismissInput()
             if presentInOverlay || strongSelf.videoRecorderValue != nil {
                 strongSelf.present(controller, in: .window(.root))

@@ -13,6 +13,7 @@ private typealias SignalKitTimer = SwiftSignalKit.Timer
 private final class AccountPresenceManagerImpl {
     private let queue: Queue
     private let network: Network
+    private let postbox: Postbox // MARK: NAGRAM — confirmed self-presence cache.
     let isPerformingUpdate = ValuePromise<Bool>(false, ignoreRepeated: true)
     
     private var shouldKeepOnlinePresenceDisposable: Disposable?
@@ -23,9 +24,10 @@ private final class AccountPresenceManagerImpl {
     // MARK: NAGRAM — also publish offline on the first suppressed subscription.
     private var wasOnline: Bool?
     
-    init(queue: Queue, shouldKeepOnlinePresence: Signal<Bool, NoError>, network: Network) {
+    init(queue: Queue, shouldKeepOnlinePresence: Signal<Bool, NoError>, network: Network, postbox: Postbox) {
         self.queue = queue
         self.network = network
+        self.postbox = postbox
         
         // MARK: NAGRAM — preserve the connection; only change explicit presence.
         let presenceInputs: Signal<(Bool, Bool, Bool), NoError> = combineLatest(
@@ -83,11 +85,18 @@ private final class AccountPresenceManagerImpl {
             request = self.network.request(Api.functions.account.updateStatus(offline: .boolTrue))
         }
         self.isPerformingUpdate.set(true)
+        // MARK: NAGRAM — corrected request time, published only after server ACK.
+        let presenceTimestamp = Int32(exactly: floor(self.network.globalTime))
         self.currentRequestDisposable.set((request
         |> `catch` { _ -> Signal<Api.Bool, NoError> in
             return .single(.boolFalse)
         }
-        |> deliverOn(self.queue)).start(completed: { [weak self] in
+        |> deliverOn(self.queue)).start(next: { [weak self] result in
+            guard let self, isOnline, case .boolTrue = result, let presenceTimestamp else { return }
+            let _ = self.postbox.transaction { transaction -> Void in
+                spaceGramStoreSelfPresence(transaction: transaction, timestamp: presenceTimestamp)
+            }.start()
+        }, completed: { [weak self] in
             guard let strongSelf = self else {
                 return
             }
@@ -111,10 +120,10 @@ final class AccountPresenceManager {
     private let queue = Queue()
     private let impl: QueueLocalObject<AccountPresenceManagerImpl>
     
-    init(shouldKeepOnlinePresence: Signal<Bool, NoError>, network: Network) {
+    init(shouldKeepOnlinePresence: Signal<Bool, NoError>, network: Network, postbox: Postbox) {
         let queue = self.queue
         self.impl = QueueLocalObject(queue: self.queue, generate: {
-            return AccountPresenceManagerImpl(queue: queue, shouldKeepOnlinePresence: shouldKeepOnlinePresence, network: network)
+            return AccountPresenceManagerImpl(queue: queue, shouldKeepOnlinePresence: shouldKeepOnlinePresence, network: network, postbox: postbox)
         })
     }
     

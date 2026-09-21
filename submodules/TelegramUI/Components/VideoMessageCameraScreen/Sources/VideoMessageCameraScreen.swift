@@ -1822,6 +1822,9 @@ public class VideoMessageCameraScreen: ViewController {
     
     deinit {
         self.audioSessionDisposable?.dispose()
+        // MARK: NAGRAM — cancel result/thumbnail work owned by this recording.
+        self.sendResultDisposable.dispose()
+        self.sendThumbnailDisposable.dispose()
     }
 
     override public func loadDisplayNode() {
@@ -1831,10 +1834,29 @@ public class VideoMessageCameraScreen: ViewController {
     }
         
     fileprivate var didSend = false
+    // MARK: NAGRAM — a cancelled camera must not finish a late enqueue callback.
+    private let sendResultDisposable = MetaDisposable()
+    private let sendThumbnailDisposable = MetaDisposable()
     fileprivate var lastActionTimestamp: Double?
     fileprivate var isSendingImmediately = false
+    // MARK: NAGRAM — keep the captured recording available if enqueue rejects it.
+    public func resetSendAfterEnqueueFailure() {
+        guard !self.isDismissed else { return }
+        self.didSend = false
+        self.isSendingImmediately = false
+        self.node.transitioningToPreview = false
+        if self.node.previewState == nil, !self.node.results.isEmpty {
+            let composition = composition(with: self.node.results)
+            self.updatePreviewState({ _ in
+                return PreviewState(composition: composition, trimRange: nil, isMuted: true)
+            }, transition: .spring(duration: 0.3))
+        } else {
+            self.node.requestUpdateLayout(transition: .spring(duration: 0.3))
+        }
+    }
+
     public func sendVideoRecording(silentPosting: Bool? = nil, scheduleTime: Int32? = nil, repeatPeriod: Int32? = nil, messageEffect: ChatSendMessageEffect? = nil) {
-        guard !self.didSend else {
+        guard !self.didSend && !self.isDismissed else {
             return
         }
         
@@ -1870,10 +1892,10 @@ public class VideoMessageCameraScreen: ViewController {
         
         self.didSend = true
         
-        let _ = (self.currentResults
+        self.sendResultDisposable.set((self.currentResults
         |> take(1)
-        |> deliverOnMainQueue).startStandalone(next: { [weak self] results in
-            guard let self, let firstResult = results.first, case let .video(video) = firstResult else {
+        |> deliverOnMainQueue).start(next: { [weak self] results in
+            guard let self, !self.isDismissed, let firstResult = results.first, case let .video(video) = firstResult else {
                 return
             }
 
@@ -1932,9 +1954,9 @@ public class VideoMessageCameraScreen: ViewController {
                 thumbnailImage = .single(video.thumbnail)
             }
             
-            let _ = (thumbnailImage
-            |> deliverOnMainQueue).startStandalone(next: { [weak self] thumbnailImage in
-                guard let self else {
+            self.sendThumbnailDisposable.set((thumbnailImage
+            |> deliverOnMainQueue).start(next: { [weak self] thumbnailImage in
+                guard let self, !self.isDismissed else {
                     return
                 }
                 let values = MediaEditorValues(
@@ -2040,8 +2062,8 @@ public class VideoMessageCameraScreen: ViewController {
                     correlationId: nil,
                     bubbleUpEmojiOrStickersets: []
                 ), silentPosting, scheduleTime, repeatPeriod)
-            })
-        })
+            }))
+        }))
     }
     
     private var waitingForNextResult = false
@@ -2129,6 +2151,9 @@ public class VideoMessageCameraScreen: ViewController {
         
         self.node.camera?.stopCapture(invalidate: true)
         self.isDismissed = true
+        // MARK: NAGRAM — stop late asynchronous recording results on cancel.
+        self.sendResultDisposable.dispose()
+        self.sendThumbnailDisposable.dispose()
         if animated {
             self.node.animateOut(completion: {
                 self.dismiss(animated: false)

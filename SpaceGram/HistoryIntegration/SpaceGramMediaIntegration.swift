@@ -3,6 +3,7 @@ import Postbox
 import SpaceGramHistoryStorage
 import SpaceGramMediaArchive
 import SpaceGramSettings
+import SpaceGramSettingsSignal
 import SwiftSignalKit
 
 func spaceGramPinMessageMedia(postbox: Postbox, message: Message) -> [SpaceGramMediaCapture] {
@@ -49,7 +50,7 @@ private func spaceGramPinMedia(mediaBox: MediaBox, media: [Media]) -> [SpaceGram
             case "application/pdf": fallbackExtension = "pdf"
             default: fallbackExtension = "bin"
             }
-            let name = file.fileName ?? (kind + "." + fallbackExtension)
+            let name = file.isInstantVideo ? "video.mp4" : (file.fileName ?? (kind + "." + fallbackExtension))
             let ext = (name as NSString).pathExtension
             pin(file.resource, name: name, kind: kind, ext: ext.isEmpty ? fallbackExtension : ext)
             for preview in file.previewRepresentations {
@@ -121,6 +122,77 @@ private func spaceGramRecordMediaCapture(postbox: Postbox, transaction: Transact
         spaceGramStoreMessageMedia(postbox: postbox, key: key, captureId: captureId, captures: captures)
     } catch {
         NSLog("SpaceGramMediaArchive: capture event failed; Telegram continues")
+    }
+}
+
+// Observe local completion by resource id, regardless of which renderer/fetcher
+// downloaded it. This subscribes to data availability and never starts a fetch.
+// The bounded received-snapshot collection also restores associations on launch.
+func spaceGramObserveReceivedMedia(postbox: Postbox) -> Disposable {
+    let queue = Queue(name: "SpaceGram.ReceivedMedia")
+    var observations: [String: Disposable] = [:]
+    let viewKey = PostboxViewKey.orderedItemList(id: SpaceGramMessageSnapshotStore.collectionId)
+    let snapshots = combineLatest(postbox.combinedView(keys: [viewKey]), spaceGramSettingsChangesSignal())
+    |> mapToSignal { _ -> Signal<[SpaceGramReceivedMessageSnapshot], NoError> in
+        return postbox.transaction { transaction in
+            SpaceGramSettings.shared.captureMedia ? SpaceGramMessageSnapshotStore.list(transaction: transaction) : []
+        }
+    }
+    |> deliverOn(queue)
+    let subscription = snapshots.start(next: { snapshots in
+        var wanted = Set<String>()
+        for received in snapshots {
+            for metadata in received.snapshot.media {
+                for (index, resourceId) in (metadata.resourceIds ?? []).prefix(32).enumerated() {
+                    wanted.insert(resourceId)
+                    if observations[resourceId] != nil { continue }
+                    let isThumbnail = index != 0
+                    let kind = isThumbnail ? "thumbnail" : (metadata.type == "image" ? "photo" : (metadata.isInstantVideo == true ? "videoMessage" : (metadata.isVoice == true ? "voice" : (metadata.isAnimated == true ? "animation" : (metadata.mimeType?.hasPrefix("video/") == true ? "video" : "file")))))
+                    let ext: String
+                    if isThumbnail || metadata.type == "image" { ext = "jpg" }
+                    else if metadata.isInstantVideo == true { ext = "mp4" }
+                    else if metadata.isVoice == true { ext = "ogg" }
+                    else {
+                        switch metadata.mimeType {
+                        case "video/mp4": ext = "mp4"
+                        case "audio/mpeg": ext = "mp3"
+                        case "audio/ogg": ext = "ogg"
+                        case "image/gif": ext = "gif"
+                        case "image/webp": ext = "webp"
+                        case "video/webm": ext = "webm"
+                        default: ext = metadata.filename.map { ($0 as NSString).pathExtension } ?? "bin"
+                        }
+                    }
+                    let name = isThumbnail ? "thumbnail.jpg" : (metadata.filename ?? (kind + "." + ext))
+                    observations[resourceId] = (postbox.mediaBox.resourceData(id: MediaResourceId(resourceId))
+                    |> filter { $0.complete && $0.size > 0 }
+                    |> take(1)).start(next: { [weak postbox] data in
+                        guard let postbox, SpaceGramSettings.shared.captureMedia,
+                              let capture = SpaceGramMediaArchive.pinCompletedFile(path: data.path, fileName: name, kind: kind, fileExtension: ext) else { return }
+                        capture.resourceId = resourceId
+                        // Pin before hopping queues: a delete may unlink MediaBox
+                        // while the following transaction waits to run.
+                        let _ = postbox.transaction { transaction -> Void in
+                            guard SpaceGramSettings.shared.captureMedia,
+                                  SpaceGramMessageSnapshotStore.load(transaction: transaction, key: received.key) != nil else { return }
+                            let id = MessageId(peerId: PeerId(received.key.peerId), namespace: received.key.namespace, id: received.key.id)
+                            spaceGramRecordMediaCapture(postbox: postbox, transaction: transaction, id: id, threadId: received.threadId,
+                                snapshot: received.snapshot, source: "completedDownload", captures: [capture])
+                        }.start()
+                    })
+                }
+            }
+        }
+        for id in Array(observations.keys) where !wanted.contains(id) {
+            observations.removeValue(forKey: id)?.dispose()
+        }
+    })
+    return ActionDisposable {
+        subscription.dispose()
+        queue.async {
+            for disposable in observations.values { disposable.dispose() }
+            observations.removeAll()
+        }
     }
 }
 

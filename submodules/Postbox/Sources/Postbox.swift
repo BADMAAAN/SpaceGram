@@ -2185,6 +2185,8 @@ final class PostboxImpl {
         })
         
         for (peerId, peerMessages) in addedMessagesByPeerId {
+            // MARK: NAGRAM — account-scoped capture, including chats without UI.
+            self.seedConfiguration.afterMessagesStored?(transaction, peerMessages)
             switch location {
                 case .Random:
                     break
@@ -3038,6 +3040,8 @@ final class PostboxImpl {
                         f.addOrUpdate(messages: [updatedMessage], transaction: transaction)
                     }
                 }
+                // MARK: NAGRAM — refresh the received snapshot after an edit.
+                self.seedConfiguration.afterMessagesStored?(transaction, [updatedMessage])
             }
         }
     }

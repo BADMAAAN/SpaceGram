@@ -434,6 +434,10 @@ public func updatePeersCustom(transaction: Transaction, peers: [Peer], update: (
 func updatePeerPresences(transaction: Transaction, accountPeerId: PeerId, peerPresences: [PeerId: Api.User]) {
     var parsedPresences: [PeerId: PeerPresence] = [:]
     for (peerId, user) in peerPresences {
+        // MARK: NAGRAM — preserve server self status before upstream discards it.
+        if peerId == accountPeerId, case let .user(data) = user, let status = data.status {
+            spaceGramCaptureSelfPresence(transaction: transaction, status: status)
+        }
         guard let presence = TelegramUserPresence(apiUser: user) else {
             continue
         }
@@ -468,6 +472,10 @@ func updatePeerPresences(transaction: Transaction, accountPeerId: PeerId, peerPr
 func updatePeerPresencesClean(transaction: Transaction, accountPeerId: PeerId, peerPresences: [PeerId: UpdatedApiPresence]) {
     var parsedPresences: [PeerId: PeerPresence] = [:]
     for (peerId, status) in peerPresences {
+        // MARK: NAGRAM — never read the synthetic self presence from PeerView.
+        if peerId == accountPeerId {
+            spaceGramCaptureSelfPresence(transaction: transaction, status: status.status)
+        }
         let presence = TelegramUserPresence(apiStatus: status.status)
         switch presence.status {
         case .present:

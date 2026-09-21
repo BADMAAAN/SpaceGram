@@ -43,7 +43,7 @@ Delayed Send preserves explicit native schedules, uses corrected `network.global
 
 ### Navigation and local history
 
-An ordinary Ghost chat open starts at the latest messages. Explicit navigation subjects and already-open-chat navigation retain priority, and new messages do not force-scroll an active chat.
+An ordinary chat reopen restores Telegram's saved message anchor and relative offset before considering server unread state, including in Ghost. Explicit navigation subjects retain priority, and new messages do not force-scroll an active chat.
 
 Deleted-message preservation is an account-local presentation overlay. It never inserts or updates Telegram server history. Original text is retained; compact localized deletion metadata is added near the timestamp. Missing resources use a typed unavailable representation.
 

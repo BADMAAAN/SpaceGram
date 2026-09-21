@@ -5,6 +5,13 @@ application-specific Postbox ordered collection. It is not an upstream allocatio
 Keep this reservation unique when rebasing or adding collections. The literal
 avoids importing TelegramCore's application-specific collection helper.
 
+Collection **1010** is a separate bounded received-message inbox (at most 1,000
+snapshots, 256 KiB each). It records current text/entities/media metadata from
+Postbox writes without an open chat. These are not edit revisions. MediaBox
+availability observers restore pending resource associations from it on launch.
+Clearing the archive also clears this inbox. Incoming messages do not evict the
+saved edit/delete collection. Both collections are isolated by account Postbox.
+
 Each account owns its Postbox and archive. One entry identifies one message:
 16 bytes, packed `PeerId.toInt64()` (8), message namespace (4), message id (4),
 all signed two's-complement, big-endian. Account and thread are excluded.

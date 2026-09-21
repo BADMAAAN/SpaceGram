@@ -37,6 +37,7 @@ jobs:
         run: |
           python3 tools/test_spacegram_feature_contracts.py
           python3 tools/test_spacegram_build_info.py
+          python3 tools/test_inspect_spacegram_ipa.py
           python3 tools/check_spacegram_preflight.py
 
       - name: Set temporary build paths
@@ -225,10 +226,10 @@ jobs:
         run: |
           set -euo pipefail
           cat > local.bazelrc <<'RC'
-          build --//Telegram:disableExtensions
           build --apple_generate_dsym
           build --output_groups=+dsyms
           RC
+          printf 'common --repository_cache=%s\n' "$BAZEL_REPOSITORY_CACHE" >> local.bazelrc
           python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
 
       - name: Build device debug ARM64 IPA
@@ -264,6 +265,7 @@ jobs:
       - name: Verify embedded source identity
         run: |
           python3 tools/spacegram_build_info.py --ipa "$ARTIFACTS_DIR/Telegram.ipa" --expected-sha "$GITHUB_SHA" --output "$ARTIFACTS_DIR/build-info.json"
+          python3 tools/inspect_spacegram_ipa.py "$ARTIFACTS_DIR/Telegram.ipa" --require-notification-extension --output "$ARTIFACTS_DIR/push-signing-report.json"
 
       - name: Upload iPhone test IPA
         if: success()
@@ -272,6 +274,7 @@ jobs:
           name: SpaceGram-iPhone-test
           path: |
             ${{ runner.temp }}/spacegram-ios-artifacts/Telegram.ipa
+            ${{ runner.temp }}/spacegram-ios-artifacts/push-signing-report.json
             ${{ runner.temp }}/spacegram-ios-artifacts/build-info.json
             ${{ runner.temp }}/spacegram-ios-artifacts/Telegram.DSYMs.zip
           if-no-files-found: error

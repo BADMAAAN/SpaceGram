@@ -33,7 +33,8 @@ func _internal_deleteMessagesInteractively(account: Account, messageIds: [Messag
             }
         }
 
-        deleteMessagesInteractively(transaction: transaction, stateManager: account.stateManager, postbox: account.postbox, messageIds: messageIds, type: type, removeIfPossiblyDelivered: true)
+        // MARK: NAGRAM — preserve the caller's pending/group deletion semantics.
+        deleteMessagesInteractively(transaction: transaction, stateManager: account.stateManager, postbox: account.postbox, messageIds: messageIds, type: type, deleteAllInGroup: deleteAllInGroup, removeIfPossiblyDelivered: true)
         return ephemeralRequests
     }
     |> mapToSignal { ephemeralRequests -> Signal<Void, NoError> in
@@ -59,7 +60,10 @@ func _internal_deleteMessagesInteractively(account: Account, messageIds: [Messag
 func deleteMessagesInteractively(transaction: Transaction, stateManager: AccountStateManager?, postbox: Postbox, messageIds initialMessageIds: [MessageId], type: InteractiveMessagesDeletionType, deleteAllInGroup: Bool = false, removeIfPossiblyDelivered: Bool) {
     var messageIds: [MessageAndThreadId] = []
     if deleteAllInGroup {
-        var tempIds: [MessageId] = initialMessageIds
+        // MARK: NAGRAM — a stale/ungrouped pending id is already in tempIds.
+        // Appending it again produced two delete operations for one identity.
+        var seenIds = Set<MessageId>()
+        var tempIds = initialMessageIds.filter { seenIds.insert($0).inserted }
         for id in initialMessageIds {
             if let group = transaction.getMessageGroup(id) ?? transaction.getMessageForwardedGroup(id) {
                 for message in group {
@@ -67,8 +71,6 @@ func deleteMessagesInteractively(transaction: Transaction, stateManager: Account
                         tempIds.append(message.id)
                     }
                 }
-            } else {
-                tempIds.append(id)
             }
         }
         

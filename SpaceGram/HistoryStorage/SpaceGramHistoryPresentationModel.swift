@@ -9,6 +9,13 @@ public struct SpaceGramHistoryPresentationItem {
 }
 
 public enum SpaceGramHistoryPresentationModel {
+    public static func editRevisions(_ record: SpaceGramHistoryRecord) -> [SpaceGramHistoryRevision] {
+        let numbers = Set(record.events.filter { $0.type == .edit }.compactMap(\.revisionNumber))
+        // Capture/delete snapshots are not prior edits. Sequence numbers also
+        // retain A -> B -> A when edits share a timestamp or the clock changes.
+        return record.revisions.filter { numbers.contains($0.number) }.sorted { $0.number < $1.number }
+    }
+
     public static func timeline(_ record: SpaceGramHistoryRecord) -> [SpaceGramHistoryPresentationItem] {
         var items = record.events.enumerated().map { index, event in
             SpaceGramHistoryPresentationItem(timestamp: event.observedTimestamp, eventIndex: index, event: event, revision: record.revisions.first { $0.number == event.revisionNumber })

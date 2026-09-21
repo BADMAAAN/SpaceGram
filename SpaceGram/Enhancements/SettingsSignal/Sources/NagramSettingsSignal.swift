@@ -8,6 +8,8 @@ import UIKit
 // 独立模块：依赖 SwiftSignalKit，不污染纯 Foundation 的 NagramSettings 数据层。
 private func nagramDefaultsSignal<Value: Equatable>(_ value: @escaping () -> Value) -> Signal<Value, NoError> {
     return Signal<Value, NoError> { subscriber in
+        // Cloud bootstrap can write defaults; finish before observing them.
+        _ = NagramSettings.shared
         let lock = NSRecursiveLock()
         var isDisposed = false
         let emit: () -> Void = {

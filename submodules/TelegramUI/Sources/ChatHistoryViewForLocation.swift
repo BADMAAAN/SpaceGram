@@ -188,7 +188,7 @@ func chatHistoryViewForLocation(
                         let storedHistoryScrollState = effectiveIsAddedToChatList && tag == nil
                             ? (initialData?.storedInterfaceState).flatMap(_internal_decodeStoredChatInterfaceState).flatMap(ChatInterfaceState.parse)?.historyScrollState
                             : nil
-                        if SpaceGramGhostPolicy.suppressAutomaticReads, let historyScrollState = storedHistoryScrollState {
+                        if let historyScrollState = storedHistoryScrollState {
                             scrollPosition = .positionRestoration(index: historyScrollState.messageIndex, relativeOffset: CGFloat(historyScrollState.relativeOffset))
                         } else if let maxReadIndex = view.maxReadIndex, tag == nil, canScrollToRead {
                             let aroundIndex = maxReadIndex

@@ -7,6 +7,48 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SpaceGramFeatureContracts(unittest.TestCase):
+    def test_received_snapshots_and_completion_are_account_lifetime_hooks(self):
+        account = (ROOT / "submodules/TelegramCore/Sources/Account/Account.swift").read_text(encoding="utf-8")
+        seed = (ROOT / "submodules/TelegramCore/Sources/SyncCore/SyncCore_StandaloneAccountTransaction.swift").read_text(encoding="utf-8")
+        core = (ROOT / "SpaceGram/HistoryIntegration/SpaceGramHistoryIntegration.swift").read_text(encoding="utf-8")
+        media = (ROOT / "SpaceGram/HistoryIntegration/SpaceGramMediaIntegration.swift").read_text(encoding="utf-8")
+        self.assertIn("afterMessagesStored: spaceGramAfterMessagesStored", seed)
+        self.assertIn("managedOperationsDisposable.add(spaceGramObserveReceivedMedia(postbox: postbox))", account)
+        self.assertIn("SpaceGramMessageSnapshotStore.load(transaction: transaction, key: key)", core)
+        self.assertIn("received?.snapshot", core)
+        observer = media.split("func spaceGramObserveReceivedMedia", 1)[1].split("// Account-lifetime", 1)[0]
+        self.assertIn("resourceData(id: MediaResourceId(resourceId))", observer)
+        self.assertIn("$0.complete && $0.size > 0", observer)
+        self.assertLess(observer.index("pinCompletedFile"), observer.index("postbox.transaction { transaction -> Void"))
+        self.assertNotIn("fetchedMediaResource(", observer)
+        self.assertNotIn("ChatController", observer)
+
+    def test_recording_enqueue_acknowledges_once_and_keeps_failed_draft(self):
+        recording = (ROOT / "submodules/TelegramUI/Sources/Chat/ChatControllerMediaRecording.swift").read_text(encoding="utf-8")
+        camera = (ROOT / "submodules/TelegramUI/Components/VideoMessageCameraScreen/Sources/VideoMessageCameraScreen.swift").read_text(encoding="utf-8")
+        self.assertIn("self.videoRecorderValue === videoController", recording)
+        self.assertIn("self.audioRecorderValue === audioRecorderValue", recording)
+        self.assertIn("guard !self.audioSendInFlight", recording)
+        self.assertIn("current.resource.id == audio.resource.id", recording)
+        self.assertIn("copyItem(atPath: source, toPath: tempPath)", recording)
+        self.assertNotIn("messageTransitionNode.add(correlationId:", recording)
+        self.assertIn("videoController.resetSendAfterEnqueueFailure()", recording)
+        self.assertIn("sendResultDisposable.dispose()", camera)
+        self.assertIn("sendThumbnailDisposable.dispose()", camera)
+
+    def test_push_endpoint_and_device_extension_contract(self):
+        workflow = (ROOT / ".github/workflows/spacegram-ios-test.yml").read_text(encoding="utf-8")
+        device = workflow.split("- name: Prepare fake codesigning for resignable device build", 1)[1]
+        self.assertNotIn("disableExtensions", device)
+        self.assertNotIn("disableProvisioningProfiles", device)
+        self.assertIn("--require-notification-extension", device)
+        context = (ROOT / "submodules/TelegramUI/Sources/SharedAccountContext.swift").read_text(encoding="utf-8")
+        self.assertEqual(context.count("SpaceGramPushEnvironment.currentSandbox"), 2)
+        environment = (ROOT / "SpaceGram/Settings/SpaceGramPushEnvironment.swift").read_text(encoding="utf-8")
+        self.assertNotIn("#if DEBUG", environment)
+        self.assertIn('case "development": return true', environment)
+        self.assertIn('case "production": return false', environment)
+
     def test_retired_spacegram_ai_layer_is_absent(self):
         self.assertFalse(any((ROOT / "SpaceGram/AI").glob("*")))
         self.assertFalse((ROOT / "SpaceGram/SettingsUI/SpaceGramAIRichText.swift").exists())
@@ -202,15 +244,22 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn("if SpaceGramGhostPolicy.suppressChatActivity", activity)
         self.assertIn("if !isSpeakingInGroupCall(activity)", activity)
 
-    def test_ghost_restores_local_scroll_and_self_profile_label(self):
+    def test_saved_scroll_and_server_self_presence_sources(self):
         history = (ROOT / "submodules/TelegramUI/Sources/ChatHistoryViewForLocation.swift").read_text(encoding="utf-8")
         navigation = (ROOT / "submodules/TelegramUI/Sources/NavigateToChatController.swift").read_text(encoding="utf-8")
         header = (ROOT / "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoHeaderNode.swift").read_text(encoding="utf-8")
-        self.assertIn("SpaceGramGhostPolicy.suppressAutomaticReads", history)
-        self.assertLess(history.index("SpaceGramGhostPolicy.suppressAutomaticReads"), history.index("else if let maxReadIndex"))
+        self.assertLess(history.index("if let historyScrollState = storedHistoryScrollState"), history.index("else if let maxReadIndex"))
+        node = (ROOT / "submodules/TelegramUI/Sources/ChatHistoryListNode.swift").read_text(encoding="utf-8")
+        initial = node[node.index("if let subject = subject, case let .message"):node.index("self.chatHistoryLocationPromise.set(self.chatHistoryLocationValue!)")]
+        self.assertNotIn("SpaceGramSettings.shared.ghostMode.enabled", initial)
+        self.assertIn(".Initial(count:", initial)
         self.assertNotIn("SpaceGramGhostPolicy", navigation)
         self.assertIn("SpaceGramGhostPolicy.suppressOnlinePresence", header)
-        self.assertIn('ngI18n("SpaceGram.Hub.Ghost"', header)
+        self.assertNotIn('ngI18n("SpaceGram.Hub.Ghost"', header)
+        self.assertIn("statusData?.text", header)
+        presence = (ROOT / "SpaceGram/HistoryIntegration/SpaceGramSelfPresence.swift").read_text(encoding="utf-8")
+        self.assertIn("data.wasOnline", presence)
+        self.assertNotIn("Date()", presence)
 
     def test_deleted_messages_use_presentation_only_overlay(self):
         overlay = (ROOT / "SpaceGram/HistoryOverlay/SpaceGramDeletedMessageOverlay.swift").read_text(encoding="utf-8")
@@ -240,11 +289,14 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         menu = (ROOT / "submodules/TelegramUI/Sources/ChatInterfaceStateContextMenus.swift").read_text(encoding="utf-8")
         self.assertIn("SpaceGramHistoryStore.load", menu)
         self.assertIn('ngI18n("SpaceGram.History.EditHistory"', menu)
-        self.assertIn('ngI18n("SpaceGram.History.Previous"', menu)
-        self.assertIn('ngI18n("SpaceGram.History.Current"', menu)
-        self.assertIn("historyRecord.revisions.sorted", menu)
-        self.assertIn("controllerInteraction.presentController(actionSheet, nil)", menu)
-        self.assertNotIn("controllerInteraction?.presentController(actionSheet, nil)", menu)
+        viewer = (ROOT / "SpaceGram/SettingsUI/SpaceGramEditHistoryController.swift").read_text(encoding="utf-8")
+        self.assertIn("spaceGramEditHistoryController", menu)
+        self.assertIn('ngI18n("SpaceGram.History.Previous"', viewer)
+        self.assertIn('ngI18n("SpaceGram.History.Current"', viewer)
+        self.assertIn("SpaceGramHistoryPresentationModel.editRevisions", viewer)
+        self.assertIn("ItemListController(context:", viewer)
+        self.assertIn("serverEditTimestamp", viewer)
+        self.assertIn("UIPasteboard.general.string", viewer)
         self.assertNotIn("SpaceGramHistoryStore.upsert", menu)
 
     def test_ghost_quick_button_uses_the_persisted_master(self):

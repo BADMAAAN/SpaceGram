@@ -125,12 +125,16 @@ public enum SpaceGramHistoryStore {
     }
 
     public static func removeMessage(transaction: Transaction, key: SpaceGramHistoryMessageKey) throws -> [String] {
+        SpaceGramMessageSnapshotStore.remove(transaction: transaction, key: key)
         guard let record = try self.load(transaction: transaction, key: key) else { return [] }
         self.remove(transaction: transaction, key: key)
         return self.unreferencedAssets(transaction: transaction, candidates: record.events.flatMap { $0.mediaAssetIds ?? [] })
     }
 
     public static func removePeer(transaction: Transaction, peerId: Int64) -> [String] {
+        for received in SpaceGramMessageSnapshotStore.list(transaction: transaction) where received.key.peerId == peerId {
+            SpaceGramMessageSnapshotStore.remove(transaction: transaction, key: received.key)
+        }
         var assetIds: [String] = []
         for record in self.listRecords(transaction: transaction).records where record.key.peerId == peerId {
             assetIds.append(contentsOf: record.events.flatMap { $0.mediaAssetIds ?? [] })
@@ -165,6 +169,7 @@ public enum SpaceGramHistoryStore {
     }
 
     public static func clearArchive(transaction: Transaction) {
+        SpaceGramMessageSnapshotStore.clear(transaction: transaction)
         transaction.replaceOrderedItemListItems(collectionId: SpaceGramHistoryCollection.id, items: [])
     }
 

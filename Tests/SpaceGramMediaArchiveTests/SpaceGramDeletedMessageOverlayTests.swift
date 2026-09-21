@@ -67,6 +67,9 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
             let resource = try XCTUnwrap(resources.values.first { $0.asset.resourceId == "fixture-" + kind })
             XCTAssertEqual(try Data(contentsOf: resource.url), Data(("received-" + kind).utf8))
             var metadata = SpaceGramHistoryMediaMetadata(type: kind == "photo" ? "image" : "file")
+            metadata.resourceIds = ["fixture-" + kind]
+            metadata.isInstantVideo = kind == "videoMessage"
+            metadata.mimeType = kind == "videoMessage" ? "video/mp3" : nil
             metadata.width = 320
             metadata.height = 240
             metadata.duration = 3
@@ -76,7 +79,8 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
             snapshot.media = [metadata]
             snapshot.groupingKey = 123
             var item = SpaceGramDeletedMessageOverlayItem(originalMessageId: MessageId(peerId: self.peerId, namespace: Namespaces.Message.Cloud, id: Int32(index + 1)), threadId: nil, snapshot: snapshot, author: nil, chatPeer: nil, hasArchivedMedia: true, stableVersion: 1)
-            item.archivedMedia = [resource]
+            // Other album items must never supply this bubble's primary bytes.
+            item.archivedMedia = Array(resources.values)
             let message = item.makeMessage(accountPeerId: self.peerId, deletedLabel: "Deleted", archivedMediaLabel: "Archived", missingMediaLabel: "Media unavailable")
             XCTAssertEqual(message.text, "caption")
             XCTAssertEqual(message.groupingKey, 123)
@@ -88,6 +92,7 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
                 XCTAssertFalse(file.fileName?.contains("Media unavailable") == true)
                 XCTAssertEqual(file.isVoice, kind == "voice")
                 XCTAssertEqual(file.isInstantVideo, kind == "videoMessage")
+                if kind == "videoMessage" { XCTAssertEqual(file.mimeType, "video/mp4") }
                 XCTAssertEqual(file.isSticker, kind == "sticker")
                 XCTAssertEqual(file.isAnimated, kind == "animation")
             }

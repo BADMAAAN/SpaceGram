@@ -1261,10 +1261,10 @@ final class PeerInfoHeaderNode: ASDisplayNode {
                 subtitleColor = .white
                 
                 // MARK: NAGRAM — foreground UI is not proof of server presence.
-                // Do not claim the user is online while Ghost suppresses it, and
-                // do not invent a historical last-seen timestamp.
+                // PeerInfoData formats the confirmed timestamp with Telegram's
+                // ordinary presence formatter and keeps its timer alive.
                 subtitleStringText = SpaceGramGhostPolicy.suppressOnlinePresence
-                    ? ngI18n("SpaceGram.Hub.Ghost", presentationData.strings.baseLanguageCode)
+                    ? (statusData?.text ?? "")
                     : presentationData.strings.Presence_online
                 subtitleAttributes = MultiScaleTextState.Attributes(font: Font.regular(17.0), color: subtitleColor)
                 smallSubtitleAttributes = MultiScaleTextState.Attributes(font: Font.regular(16.0), color: .white, shadowColor: titleShadowColor)

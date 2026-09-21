@@ -36,6 +36,7 @@ import SpaceGramMessageShot
 // MARK: NAGRAM — read-only per-message edit history presentation.
 import SpaceGramHistoryOverlay
 import SpaceGramHistoryStorage
+import SpaceGramSettingsUI
 // MARK: NAGRAM
 import DebugSettingsUI
 import ChatPresentationInterfaceState
@@ -1261,29 +1262,18 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
 
         // MARK: NAGRAM — expose only genuine saved edit revisions. The current
         // message remains separate and is never written back to the archive.
-        if let historyRecord, historyRecord.events.contains(where: { $0.type == .edit }), !historyRecord.revisions.isEmpty {
+        if let historyRecord, !SpaceGramHistoryPresentationModel.editRevisions(historyRecord).isEmpty {
             let language = chatPresentationInterfaceState.strings.baseLanguageCode
             actions.append(.action(ContextMenuActionItem(text: ngI18n("SpaceGram.History.EditHistory", language), icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.actionSheet.primaryTextColor)
             }, action: { _, f in
                 f(.dismissWithoutContent)
-                let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-                let actionSheet = ActionSheetController(presentationData: presentationData)
-                var items: [ActionSheetItem] = [ActionSheetTextItem(title: ngI18n("SpaceGram.History.EditHistory", language))]
-                for revision in historyRecord.revisions.sorted(by: { lhs, rhs in
-                    lhs.observedTimestamp == rhs.observedTimestamp ? lhs.number < rhs.number : lhs.observedTimestamp < rhs.observedTimestamp
-                }) {
-                    let time = DateFormatter.localizedString(from: Date(timeIntervalSince1970: TimeInterval(revision.observedTimestamp)), dateStyle: .short, timeStyle: .short)
-                    let text = revision.snapshot.text.isEmpty ? ngI18n("SpaceGram.History.NoText", language) : revision.snapshot.text
-                    items.append(ActionSheetTextItem(title: "\(ngI18n("SpaceGram.History.Previous", language)) · \(time)\n\(text)"))
+                let viewer = spaceGramEditHistoryController(context: context, record: historyRecord, current: message)
+                if let navigationController = controllerInteraction.navigationController() {
+                    navigationController.pushViewController(viewer)
+                } else {
+                    controllerInteraction.presentController(viewer, nil)
                 }
-                let currentText = message.text.isEmpty ? ngI18n("SpaceGram.History.NoText", language) : message.text
-                items.append(ActionSheetTextItem(title: "\(ngI18n("SpaceGram.History.Current", language))\n\(currentText)"))
-                items.append(ActionSheetButtonItem(title: presentationData.strings.Common_Close, color: .accent, font: .bold, action: { [weak actionSheet] in
-                    actionSheet?.dismissAnimated()
-                }))
-                actionSheet.setItemGroups([ActionSheetItemGroup(items: items)])
-                controllerInteraction.presentController(actionSheet, nil)
             })))
         }
 

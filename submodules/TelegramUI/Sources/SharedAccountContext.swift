@@ -1,6 +1,7 @@
 import Foundation
 // MARK: NAGRAM — demo sessions must not expose device contacts or location.
 import NagramSettings
+import SpaceGramSettings // MARK: NAGRAM — APNs follows installed signing.
 import UIKit
 import AsyncDisplayKit
 import Postbox
@@ -335,12 +336,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             guard let data else {
                 return nil
             }
-            let sandbox: Bool
-            #if DEBUG
-            sandbox = true
-            #else
-            sandbox = false
-            #endif
+            // MARK: NAGRAM — a debug IPA may carry a production push profile.
+            guard let sandbox = SpaceGramPushEnvironment.currentSandbox else { return nil }
             return AuthorizationCodePushNotificationConfiguration(
                 token: hexString(data),
                 isSandbox: sandbox
@@ -1629,12 +1626,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     }
     
     public func updateNotificationTokensRegistration() {
-        let sandbox: Bool
-        #if DEBUG
-        sandbox = true
-        #else
-        sandbox = false
-        #endif
+        // MARK: NAGRAM — use the same APNs environment for login and all accounts.
+        guard let sandbox = SpaceGramPushEnvironment.currentSandbox else { return }
         
         let settings = self.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.inAppNotificationSettings])
         |> map { sharedData -> (allAccounts: Bool, includeMuted: Bool) in

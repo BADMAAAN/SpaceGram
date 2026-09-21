@@ -2,6 +2,8 @@ import Foundation
 import SpaceGramSettings
 import SwiftSignalKit
 
+private let settingsNotificationQueue = DispatchQueue(label: "SpaceGram.SettingsNotifications")
+
 // Bootstrap first, then observe before reading the initial value so subsequent
 // changes cannot be missed. Serialize reads/emissions from notification threads.
 private func settingsSignal<T>(_ read: @escaping () -> T) -> Signal<T, NoError> {
@@ -11,9 +13,11 @@ private func settingsSignal<T>(_ read: @escaping () -> T) -> Signal<T, NoError> 
         // Otherwise the notification can re-enter Swift's once initialization.
         _ = SpaceGramSettings.shared
         let lock = NSRecursiveLock()
+        var disposed = false
         let emit = {
             lock.lock()
             defer { lock.unlock() }
+            guard !disposed else { return }
             subscriber.putNext(read())
         }
         let observer = NotificationCenter.default.addObserver(
@@ -21,10 +25,16 @@ private func settingsSignal<T>(_ read: @escaping () -> T) -> Signal<T, NoError> 
             object: UserDefaults.standard,
             queue: nil
         ) { _ in
-            emit()
+            // A subscriber may initialize enhancement settings (including iCloud
+            // migration) or write defaults. Never re-enter that subscriber from
+            // inside a defaults write or a Swift singleton's once initializer.
+            settingsNotificationQueue.async { emit() }
         }
         emit()
         return ActionDisposable {
+            lock.lock()
+            disposed = true
+            lock.unlock()
             NotificationCenter.default.removeObserver(observer)
         }
     }
