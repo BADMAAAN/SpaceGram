@@ -1,5 +1,6 @@
 import Foundation
 import NagramSettings
+import NagramSettingsSignal
 import SpaceGramSettings
 import SpaceGramSettingsSignal
 import SwiftSignalKit

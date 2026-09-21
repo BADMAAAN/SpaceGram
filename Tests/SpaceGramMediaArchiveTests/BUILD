@@ -8,6 +8,7 @@ swift_library(
     srcs = glob(["*.swift"]),
     deps = [
         "//SpaceGram/Enhancements/Settings:NagramSettings",
+        "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
         "//SpaceGram/HistoryStorage:SpaceGramHistoryStorage",
         "//SpaceGram/HistoryOverlay:SpaceGramHistoryOverlay",
         "//SpaceGram/MediaArchive:SpaceGramMediaArchive",
