@@ -33,13 +33,18 @@ final class SpaceGramSettingsStartupTests: XCTestCase {
 
     func testSettingsWritesDoNotRecursivelyEnterPolicySubscriber() {
         _ = SpaceGramSettings.shared
-        let key = "spacegram.settings.toolsEnabled"
+        let enabledKey = "spacegram.settings.enabled"
+        let key = "spacegram.settings.botsHubEnabled"
         let defaults = UserDefaults.standard
+        let previousEnabled = defaults.object(forKey: enabledKey)
         let previous = defaults.object(forKey: key)
         defer {
+            if let previousEnabled { defaults.set(previousEnabled, forKey: enabledKey) }
+            else { defaults.removeObject(forKey: enabledKey) }
             if let previous { defaults.set(previous, forKey: key) }
             else { defaults.removeObject(forKey: key) }
         }
+        defaults.set(true, forKey: enabledKey)
         defaults.set(false, forKey: key)
         let completed = expectation(description: "ON and OFF propagated")
         let lock = NSRecursiveLock()
