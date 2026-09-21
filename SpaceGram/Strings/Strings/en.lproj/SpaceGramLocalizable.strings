@@ -929,6 +929,7 @@
 "SpaceGram.History.EditHistory" = "Edit History";
 "SpaceGram.History.Previous" = "Previous version";
 "SpaceGram.History.Current" = "Current version";
+"SpaceGram.History.Copy" = "Copy";
 "SpaceGram.History.ServerDeleted" = "Deleted on server";
 "SpaceGram.History.Cleanup" = "Cleanup";
 "SpaceGram.History.TextMissing" = "Saved text is no longer available.";

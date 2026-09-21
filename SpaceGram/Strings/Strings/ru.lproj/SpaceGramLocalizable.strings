@@ -175,6 +175,7 @@
 "SpaceGram.History.EditHistory" = "История изменений";
 "SpaceGram.History.Previous" = "Предыдущая версия";
 "SpaceGram.History.Current" = "Текущая версия";
+"SpaceGram.History.Copy" = "Копировать";
 "SpaceGram.History.ServerDeleted" = "Удалено на сервере";
 "SpaceGram.History.Cleanup" = "Очистка";
 "SpaceGram.History.TextMissing" = "Сохранённый текст больше недоступен.";

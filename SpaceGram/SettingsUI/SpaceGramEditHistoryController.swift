@@ -45,7 +45,7 @@ public func spaceGramEditHistoryController(context: AccountContext, record: Spac
                 text: text.isEmpty ? ngI18n("SpaceGram.History.NoText", language) : text, kind: 1))
             if !text.isEmpty {
                 entries.append(SpaceGramEditHistoryEntry(stableId: section * 3 + 2, section: section,
-                    text: presentationData.strings.Common_Copy, kind: 2, copyText: text))
+                    text: ngI18n("SpaceGram.History.Copy", language), kind: 2, copyText: text))
             }
         }
         for (index, revision) in revisions.enumerated() {
