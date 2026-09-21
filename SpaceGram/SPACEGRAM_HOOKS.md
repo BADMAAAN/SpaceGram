@@ -347,19 +347,13 @@ before reading the initial value and serialize notification emissions.
   A later normal `readStories(maxId:)` can still cover earlier story IDs.
 - `TelegramCore/BUILD`: direct dependency on SpaceGramSettingsSignal (Foundation,
   SpaceGramSettings, SwiftSignalKit only; no UI/Core cycle).
-- `TelegramUI/Sources/ChatInterfaceStateContextMenus.swift`: gates SpaceGram AI
-  availability and rechecks at tap time. Its BUILD links SpaceGramSettings.
-  Saved Message History actions deliberately remain available.
+- `TelegramUI/Sources/ChatInterfaceStateContextMenus.swift`: gates opt-in
+  SpaceGram message actions and rechecks applicability at tap time. Its BUILD
+  links SpaceGramSettings. Saved Message History actions deliberately remain
+  available.
 
 All modified upstream sites have nearby `// MARK: NAGRAM` markers. Rebase by
 preserving these boundaries, not by moving product logic into Telegram code.
-
-QwenProvider independently rejects new requests while disabled and owns a
-settings observer for each active request. Both streaming and non-streaming tasks
-are cancelled on disable; a disabled-request outcome is sticky even if the user
-reenables SpaceGram before the cancellation callback. Already delivered data cannot
-be recalled. No request body, API key or error containing content is logged.
-
 
 ### Automatic chat reading
 
@@ -416,7 +410,7 @@ Upstream modification sites are marked `// MARK: NAGRAM`. Preserve capture order
 before deletion; moving only the path lookup into an asynchronous callback loses
 the original file. Never bypass MediaBox deletion or fake acknowledgement success.
 
-## History browser and Qwen conversations (2026-09-19)
+## History browser (2026-09-19)
 
 The History browser remains in `SpaceGram/HistoryUI`; it uses the existing
 Postbox collection and does not add upstream hooks. Search, event/peer filters,
@@ -432,13 +426,8 @@ removed after the transaction;
 clearing Media Archive is a separate confirmed action. History text remains
 readable if Media Archive is cleared. No Telegram message tables are modified.
 
-`SpaceGram/AI/SpaceGramConversationStore.swift` saves each Qwen conversation in
-the selected account directory with iOS file protection and backup exclusion.
-It stores messages and model names, never API keys. The assistant sends a
-bounded suffix of complete messages as context and shows older UI messages on
-demand. The native message context menu displays optional History, Edited and
-Deleted markers in one existing `// MARK: NAGRAM`-scoped TelegramUI hook.
-See [HISTORY_AI_AUDIT.md](HISTORY_AI_AUDIT.md) for policy, migration and tests.
+The native message context menu displays optional History, Edited and Deleted
+markers in one existing `// MARK: NAGRAM`-scoped TelegramUI hook.
 # Product naming note
 
 The user-facing product is **SpaceGram**. Hook markers, module names, and paths

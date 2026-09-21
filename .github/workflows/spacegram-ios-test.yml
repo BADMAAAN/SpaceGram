@@ -104,28 +104,50 @@ jobs:
           build --//Telegram:disableProvisioningProfiles
           RC
           set +e
-          python3 -u build-system/Make/Make.py --cacheDir "$BAZEL_CACHE" test \
-            --configurationPath build-input/spacegram-test-configuration.json \
-            --xcodeManagedCodesigning \
-            --target Tests/SpaceGramMediaArchiveTests:SpaceGramMediaArchiveTests \
-            2>&1 | tee "$ARTIFACTS_DIR/tests.log"
-          test_status="${PIPESTATUS[0]}"
+          run_test_attempt() {
+            local attempt="$1"
+            local attempt_log="$ARTIFACTS_DIR/tests-attempt-${attempt}.log"
+            local diagnostics="$ARTIFACTS_DIR/DiagnosticReports/attempt-${attempt}"
+
+            python3 -u build-system/Make/Make.py --cacheDir "$BAZEL_CACHE" test \
+              --configurationPath build-input/spacegram-test-configuration.json \
+              --xcodeManagedCodesigning \
+              --target Tests/SpaceGramMediaArchiveTests:SpaceGramMediaArchiveTests \
+              2>&1 | tee "$attempt_log"
+            local status="${PIPESTATUS[0]}"
+
+            if [ -d bazel-testlogs/Tests/SpaceGramMediaArchiveTests ]; then
+              find bazel-testlogs/Tests/SpaceGramMediaArchiveTests -type f -name 'test.log' \
+                -exec cp -f {} "$ARTIFACTS_DIR/test-attempt-${attempt}.log" \; 2>/dev/null || true
+              find bazel-testlogs/Tests/SpaceGramMediaArchiveTests -type f -name 'test.xml' \
+                -exec cp -f {} "$ARTIFACTS_DIR/test-attempt-${attempt}.xml" \; 2>/dev/null || true
+            fi
+
+            mkdir -p "$diagnostics"
+            if [ -d "$HOME/Library/Logs/DiagnosticReports" ]; then
+              find "$HOME/Library/Logs/DiagnosticReports" \
+                -type f \( -name '*.crash' -o -name '*.ips' \) \
+                -mmin -30 \
+                -exec cp -f {} "$diagnostics/" \; 2>/dev/null || true
+            fi
+            return "$status"
+          }
+
+          run_test_attempt 1
+          test_status="$?"
+          final_attempt=1
+          if [ "$test_status" -ne 0 ] \
+            && grep -Eq 'Executed [0-9]+ tests?, with 0 failures' "$ARTIFACTS_DIR/tests-attempt-1.log" \
+            && grep -Fq 'Child process terminated with signal 5: Trace/BPT trap' "$ARTIFACTS_DIR/tests-attempt-1.log" \
+            && ! grep -Eq "Test (Case|Suite) '.*' failed|Executed [0-9]+ tests?, with [1-9][0-9]* failures" "$ARTIFACTS_DIR/tests-attempt-1.log"; then
+            printf '%s\n' 'XCTest assertions passed before simulator SIGTRAP; retrying once.'
+            run_test_attempt 2
+            test_status="$?"
+            final_attempt=2
+          fi
+
           set -e
-
-          if [ -d bazel-testlogs/Tests/SpaceGramMediaArchiveTests ]; then
-            find bazel-testlogs/Tests/SpaceGramMediaArchiveTests \
-              -type f \( -name 'test.log' -o -name 'test.xml' \) \
-              -exec cp -f {} "$ARTIFACTS_DIR/" \; 2>/dev/null || true
-          fi
-
-          mkdir -p "$ARTIFACTS_DIR/DiagnosticReports"
-          if [ -d "$HOME/Library/Logs/DiagnosticReports" ]; then
-            find "$HOME/Library/Logs/DiagnosticReports" \
-              -type f \( -name '*.crash' -o -name '*.ips' \) \
-              -mmin -30 \
-              -exec cp -f {} "$ARTIFACTS_DIR/DiagnosticReports/" \; 2>/dev/null || true
-          fi
-
+          cp -f "$ARTIFACTS_DIR/tests-attempt-${final_attempt}.log" "$ARTIFACTS_DIR/tests.log"
           exit "$test_status"
 
       - name: Upload simulator test results
@@ -135,8 +157,9 @@ jobs:
           name: SpaceGram-simulator-tests
           path: |
             ${{ runner.temp }}/spacegram-ios-artifacts/tests.log
-            ${{ runner.temp }}/spacegram-ios-artifacts/test.log
-            ${{ runner.temp }}/spacegram-ios-artifacts/test.xml
+            ${{ runner.temp }}/spacegram-ios-artifacts/tests-attempt-*.log
+            ${{ runner.temp }}/spacegram-ios-artifacts/test-attempt-*.log
+            ${{ runner.temp }}/spacegram-ios-artifacts/test-attempt-*.xml
             ${{ runner.temp }}/spacegram-ios-artifacts/DiagnosticReports/
             bazel-testlogs/Tests/SpaceGramMediaArchiveTests/**/test.*
           retention-days: 14

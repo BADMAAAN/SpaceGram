@@ -47,4 +47,22 @@ final class SpaceGramSettingsStartupTests: XCTestCase {
         NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: UserDefaults.standard)
         XCTAssertEqual(emissions, 1)
     }
+
+    func testEnhancementSignalSerializesReentrantDefaultsNotification() {
+        let key = "SpaceGramTests." + UUID().uuidString
+        let defaults = NagramDemoMode.userDefaults
+        defaults.set(false, forKey: key)
+        defer { defaults.removeObject(forKey: key) }
+
+        var values: [Bool] = []
+        let disposable = nagramBoolSignal(key, defaultValue: false).start(next: { value in
+            values.append(value)
+            if !value {
+                defaults.set(true, forKey: key)
+                NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: defaults)
+            }
+        })
+        disposable.dispose()
+        XCTAssertEqual(values, [false, true])
+    }
 }

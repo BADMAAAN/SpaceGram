@@ -25,26 +25,6 @@ public struct SpaceGramDefault {
     }
 }
 
-@propertyWrapper
-public struct SpaceGramStringDefault {
-    private let key: String
-    private let defaultValue: String
-
-    public init(_ key: String, _ defaultValue: String) {
-        self.key = key
-        self.defaultValue = defaultValue
-    }
-
-    public var wrappedValue: String {
-        get {
-            UserDefaults.standard.string(forKey: key) ?? defaultValue
-        }
-        nonmutating set {
-            UserDefaults.standard.set(newValue, forKey: key)
-        }
-    }
-}
-
 public final class SpaceGramSettings {
     public static let shared = SpaceGramSettings()
 
@@ -104,25 +84,6 @@ public final class SpaceGramSettings {
 
     @SpaceGramDefault("spacegram.settings.saveServerDeletedMessages", true)
     public var saveServerDeletedMessages: Bool
-
-    @SpaceGramStringDefault("spacegram.settings.qwenModel", "qwen-plus")
-    public var qwenModel: String
-
-    @SpaceGramStringDefault("spacegram.settings.aiContextCharacters", "24000")
-    private var aiContextCharactersValue: String
-
-    public static let aiContextPresets = [8000, 16000, 24000]
-
-    public var aiContextCharacters: Int {
-        get {
-            let value = Int(aiContextCharactersValue) ?? 24000
-            return Self.aiContextPresets.contains(value) ? value : 24000
-        }
-        set {
-            guard Self.aiContextPresets.contains(newValue) else { return }
-            aiContextCharactersValue = String(newValue)
-        }
-    }
 
     @SpaceGramDefault("spacegram.settings.hideChatActivity", false)
     public var hideChatActivity: Bool

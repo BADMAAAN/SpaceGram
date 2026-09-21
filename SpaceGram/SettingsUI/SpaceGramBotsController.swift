@@ -35,7 +35,7 @@ private enum SpaceGramBotsEntry: ItemListNodeEntry {
         case let (.header(lId, lSection, lText), .header(rId, rSection, rText)):
             return lId == rId && lSection == rSection && lText == rText
         case let (.bot(lId, lSection, lBot, lEnabled), .bot(rId, rSection, rBot, rEnabled)):
-            return lId == rId && lSection == rSection && lBot.id == rBot.id && lBot.title == rBot.title && lBot.subtitle == rBot.subtitle && lBot.isEnabled == rBot.isEnabled && lEnabled == rEnabled
+            return lId == rId && lSection == rSection && lBot.id == rBot.id && lBot.titleKey == rBot.titleKey && lBot.subtitleKey == rBot.subtitleKey && lBot.isEnabled == rBot.isEnabled && lEnabled == rEnabled
         default: return false
         }
     }
@@ -49,7 +49,8 @@ private enum SpaceGramBotsEntry: ItemListNodeEntry {
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: section)
         case let .bot(_, section, bot, toolsEnabled):
             let enabled = toolsEnabled && bot.isEnabled
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: bot.title, enabled: enabled, label: bot.subtitle, sectionId: section, style: .blocks, disclosureStyle: enabled ? .arrow : .none, action: enabled ? {
+            let lang = presentationData.strings.baseLanguageCode
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: ngI18n(bot.titleKey, lang), enabled: enabled, label: ngI18n(bot.subtitleKey, lang), sectionId: section, style: .blocks, disclosureStyle: enabled ? .arrow : .none, action: enabled ? {
                 arguments.openBot(bot)
             } : nil)
         }
@@ -72,7 +73,7 @@ public func spaceGramBotsController(context: AccountContext) -> ViewController {
         var stableId: Int32 = 0
         for (section, category) in SpaceGramBotCategory.allCases.enumerated() {
             let title: String
-            switch category { case .ai: title = ngI18n("SpaceGram.AI", lang); case .media: title = ngI18n("SpaceGram.Media", lang); case .utilities: title = ngI18n("SpaceGram.Utilities", lang); case .custom: title = ngI18n("SpaceGram.Custom", lang) }
+            switch category { case .media: title = ngI18n("SpaceGram.Media", lang); case .utilities: title = ngI18n("SpaceGram.Utilities", lang); case .custom: title = ngI18n("SpaceGram.Custom", lang) }
             entries.append(.header(stableId, Int32(section), title))
             stableId += 1
             for bot in SpaceGramBotCatalog.defaultBots where bot.category == category {

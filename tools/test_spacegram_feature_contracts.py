@@ -7,6 +7,35 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SpaceGramFeatureContracts(unittest.TestCase):
+    def test_retired_spacegram_ai_layer_is_absent(self):
+        self.assertFalse(any((ROOT / "SpaceGram/AI").glob("*")))
+        self.assertFalse((ROOT / "SpaceGram/SettingsUI/SpaceGramAIRichText.swift").exists())
+        settings = (ROOT / "SpaceGram/Settings/SpaceGramSettings.swift").read_text(encoding="utf-8")
+        tests_build = (ROOT / "Tests/SpaceGramMediaArchiveTests/BUILD").read_text(encoding="utf-8")
+        bots = (ROOT / "SpaceGram/Bots/SpaceGramBotDescriptor.swift").read_text(encoding="utf-8")
+        self.assertNotRegex(settings, r"qwenModel|aiContextCharacters")
+        self.assertNotIn("//SpaceGram/AI", tests_build)
+        self.assertNotIn("case ai", bots)
+
+    def test_custom_qr_is_absent_and_telegram_qr_remains(self):
+        self.assertFalse(any((ROOT / "SpaceGram/QR").glob("*")))
+        self.assertFalse((ROOT / "SpaceGram/SettingsUI/SpaceGramQRToolsController.swift").exists())
+        settings_ui = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "SpaceGram/SettingsUI").glob("*.swift"))
+        self.assertNotRegex(settings_ui, r"QR Tools|Generate QR|SpaceGramQR")
+        peer_info = (ROOT / "submodules/TelegramUI/Components/PeerInfo/PeerInfoScreen/Sources/PeerInfoScreen.swift").read_text(encoding="utf-8")
+        shared_context = (ROOT / "submodules/TelegramUI/Sources/SharedAccountContext.swift").read_text(encoding="utf-8")
+        self.assertIn("openQrCode:", peer_info)
+        self.assertIn("makeChatQrCodeScreen", shared_context)
+
+    def test_ci_sigtrap_retry_is_bounded_and_evidence_gated(self):
+        workflow = (ROOT / ".github/workflows/spacegram-ios-test.yml").read_text(encoding="utf-8")
+        self.assertEqual(workflow.count("run_test_attempt 2"), 1)
+        self.assertIn("Executed [0-9]+ tests?, with 0 failures", workflow)
+        self.assertIn("Child process terminated with signal 5: Trace/BPT trap", workflow)
+        self.assertIn('if [ "$test_status" -ne 0 ]', workflow)
+        self.assertIn('exit "$test_status"', workflow)
+        self.assertNotIn("continue-on-error", workflow)
+
     def test_no_foreign_user_facing_branding(self):
         forbidden = re.compile(r"Nagram|NGram|AyuGram|AuraGram|Qwengram|Qwen", re.I)
         for path in (ROOT / "SpaceGram/Strings/Strings").glob("*.lproj/SpaceGramLocalizable.strings"):
@@ -80,6 +109,19 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         catalog = (ROOT / "SpaceGram/Strings/Strings/ru.lproj/SpaceGramLocalizable.strings").read_text(encoding="utf-8")
         translated = set(re.findall(r'^"([^"]+)"\s*=', catalog, re.M))
         self.assertFalse(keys - translated, keys - translated)
+
+    def test_active_product_localization_has_english_and_russian(self):
+        catalogs = {}
+        for locale in ("en", "ru"):
+            source = (ROOT / f"SpaceGram/Strings/Strings/{locale}.lproj/SpaceGramLocalizable.strings").read_text(encoding="utf-8")
+            catalogs[locale] = set(re.findall(r'^"([^"]+)"\s*=', source, re.M))
+
+        used = set()
+        for path in (ROOT / "SpaceGram").rglob("*.swift"):
+            used.update(re.findall(r'"((?:SpaceGram|Nagram)\.[A-Za-z0-9_.-]+)"', path.read_text(encoding="utf-8")))
+        localizable = used & (catalogs["en"] | catalogs["ru"])
+        for locale in ("en", "ru"):
+            self.assertFalse(localizable - catalogs[locale], f"{locale}: missing {localizable - catalogs[locale]}")
 
     def test_delayed_send_preserves_native_schedule_and_call_exception(self):
         source = (ROOT / "submodules/TelegramUI/Sources/ChatController.swift").read_text(encoding="utf-8")

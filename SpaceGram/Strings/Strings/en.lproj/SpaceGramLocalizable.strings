@@ -735,6 +735,11 @@
 "SpaceGram.Disabled" = "SpaceGram is disabled. Settings and saved history remain available.";
 
 "SpaceGram.Tools" = "Tools";
+"SpaceGram.Bot.Translator" = "Translator";
+"SpaceGram.Bot.TranslateText" = "Translate text";
+"SpaceGram.Bot.MediaTools" = "Media Tools";
+"SpaceGram.Bot.Reminders" = "Reminders";
+"SpaceGram.Bot.AddBot" = "Add Bot";
 
 "SpaceGram.ToolsEnabled" = "Tools Hub Enabled";
 
@@ -763,7 +768,6 @@
 
 "SpaceGram.Foundation" = "SpaceGram · Telegram with additional local tools";
 
-"SpaceGram.AI" = "AI";
 
 "SpaceGram.Utilities" = "Utilities";
 
@@ -809,11 +813,6 @@
 "SpaceGram.History.AssetCorrupt" = "Archived file is damaged";
 "SpaceGram.History.NoBinary" = "No binary media was saved (it may never have been downloaded).";
 "SpaceGram.History.CaptureFailed" = "Binary media was captured but could not be saved.";
-"SpaceGram.AI.Conversations" = "Conversations";
-"SpaceGram.AI.HideConversations" = "Hide conversations";
-"SpaceGram.AI.NewConversation" = "New conversation";
-"SpaceGram.AI.DeleteConversation" = "Delete this conversation";
-"SpaceGram.AI.ShowEarlier" = "Show earlier messages";
 "SpaceGram.Privacy" = "Privacy & Security";
 "SpaceGram.Appearance" = "Appearance";
 "SpaceGram.AppearanceInfo" = "SpaceGram screens use a restrained cosmic-black palette with Telegram's native typography and controls.";
@@ -829,16 +828,6 @@
 "SpaceGram.History.ShowIndicator" = "Show History Indicator";
 "SpaceGram.History.ShowEdited" = "Show Edited Indicator";
 "SpaceGram.History.ShowDeleted" = "Show Deleted Indicator";
-"SpaceGram.AI.SearchPlaceholder" = "Search conversations";
-"SpaceGram.AI.Rename" = "Rename conversation";
-"SpaceGram.AI.Title" = "Conversation title";
-"SpaceGram.AI.SaveTitle" = "Save title";
-"SpaceGram.AI.MessageActions" = "Message actions";
-"SpaceGram.AI.Copy" = "Copy";
-"SpaceGram.AI.Share" = "Share";
-"SpaceGram.AI.Retry" = "Retry";
-"SpaceGram.AI.Regenerate" = "Regenerate";
-"SpaceGram.AI.DeleteMessage" = "Delete message";
 "SpaceGram.On" = "On";
 "SpaceGram.Off" = "Off";
 "SpaceGram.Privacy.Open" = "Privacy & Security";
@@ -883,9 +872,6 @@
 "SpaceGram.Privacy.AllCleared" = "All SpaceGram data for this account was cleared.";
 "SpaceGram.Privacy.AllClearPartial" = "Some SpaceGram data could not be cleared. Telegram account and session data were not changed.";
 
-"SpaceGram.AI.ContextLimit" = "Context limit (characters)";
-"SpaceGram.AI.ContextHelp" = "Tap to choose 8,000, 16,000 or 24,000 characters. Requests keep up to 64 recent messages and the system prompt. Saved conversation history remains on this device.";
-"SpaceGram.AI.ContextUsage" = "Context: %d messages, %d characters (about %d tokens). Token count is an estimate.";
 "SpaceGram.StorageMigrationConflict" = "Both legacy and SpaceGram archives exist. Both were preserved. Back up the account data and reconcile the archive directories before retrying.";
 // Unified SpaceGram hub
 "SpaceGram.Hub.Information" = "Information";
@@ -964,15 +950,6 @@
 "SpaceGram.Hub.ForwardWithoutName" = "Forward without sender name";
 "SpaceGram.UI.APIKey" = "API Key";
 "SpaceGram.UI.EnterAPIKey" = "Enter API key";
-"SpaceGram.UI.Model" = "Model";
-"SpaceGram.UI.ModelIdentifier" = "Model identifier";
-"SpaceGram.UI.Save" = "Save";
-"SpaceGram.UI.RemoveKey" = "Remove API Key";
-"SpaceGram.UI.KeyError" = "Unable to update the API key.";
-"SpaceGram.UI.ModelError" = "Enter a model identifier.";
-"SpaceGram.UI.Status" = "Status";
-"SpaceGram.UI.Configured" = "Configured";
-"SpaceGram.UI.NotConfigured" = "Not configured";
 "SpaceGram.Hub.GoOffline" = "Go offline automatically";
 "SpaceGram.Hub.ReadOnInteract" = "Read on Interact";
 "SpaceGram.Hub.ReadOnInteractInfo" = "In Ghost mode, reads through the message only after a confirmed immediate send, reply or reaction in that conversation or topic. Opening, scrolling, typing and queueing a scheduled message do not read history. Automatic delayed sends do not trigger reads.";

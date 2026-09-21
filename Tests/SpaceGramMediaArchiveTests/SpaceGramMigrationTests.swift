@@ -20,12 +20,10 @@ final class SpaceGramMigrationTests: XCTestCase {
         try FileManager.default.removeItem(at: directory)
     }
 
-    func testPreferencesMigrateFalseAndModelWithoutDeletingRecoveryCopy() {
+    func testPreferencesMigrateFalseWithoutDeletingRecoveryCopy() {
         defaults.set(false, forKey: "qwengram.settings.enabled")
-        defaults.set("custom-model", forKey: "qwengram.settings.qwenModel")
         XCTAssertTrue(SpaceGramMigrationCoordinator.migrateDefaults(defaults))
         XCTAssertEqual(defaults.object(forKey: "spacegram.settings.enabled") as? Bool, false)
-        XCTAssertEqual(defaults.string(forKey: "spacegram.settings.qwenModel"), "custom-model")
         XCTAssertNotNil(defaults.object(forKey: "qwengram.settings.enabled"))
     }
 
