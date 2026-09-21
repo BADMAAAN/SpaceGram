@@ -1283,7 +1283,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     actionSheet?.dismissAnimated()
                 }))
                 actionSheet.setItemGroups([ActionSheetItemGroup(items: items)])
-                controllerInteraction?.presentController(actionSheet, nil)
+                controllerInteraction.presentController(actionSheet, nil)
             })))
         }
 

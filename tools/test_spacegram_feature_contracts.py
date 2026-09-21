@@ -168,6 +168,7 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn("if automaticDelayedCandidate", controller)
         self.assertIn("skipAddingTransitions = true", controller)
         self.assertIn("if !isSpaceGramDelayedSend", loader)
+        self.assertIn("self.chatDisplayNode.sendMessages(repeatedMessages, nil, nil, nil, repeatedMessages.count > 1, false, nil)", controller)
 
     def test_push_registration_and_entitlement_contract(self):
         delegate = (ROOT / "submodules/TelegramUI/Sources/AppDelegate.swift").read_text(encoding="utf-8")
@@ -242,6 +243,8 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn('ngI18n("SpaceGram.History.Previous"', menu)
         self.assertIn('ngI18n("SpaceGram.History.Current"', menu)
         self.assertIn("historyRecord.revisions.sorted", menu)
+        self.assertIn("controllerInteraction.presentController(actionSheet, nil)", menu)
+        self.assertNotIn("controllerInteraction?.presentController(actionSheet, nil)", menu)
         self.assertNotIn("SpaceGramHistoryStore.upsert", menu)
 
     def test_ghost_quick_button_uses_the_persisted_master(self):

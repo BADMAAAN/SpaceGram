@@ -11420,7 +11420,7 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             return .forward(source: message.id, threadId: self.chatLocation.threadId, grouping: .auto, attributes: forwardAttributes, correlationId: nil)
         }
         self.chatDisplayNode.setupSendActionOnViewUpdate({}, nil)
-        self.chatDisplayNode.sendMessages(repeatedMessages, nil, nil, nil, repeatedMessages.count > 1, false)
+        self.chatDisplayNode.sendMessages(repeatedMessages, nil, nil, nil, repeatedMessages.count > 1, false, nil)
         return true
     }
 
