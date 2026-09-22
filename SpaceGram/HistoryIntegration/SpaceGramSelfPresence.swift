@@ -12,16 +12,19 @@ private struct SpaceGramSelfPresenceRecord: Codable {
 
 // Only server was_online or a successful online RPC enters this store. The
 // account's synthetic .present(Int32.max - 1) and offline heartbeats never do.
-func spaceGramStoreSelfPresence(transaction: Transaction, timestamp: Int32) {
+func spaceGramStoreSelfPresence(transaction: Transaction, timestamp: Int32, allowRollback: Bool = false) {
     guard timestamp > 0, timestamp < Int32.max - 1 else { return }
     let previous = transaction.getPreferencesEntry(key: spaceGramSelfPresenceKey)?.get(SpaceGramSelfPresenceRecord.self)
-    guard (previous?.timestamp ?? 0) < timestamp else { return }
+    guard allowRollback || (previous?.timestamp ?? 0) < timestamp else { return }
     transaction.setPreferencesEntry(key: spaceGramSelfPresenceKey, value: PreferencesEntry(SpaceGramSelfPresenceRecord(timestamp: timestamp)))
 }
 
 func spaceGramCaptureSelfPresence(transaction: Transaction, status: Api.UserStatus) {
     if case let .userStatusOffline(data) = status {
-        spaceGramStoreSelfPresence(transaction: transaction, timestamp: data.wasOnline)
+        // MARK: NAGRAM — this is an authoritative server value. A transient
+        // online status may resolve back to an older was_online, so do not keep
+        // a newer local observation in preference to the server response.
+        spaceGramStoreSelfPresence(transaction: transaction, timestamp: data.wasOnline, allowRollback: true)
     }
 }
 

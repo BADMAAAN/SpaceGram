@@ -334,10 +334,16 @@ before reading the initial value and serialize notification emissions.
   checks again inside the transaction before cloud/encrypted typing requests.
   Group-call speaking events are exempt because they maintain live call state.
 - `TelegramCore/Sources/State/ManagedAccountPresence.swift`: combines Telegram's
-  desired online state with the policy on the manager queue. Switching suppression
-  on transitions an already-online manager to offline and stops its timer;
-  switching it off resumes Telegram's current desired state. Connection management
-  and push registration are untouched. This is not server-side invisibility.
+  desired online state with the policy on the manager queue. While suppression is
+  active it cancels the refresh timer and sends neither `offline: false` nor
+  `offline: true`; switching it off resumes Telegram's current desired state.
+  This deliberately lets a server-issued transient online status expire instead
+  of replacing `was_online` with a client-driven offline request. Connection
+  management and push registration are untouched. Preservation of the old
+  server-visible timestamp still requires a two-account device test.
+- `TelegramCore/Sources/State/PendingMessageManager.swift`: emits content-free
+  diagnostics for immediate-send completion and scheduled enqueue request/result.
+  Automatic delayed sends assert that their corrected schedule date is present.
 - `TelegramCore/Sources/TelegramEngine/Messages/Stories.swift`: suppresses pinned
   `incrementStoryViews` requests and avoids enqueuing normal view synchronization,
   while retaining Telegram's existing local story progress.

@@ -19,9 +19,8 @@ private final class AccountPresenceManagerImpl {
     private var shouldKeepOnlinePresenceDisposable: Disposable?
     private let currentRequestDisposable = MetaDisposable()
     private var onlineTimer: SignalKitTimer?
-    private var automaticOfflineTimer: SignalKitTimer?
     
-    // MARK: NAGRAM — also publish offline on the first suppressed subscription.
+    // MARK: NAGRAM — nil forces a fresh native transition after suppression ends.
     private var wasOnline: Bool?
     
     init(queue: Queue, shouldKeepOnlinePresence: Signal<Bool, NoError>, network: Network, postbox: Postbox) {
@@ -30,16 +29,11 @@ private final class AccountPresenceManagerImpl {
         self.postbox = postbox
         
         // MARK: NAGRAM — preserve the connection; only change explicit presence.
-        let presenceInputs: Signal<(Bool, Bool, Bool), NoError> = combineLatest(
+        let presenceInputs: Signal<(Bool, Bool), NoError> = combineLatest(
             shouldKeepOnlinePresence,
-            spaceGramSuppressOnlinePresenceSignal(),
-            spaceGramGoOfflineAutomaticallySignal()
+            spaceGramSuppressOnlinePresenceSignal()
         )
-        let resolvedPresence: Signal<(Bool, Bool), NoError> = presenceInputs
-        |> map { value in
-            return (value.0 && !value.1, value.2)
-        }
-        let distinctPresence: Signal<(Bool, Bool), NoError> = resolvedPresence
+        let distinctPresence: Signal<(Bool, Bool), NoError> = presenceInputs
         |> distinctUntilChanged(isEqual: { lhs, rhs in
             return lhs.0 == rhs.0 && lhs.1 == rhs.1
         })
@@ -48,11 +42,21 @@ private final class AccountPresenceManagerImpl {
             guard let `self` = self else {
                 return
             }
-            if self.wasOnline != value.0 {
-                self.wasOnline = value.0
-                self.updatePresence(value.0)
+            let (shouldBeOnline, suppressPresence) = value
+            if suppressPresence {
+                // MARK: NAGRAM — authoritative Ghost semantics: never convert
+                // suppression into an explicit offline RPC. That RPC has no
+                // timestamp parameter and can replace the server's was_online.
+                self.wasOnline = nil
+                self.onlineTimer?.invalidate()
+                self.onlineTimer = nil
+                self.currentRequestDisposable.set(nil)
+                self.isPerformingUpdate.set(false)
+                Logger.shared.log("SpaceGramPresence", "presence RPC suppressed; waiting for server status expiry")
+            } else if self.wasOnline != shouldBeOnline {
+                self.wasOnline = shouldBeOnline
+                self.updatePresence(shouldBeOnline)
             }
-            self.updateAutomaticOffline(value.1 && !value.0)
         })
     }
     
@@ -61,13 +65,17 @@ private final class AccountPresenceManagerImpl {
         self.shouldKeepOnlinePresenceDisposable?.dispose()
         self.currentRequestDisposable.dispose()
         self.onlineTimer?.invalidate()
-        self.automaticOfflineTimer?.invalidate()
     }
     
     private func updatePresence(_ isOnline: Bool) {
         // MARK: NAGRAM — timers and queued signal callbacks must recheck the
         // current policy at the RPC boundary, not only at subscription time.
-        let isOnline = isOnline && !SpaceGramGhostPolicy.suppressOnlinePresence
+        guard !SpaceGramGhostPolicy.suppressOnlinePresence else {
+            self.onlineTimer?.invalidate()
+            self.onlineTimer = nil
+            Logger.shared.log("SpaceGramPresence", "presence RPC cancelled at request boundary")
+            return
+        }
         let request: Signal<Api.Bool, MTRpcError>
         if isOnline {
             let timer = SignalKitTimer(timeout: 30.0, repeat: false, completion: { [weak self] in
@@ -78,10 +86,12 @@ private final class AccountPresenceManagerImpl {
             }, queue: self.queue)
             self.onlineTimer = timer
             timer.start()
+            Logger.shared.log("SpaceGramPresence", "account.updateStatus offline=false")
             request = self.network.request(Api.functions.account.updateStatus(offline: .boolFalse))
         } else {
             self.onlineTimer?.invalidate()
             self.onlineTimer = nil
+            Logger.shared.log("SpaceGramPresence", "account.updateStatus offline=true")
             request = self.network.request(Api.functions.account.updateStatus(offline: .boolTrue))
         }
         self.isPerformingUpdate.set(true)
@@ -100,19 +110,9 @@ private final class AccountPresenceManagerImpl {
             guard let strongSelf = self else {
                 return
             }
+            Logger.shared.log("SpaceGramPresence", "account.updateStatus completed offline=\(!isOnline)")
             strongSelf.isPerformingUpdate.set(false)
         }))
-    }
-
-    private func updateAutomaticOffline(_ enabled: Bool) {
-        self.automaticOfflineTimer?.invalidate()
-        self.automaticOfflineTimer = nil
-        guard enabled else { return }
-        let timer = SignalKitTimer(timeout: 25.0, repeat: true, completion: { [weak self] in
-            self?.updatePresence(false)
-        }, queue: self.queue)
-        self.automaticOfflineTimer = timer
-        timer.start()
     }
 }
 

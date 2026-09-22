@@ -234,10 +234,19 @@ class SpaceGramFeatureContracts(unittest.TestCase):
 
     def test_ghost_presence_and_activity_send_boundaries(self):
         presence = (ROOT / "submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift").read_text(encoding="utf-8")
-        self.assertIn("return (value.0 && !value.1, value.2)", presence)
-        self.assertIn("let presenceInputs: Signal<(Bool, Bool, Bool), NoError>", presence)
+        self.assertIn("let presenceInputs: Signal<(Bool, Bool), NoError>", presence)
+        self.assertIn("if suppressPresence", presence)
+        self.assertIn("self.currentRequestDisposable.set(nil)", presence)
+        self.assertIn("waiting for server status expiry", presence)
+        self.assertNotIn("automaticOfflineTimer", presence)
         self.assertIn("self.onlineTimer?.invalidate()", presence)
         self.assertEqual(presence.count("Api.functions.account.updateStatus"), 2)
+
+        pending = (ROOT / "submodules/TelegramCore/Sources/State/PendingMessageManager.swift").read_text(encoding="utf-8")
+        self.assertIn("scheduled enqueue request kind=single", pending)
+        self.assertIn("scheduled enqueue request kind=group", pending)
+        self.assertIn("immediate send completed kind=single", pending)
+        self.assertIn("immediate send completed kind=group", pending)
 
         activity = (ROOT / "submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift").read_text(encoding="utf-8")
         self.assertIn("combineLatest(activities, spaceGramSuppressChatActivitySignal())", activity)
@@ -259,6 +268,7 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         self.assertIn("statusData?.text", header)
         presence = (ROOT / "SpaceGram/HistoryIntegration/SpaceGramSelfPresence.swift").read_text(encoding="utf-8")
         self.assertIn("data.wasOnline", presence)
+        self.assertIn("allowRollback: true", presence)
         self.assertNotIn("Date()", presence)
 
     def test_deleted_messages_use_presentation_only_overlay(self):

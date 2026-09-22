@@ -115,7 +115,6 @@ public func spaceGramSettingsController(context: AccountContext, openAccounts: (
         footer(290, "SpaceGram.Hub.HistoryInfo")
         header(3, "SpaceGram.Hub.Ghost")
         toggle(301, "SpaceGram.Hub.Ghost", "eye.slash.fill", settings.ghostMode.enabled, { settings.setGhostMode($0) })
-        toggle(306, "SpaceGram.Hub.GoOffline", "wifi.slash", settings.goOfflineAutomatically, { settings.goOfflineAutomatically = $0 })
         toggle(307, "SpaceGram.Hub.ReadOnInteract", "hand.tap", settings.readOnInteract, { settings.readOnInteract = $0 })
         toggle(308, "SpaceGram.Hub.DelayedSend", "clock.arrow.circlepath", settings.delayedSend, { settings.delayedSend = $0 })
         footer(388, "SpaceGram.Hub.ReadOnInteractInfo")

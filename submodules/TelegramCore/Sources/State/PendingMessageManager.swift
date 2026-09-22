@@ -1278,6 +1278,12 @@ public final class PendingMessageManager {
                 // Re-read Telegram's corrected clock at the RPC boundary so a slow upload
                 // cannot turn a SpaceGram delayed send into an immediate send.
                 let requestScheduleTime = spaceGramAdjustedScheduleTime(plannedTime: scheduleTime, currentServerTime: network.globalTime, minimumDelay: spaceGramMinimumDelay)
+                assert(spaceGramMinimumDelay == nil || requestScheduleTime != nil)
+                if requestScheduleTime != nil {
+                    Logger.shared.log("SpaceGramPresence", "scheduled enqueue request kind=group automatic=\(spaceGramMinimumDelay != nil)")
+                } else {
+                    Logger.shared.log("SpaceGramPresence", "immediate send request kind=group")
+                }
                                 
                 let sendMessageRequest: Signal<Api.Updates, MTRpcError>
                 if isForward {
@@ -1527,6 +1533,11 @@ public final class PendingMessageManager {
                 return sendMessageRequest
                 |> deliverOn(queue)
                 |> mapToSignal { result -> Signal<Void, MTRpcError> in
+                    if requestScheduleTime != nil {
+                        Logger.shared.log("SpaceGramPresence", "scheduled enqueue completed kind=group automatic=\(spaceGramMinimumDelay != nil)")
+                    } else {
+                        Logger.shared.log("SpaceGramPresence", "immediate send completed kind=group")
+                    }
                     if let strongSelf = self {
                         return strongSelf.applySentGroupMessages(postbox: postbox, stateManager: stateManager, messages: messages.map { $0.0 }, result: result)
                         |> mapError { _ -> MTRpcError in
@@ -1841,6 +1852,12 @@ public final class PendingMessageManager {
                 // MARK: NAGRAM — preserve Telegram's stable random id while refreshing
                 // only the schedule date. Native retries therefore remain duplicate-safe.
                 let requestScheduleTime = spaceGramAdjustedScheduleTime(plannedTime: scheduleTime, currentServerTime: network.globalTime, minimumDelay: spaceGramMinimumDelay)
+                assert(spaceGramMinimumDelay == nil || requestScheduleTime != nil)
+                if requestScheduleTime != nil {
+                    Logger.shared.log("SpaceGramPresence", "scheduled enqueue request kind=single automatic=\(spaceGramMinimumDelay != nil)")
+                } else {
+                    Logger.shared.log("SpaceGramPresence", "immediate send request kind=single")
+                }
                 
                 let dependencyTag = PendingMessageRequestDependencyTag(messageId: messageId)
                 
@@ -2227,6 +2244,11 @@ public final class PendingMessageManager {
                             |> mapError { _ -> MTRpcError in
                             }
                         case let .result(result):
+                            if requestScheduleTime != nil {
+                                Logger.shared.log("SpaceGramPresence", "scheduled enqueue completed kind=single automatic=\(spaceGramMinimumDelay != nil)")
+                            } else {
+                                Logger.shared.log("SpaceGramPresence", "immediate send completed kind=single")
+                            }
                             return strongSelf.applySentMessage(postbox: postbox, stateManager: stateManager, message: message, content: content, result: result)
                             |> mapError { _ -> MTRpcError in
                             }
