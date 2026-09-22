@@ -7,6 +7,7 @@ import TelegramCore
 import AccountContext
 import TelegramPresentationData
 import PresentationDataUtils
+import SpaceGramStrings
 import AlertUI
 import SwiftSignalKit
 
@@ -21,32 +22,53 @@ public enum NagramMediaMetadata {
         presentationData: PresentationData,
         present: (ViewController) -> Void
     ) {
-        let text = buildText(context: context, mediaReference: mediaReference)
+        let locale = presentationData.strings.baseLanguageCode
+        let text = buildText(context: context, mediaReference: mediaReference, locale: locale)
         let controller = textAlertController(
             context: context,
             forceTheme: defaultDarkColorPresentationTheme,
-            title: "媒体信息",
+            title: ngI18n("SpaceGram.MediaMetadata.Title", locale),
             text: text,
             actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]
         )
         present(controller)
     }
 
-    private static func buildText(context: AccountContext, mediaReference: AnyMediaReference) -> String {
+    public static func localizedLabels(locale: String) -> [String: String] {
+        return [
+            "title": ngI18n("SpaceGram.MediaMetadata.Title", locale),
+            "resolution": ngI18n("SpaceGram.MediaMetadata.Resolution", locale),
+            "fileSize": ngI18n("SpaceGram.MediaMetadata.FileSize", locale),
+            "type": ngI18n("SpaceGram.MediaMetadata.Type", locale),
+            "image": ngI18n("SpaceGram.MediaMetadata.Image", locale),
+            "video": ngI18n("SpaceGram.MediaMetadata.Video", locale),
+            "audio": ngI18n("SpaceGram.MediaMetadata.Audio", locale),
+            "animation": ngI18n("SpaceGram.MediaMetadata.Animation", locale),
+            "file": ngI18n("SpaceGram.MediaMetadata.File", locale),
+            "duration": ngI18n("SpaceGram.MediaMetadata.Duration", locale),
+            "frameRate": ngI18n("SpaceGram.MediaMetadata.FrameRate", locale),
+            "bitrate": ngI18n("SpaceGram.MediaMetadata.Bitrate", locale),
+            "codec": ngI18n("SpaceGram.MediaMetadata.Codec", locale),
+            "unknown": ngI18n("SpaceGram.MediaMetadata.Unknown", locale),
+        ]
+    }
+
+    private static func buildText(context: AccountContext, mediaReference: AnyMediaReference, locale: String) -> String {
         var lines: [(String, String)] = []
+        let labels = localizedLabels(locale: locale)
         let mediaBox = context.account.postbox.mediaBox
 
         if let imageRef = mediaReference.concrete(TelegramMediaImage.self) {
             let image = imageRef.media
             if let representation = largestImageRepresentation(image.representations) {
-                lines.append(("分辨率", "\(Int(representation.dimensions.width)) × \(Int(representation.dimensions.height))"))
+                lines.append((labels["resolution"]!, "\(Int(representation.dimensions.width)) × \(Int(representation.dimensions.height))"))
                 if let localPath = mediaBox.completedResourcePath(representation.resource), let size = fileSize(atPath: localPath) {
-                    lines.append(("文件大小", formatBytes(size)))
+                    lines.append((labels["fileSize"]!, formatBytes(size)))
                 } else if let declared = representation.resource.size, declared > 0 {
-                    lines.append(("文件大小", formatBytes(declared)))
+                    lines.append((labels["fileSize"]!, formatBytes(declared)))
                 }
             }
-            lines.append(("类型", "图片"))
+            lines.append((labels["type"]!, labels["image"]!))
         } else if let fileRef = mediaReference.concrete(TelegramMediaFile.self) {
             let file = fileRef.media
             var isVideo = false
@@ -77,23 +99,23 @@ public enum NagramMediaMetadata {
 
             let typeLabel: String
             if isVideo {
-                typeLabel = isAnimated ? "GIF" : "视频"
+                typeLabel = isAnimated ? "GIF" : labels["video"]!
             } else if audioDuration != nil {
-                typeLabel = "音频"
+                typeLabel = labels["audio"]!
             } else if isAnimated {
-                typeLabel = "动图"
+                typeLabel = labels["animation"]!
             } else {
-                typeLabel = "文件"
+                typeLabel = labels["file"]!
             }
-            lines.append(("类型", typeLabel))
+            lines.append((labels["type"]!, typeLabel))
 
             if let dims = videoDimensions {
-                lines.append(("分辨率", "\(Int(dims.width)) × \(Int(dims.height))"))
+                lines.append((labels["resolution"]!, "\(Int(dims.width)) × \(Int(dims.height))"))
             }
             if let duration = videoDuration {
-                lines.append(("时长", formatDuration(duration)))
+                lines.append((labels["duration"]!, formatDuration(duration)))
             } else if let duration = audioDuration {
-                lines.append(("时长", formatDuration(Double(duration))))
+                lines.append((labels["duration"]!, formatDuration(Double(duration))))
             }
 
             let localPath = mediaBox.completedResourcePath(file.resource)
@@ -104,7 +126,7 @@ public enum NagramMediaMetadata {
                 fileBytes = size
             }
             if let bytes = fileBytes {
-                lines.append(("文件大小", formatBytes(bytes)))
+                lines.append((labels["fileSize"]!, formatBytes(bytes)))
             }
 
             if isVideo {
@@ -125,17 +147,17 @@ public enum NagramMediaMetadata {
                     }
                 }
                 if let fps = probe.frameRate {
-                    lines.append(("帧率", String(format: "%.1f fps", fps)))
+                    lines.append((labels["frameRate"]!, String(format: "%.1f fps", fps)))
                 }
                 if let rate = probe.bitrate {
-                    lines.append(("码率", formatBitrate(rate)))
+                    lines.append((labels["bitrate"]!, formatBitrate(rate)))
                 } else if let bytes = fileBytes, let duration = videoDuration, duration > 0 {
-                    lines.append(("码率", formatBitrate(Double(bytes) * 8.0 / duration)))
+                    lines.append((labels["bitrate"]!, formatBitrate(Double(bytes) * 8.0 / duration)))
                 }
                 if let codec = probe.codec {
-                    lines.append(("编码", codec))
+                    lines.append((labels["codec"]!, codec))
                 } else if let codec = declaredCodec {
-                    lines.append(("编码", codec.uppercased()))
+                    lines.append((labels["codec"]!, codec.uppercased()))
                 }
             }
 
@@ -143,7 +165,7 @@ public enum NagramMediaMetadata {
                 lines.append(("MIME", file.mimeType))
             }
         } else {
-            lines.append(("类型", "未知"))
+            lines.append((labels["type"]!, labels["unknown"]!))
         }
 
         let width = lines.map { $0.0.count }.max() ?? 0

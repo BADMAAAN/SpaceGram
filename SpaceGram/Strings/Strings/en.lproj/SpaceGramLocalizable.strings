@@ -12,6 +12,20 @@
 "Nagram.MediaMetadata" = "Show Media Metadata";
 
 "Nagram.MediaMetadata.Footer" = "Shows resolution, size, duration, frame rate, bitrate, codec, and related details in image and video viewer menus.";
+"SpaceGram.MediaMetadata.Title" = "Media Information";
+"SpaceGram.MediaMetadata.Resolution" = "Resolution";
+"SpaceGram.MediaMetadata.FileSize" = "File Size";
+"SpaceGram.MediaMetadata.Type" = "Type";
+"SpaceGram.MediaMetadata.Image" = "Image";
+"SpaceGram.MediaMetadata.Video" = "Video";
+"SpaceGram.MediaMetadata.Audio" = "Audio";
+"SpaceGram.MediaMetadata.Animation" = "Animation";
+"SpaceGram.MediaMetadata.File" = "File";
+"SpaceGram.MediaMetadata.Duration" = "Duration";
+"SpaceGram.MediaMetadata.FrameRate" = "Frame Rate";
+"SpaceGram.MediaMetadata.Bitrate" = "Bitrate";
+"SpaceGram.MediaMetadata.Codec" = "Codec";
+"SpaceGram.MediaMetadata.Unknown" = "Unknown";
 
 "Nagram.FixLinkPreviews" = "Fix Link Previews";
 

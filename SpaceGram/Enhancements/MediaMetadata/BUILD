@@ -20,6 +20,7 @@ swift_library(
         "//submodules/TelegramPresentationData:TelegramPresentationData",
         "//submodules/PresentationDataUtils:PresentationDataUtils",
         "//submodules/AlertUI:AlertUI",
+        "//SpaceGram/Strings:SpaceGramStrings",
     ],
     visibility = [
         "//visibility:public",

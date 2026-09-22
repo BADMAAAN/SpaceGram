@@ -9,6 +9,7 @@ swift_library(
     deps = [
         "//SpaceGram/Enhancements/Settings:NagramSettings",
         "//SpaceGram/Enhancements/SettingsSignal:NagramSettingsSignal",
+        "//SpaceGram/Enhancements/MediaMetadata:NagramMediaMetadata",
         "//SpaceGram/HistoryStorage:SpaceGramHistoryStorage",
         "//SpaceGram/HistoryOverlay:SpaceGramHistoryOverlay",
         "//SpaceGram/MediaArchive:SpaceGramMediaArchive",
