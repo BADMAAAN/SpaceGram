@@ -9,6 +9,146 @@ import Emoji
 import UniversalMediaPlayer
 import ChatMessageInteractiveMediaNode
 import ChatMessageAnimatedStickerItemNode
+// MARK: NAGRAM — account-level SpaceGram photo/round-video capture.
+import SpaceGramHistoryStorage
+import SpaceGramSettings
+import SpaceGramSettingsSignal
+
+private final class SpaceGramArchiveFetchContext {
+    let disposable = MetaDisposable()
+    var attempts = 0
+
+    init() {
+    }
+}
+
+private struct SpaceGramArchiveFetchCandidate {
+    let message: Message
+    let media: Media
+    let resource: MediaResource
+    let kind: String
+    let diagnosticId: String
+    let peerType: MediaAutoDownloadPeerType
+}
+
+// Uses Telegram's FetchManager and auto-download policy. The persistent inbox is
+// bounded, and this additional pass is further limited to recent/new snapshots.
+private func spaceGramManagedArchiveFetches(account: Account, fetchManager: FetchManager,
+        settings: Signal<MediaAutoDownloadSettings, NoError>) -> Disposable {
+    let queue = fetchManager.queue
+    var contexts: [String: SpaceGramArchiveFetchContext] = [:]
+    var reportedDenied = Set<String>()
+    let networkType = account.networkType
+    |> map { value -> MediaAutoDownloadNetworkType in
+        switch value {
+        case .none, .cellular: return .cellular
+        case .wifi: return .wifi
+        }
+    }
+    |> distinctUntilChanged
+    let viewKey = PostboxViewKey.orderedItemList(id: SpaceGramMessageSnapshotStore.collectionId)
+    let candidates = combineLatest(account.postbox.combinedView(keys: [viewKey]), spaceGramSettingsChangesSignal())
+    |> mapToSignal { _ -> Signal<[SpaceGramArchiveFetchCandidate], NoError> in
+        return account.postbox.transaction { transaction in
+            guard SpaceGramSettings.shared.captureMedia else { return [] }
+            let cutoff = Int64(Date().timeIntervalSince1970) - 24 * 60 * 60
+            return SpaceGramMessageSnapshotStore.list(transaction: transaction).prefix(64).compactMap { received in
+                guard received.receivedTimestamp.map({ $0 >= cutoff }) == true,
+                      let diagnosticId = received.diagnosticId else { return nil }
+                let id = MessageId(peerId: PeerId(received.key.peerId), namespace: received.key.namespace, id: received.key.id)
+                guard let message = transaction.getMessage(id), message.flags.contains(.Incoming) else { return nil }
+                let peerType: MediaAutoDownloadPeerType
+                if transaction.isPeerContact(peerId: id.peerId) {
+                    peerType = .contact
+                } else if let channel = message.peers[id.peerId] as? TelegramChannel {
+                    if case .group = channel.info {
+                        peerType = .group
+                    } else {
+                        peerType = .channel
+                    }
+                } else if message.peers[id.peerId] is TelegramGroup {
+                    peerType = .group
+                } else {
+                    peerType = .otherPrivate
+                }
+                for media in message.effectiveMedia {
+                    if let image = media as? TelegramMediaImage,
+                       let representation = image.representations.max(by: {
+                           Int64($0.dimensions.width) * Int64($0.dimensions.height) < Int64($1.dimensions.width) * Int64($1.dimensions.height)
+                       }) {
+                        return SpaceGramArchiveFetchCandidate(message: message, media: image, resource: representation.resource, kind: "photo", diagnosticId: diagnosticId, peerType: peerType)
+                    } else if let file = media as? TelegramMediaFile, file.isInstantVideo {
+                        return SpaceGramArchiveFetchCandidate(message: message, media: file, resource: file.resource, kind: "videoMessage", diagnosticId: diagnosticId, peerType: peerType)
+                    }
+                }
+                return nil
+            }
+        }
+    }
+    return (combineLatest(candidates, settings, networkType)
+    |> deliverOn(queue)).start(next: { candidates, settings, networkType in
+        guard SpaceGramSettings.shared.captureMedia else {
+            for context in contexts.values { context.disposable.dispose() }
+            contexts.removeAll()
+            return
+        }
+        var validIds = Set<String>()
+        for candidate in candidates {
+            let resourceId = candidate.resource.id.stringRepresentation
+            guard shouldDownloadMediaAutomatically(settings: settings, peerType: candidate.peerType, networkType: networkType,
+                    authorPeerId: candidate.message.author?.id, contactsPeerIds: [], media: candidate.media) else {
+                if reportedDenied.insert(candidate.diagnosticId).inserted {
+                    NSLog("SpaceGramMediaLifecycle id=%@ stage=fetchDenied type=%@ bytes=0 reason=autoDownloadPolicy", candidate.diagnosticId, candidate.kind)
+                }
+                continue
+            }
+            validIds.insert(resourceId)
+            if contexts[resourceId] != nil { continue }
+            let context = SpaceGramArchiveFetchContext()
+            contexts[resourceId] = context
+            NSLog("SpaceGramMediaLifecycle id=%@ stage=messageReceived type=%@ bytes=0 reason=eligible", candidate.diagnosticId, candidate.kind)
+            func beginFetch() {
+                guard contexts[resourceId] === context else { return }
+                context.attempts += 1
+                NSLog("SpaceGramMediaLifecycle id=%@ stage=fetchRequested type=%@ bytes=0 reason=nativeFetchManager", candidate.diagnosticId, candidate.kind)
+                let priority: FetchManagerPriority = .backgroundPrefetch(
+                    locationOrder: HistoryPreloadIndex(index: nil, threadId: nil, hasUnread: true, isMuted: false, isPriority: true),
+                    localOrder: candidate.message.index)
+                let signal: Signal<Void, NoError>
+                if let image = candidate.media as? TelegramMediaImage {
+                    signal = messageMediaImageInteractiveFetched(fetchManager: fetchManager, messageId: candidate.message.id,
+                        messageReference: MessageReference(candidate.message), image: image, resource: candidate.resource,
+                        userInitiated: false, priority: priority, storeToDownloadsPeerId: nil)
+                } else if let file = candidate.media as? TelegramMediaFile {
+                    signal = messageMediaFileInteractiveFetched(fetchManager: fetchManager, messageId: candidate.message.id,
+                        messageReference: MessageReference(candidate.message), file: file, userInitiated: false, priority: priority)
+                } else {
+                    contexts.removeValue(forKey: resourceId)
+                    return
+                }
+                context.disposable.set(signal.start(completed: {
+                    queue.async {
+                        guard contexts[resourceId] === context else { return }
+                        if let path = account.postbox.mediaBox.completedResourcePath(candidate.resource),
+                           let attributes = try? FileManager.default.attributesOfItem(atPath: path),
+                           let bytes = attributes[.size] as? NSNumber, bytes.int64Value > 0 {
+                            NSLog("SpaceGramMediaLifecycle id=%@ stage=fetchCompleted type=%@ bytes=%lld reason=nativeFetchManager", candidate.diagnosticId, candidate.kind, bytes.int64Value)
+                        } else if context.attempts < 2 {
+                            queue.after(2.0, beginFetch)
+                        } else {
+                            NSLog("SpaceGramMediaLifecycle id=%@ stage=fetchFailed type=%@ bytes=0 reason=retryLimit", candidate.diagnosticId, candidate.kind)
+                            contexts.removeValue(forKey: resourceId)
+                        }
+                    }
+                }))
+            }
+            beginFetch()
+        }
+        for resourceId in Array(contexts.keys) where !validIds.contains(resourceId) {
+            contexts.removeValue(forKey: resourceId)?.disposable.dispose()
+        }
+    })
+}
 
 private final class PrefetchMediaContext {
     let fetchDisposable = MetaDisposable()
@@ -29,6 +169,7 @@ private final class PrefetchManagerInnerImpl {
     private let fetchManager: FetchManager
     
     private var listDisposable: Disposable?
+    private let spaceGramArchiveFetchDisposable = MetaDisposable()
     
     private var contexts: [EngineMedia.Id: PrefetchMediaContext] = [:]
 
@@ -98,11 +239,15 @@ private final class PrefetchManagerInnerImpl {
         |> deliverOn(self.queue)).startStrict(next: { [weak self] orderedPreloadMedia, automaticDownloadSettings, networkType in
             self?.updateOrderedPreloadMedia(orderedPreloadMedia, automaticDownloadSettings: automaticDownloadSettings, networkType: networkType)
         })
+        // MARK: NAGRAM — fetch eligible received media even if its chat is not opened.
+        self.spaceGramArchiveFetchDisposable.set(spaceGramManagedArchiveFetches(account: account, fetchManager: fetchManager,
+            settings: sharedContext.automaticMediaDownloadSettings))
     }
     
     deinit {
         assert(self.queue.isCurrent())
         self.listDisposable?.dispose()
+        self.spaceGramArchiveFetchDisposable.dispose()
     }
     
     private func updateOrderedPreloadMedia(_ items: [PrefetchMediaItem], automaticDownloadSettings: MediaAutoDownloadSettings, networkType: MediaAutoDownloadNetworkType) {

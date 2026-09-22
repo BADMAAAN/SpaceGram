@@ -1,7 +1,7 @@
 import Foundation
 
 public struct SpaceGramHistoryRecord: Codable, Equatable {
-    public static let currentVersion: Int32 = 2
+    public static let currentVersion: Int32 = 3
     public var version: Int32
     public let key: SpaceGramHistoryMessageKey
     public var threadId: Int64?
@@ -31,7 +31,8 @@ public struct SpaceGramHistoryRevision: Codable, Equatable {
     }
 }
 
-// Caller-supplied OLD content. No runtime Message or media bytes are serialized.
+// Caller-supplied OLD content. Binary media bytes are stored by SpaceGramMediaArchive;
+// nativeMediaPayload retains only Telegram's account-local media descriptor.
 // All timestamps use Unix seconds; entity offsets/lengths use UTF-16 code units.
 public struct SpaceGramHistorySnapshot: Codable, Equatable {
     public var text: String
@@ -84,8 +85,9 @@ public struct SpaceGramHistoryMediaMetadata: Codable, Equatable {
     public var isAnimated: Bool?
     public var stickerText: String?
     public var resourceIds: [String]?
-    // Descriptive identifiers only: no access hashes, credentials, file references,
-    // local paths, resource retention, or encoded media payloads.
+    // Postbox-encoded TelegramMediaImage/TelegramMediaFile. This is kept only in
+    // the owning account's Postbox and is never logged or treated as media bytes.
+    public var nativeMediaPayload: Data?
     public var identifiers: [String: String]
 
     public init(type: String) {

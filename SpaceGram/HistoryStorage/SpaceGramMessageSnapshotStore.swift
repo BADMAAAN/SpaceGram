@@ -5,11 +5,15 @@ public struct SpaceGramReceivedMessageSnapshot: Codable, Equatable {
     public let key: SpaceGramHistoryMessageKey
     public let threadId: Int64?
     public let snapshot: SpaceGramHistorySnapshot
+    public let receivedTimestamp: Int64?
+    public let diagnosticId: String?
 
-    public init(key: SpaceGramHistoryMessageKey, threadId: Int64?, snapshot: SpaceGramHistorySnapshot) {
+    public init(key: SpaceGramHistoryMessageKey, threadId: Int64?, snapshot: SpaceGramHistorySnapshot, receivedTimestamp: Int64? = nil, diagnosticId: String? = nil) {
         self.key = key
         self.threadId = threadId
         self.snapshot = snapshot
+        self.receivedTimestamp = receivedTimestamp
+        self.diagnosticId = diagnosticId
     }
 }
 

@@ -40,6 +40,7 @@ public struct SpaceGramDeletedMessageOverlayItem {
     public let stableVersion: UInt32
     public var assetIds: [String] = []
     public var archivedMedia: [SpaceGramArchivedMedia] = []
+    public var nativeMedia: [Media] = []
 
     public init(originalMessageId: MessageId, threadId: Int64?, snapshot: SpaceGramHistorySnapshot, author: Peer?, chatPeer: Peer?, hasArchivedMedia: Bool, stableVersion: UInt32) {
         self.originalMessageId = originalMessageId
@@ -119,11 +120,24 @@ public struct SpaceGramDeletedMessageOverlayItem {
         let assetNumber = primary.flatMap { UInt64($0.asset.id.replacingOccurrences(of: "-", with: "").prefix(16), radix: 16) }
         let localNumber = assetNumber.map { Int64(bitPattern: $0) } ?? (self.originalMessageId.peerId.toInt64() ^ (Int64(self.originalMessageId.id) << 32))
         let mediaId = MediaId(namespace: Namespaces.Media.LocalFile, id: localNumber)
+        let native = self.nativeMedia.first { media in
+            if let image = media as? TelegramMediaImage {
+                return metadata.type == "image" && metadata.identifiers["namespace"] == String(image.imageId.namespace) && metadata.identifiers["id"] == String(image.imageId.id)
+            } else if let file = media as? TelegramMediaFile {
+                return metadata.type == "file" && metadata.identifiers["namespace"] == String(file.fileId.namespace) && metadata.identifiers["id"] == String(file.fileId.id)
+            }
+            return false
+        }
         guard let primary else {
-            // A local, unavailable document placeholder keeps the caption intact
-            // and never attempts to recover cloud bytes or claim a thumbnail is full media.
+            // A verified complete MediaBox resource is preferable while the
+            // private archive publication is still in flight.
+            if let native {
+                return [native]
+            }
+            // An explicit unavailable resource keeps the caption intact without
+            // inventing an empty local path or claiming a thumbnail is full media.
             return [TelegramMediaFile(fileId: mediaId, partialReference: nil,
-                resource: LocalFileReferenceMediaResource(localFilePath: "", randomId: localNumber),
+                resource: EmptyMediaResource(),
                 previewRepresentations: [], videoThumbnails: [], immediateThumbnailData: nil,
                 mimeType: "application/octet-stream", size: metadata.size,
                 attributes: [.FileName(fileName: (metadata.filename ?? metadata.type) + " — " + missingMediaLabel)], alternativeRepresentations: [])]
@@ -132,6 +146,23 @@ public struct SpaceGramDeletedMessageOverlayItem {
             let hex = value.asset.id.replacingOccurrences(of: "-", with: "")
             let id = Int64(bitPattern: UInt64(hex.prefix(16), radix: 16) ?? 0)
             return LocalFileReferenceMediaResource(localFilePath: value.url.path, randomId: id, size: value.asset.bytes)
+        }
+        if let image = native as? TelegramMediaImage, primary.asset.kind == "photo" {
+            let dimensions = image.representations.max(by: {
+                Int64($0.dimensions.width) * Int64($0.dimensions.height) < Int64($1.dimensions.width) * Int64($1.dimensions.height)
+            })?.dimensions ?? PixelDimensions(width: 512, height: 512)
+            return [TelegramMediaImage(imageId: image.imageId,
+                representations: [TelegramMediaImageRepresentation(dimensions: dimensions, resource: resource(primary), progressiveSizes: [], immediateThumbnailData: image.immediateThumbnailData, hasVideo: false, isPersonal: false)],
+                videoRepresentations: [], immediateThumbnailData: image.immediateThumbnailData, emojiMarkup: image.emojiMarkup,
+                reference: image.reference, partialReference: image.partialReference, flags: image.flags, video: nil)]
+        } else if let file = native as? TelegramMediaFile, primary.asset.kind != "thumbnail" {
+            let previews = mediaAssets.filter { $0.asset.kind == "thumbnail" }.prefix(1).map {
+                TelegramMediaImageRepresentation(dimensions: file.dimensions ?? PixelDimensions(width: 512, height: 512), resource: resource($0), progressiveSizes: [], immediateThumbnailData: nil, hasVideo: false, isPersonal: false)
+            }
+            return [TelegramMediaFile(fileId: file.fileId, partialReference: file.partialReference, resource: resource(primary),
+                previewRepresentations: previews, videoThumbnails: [], videoCover: file.videoCover,
+                immediateThumbnailData: file.immediateThumbnailData, mimeType: file.mimeType, size: primary.asset.bytes,
+                attributes: file.attributes, alternativeRepresentations: [])]
         }
         let dimensions = PixelDimensions(width: max(1, min(16384, metadata.width ?? 512)), height: max(1, min(16384, metadata.height ?? 512)))
         if primary.asset.kind == "photo" || metadata.type == "image" {
@@ -220,6 +251,23 @@ public func spaceGramDeletedMessageOverlay(postbox: Postbox, peerId: PeerId, thr
                     var item = item
                     let matchingIds = Set(item.snapshot.media.flatMap { $0.resourceIds ?? [] })
                     item.archivedMedia = resources.values.filter { item.assetIds.contains($0.asset.id) || $0.asset.resourceId.map(matchingIds.contains) == true }
+                    item.nativeMedia = item.snapshot.media.compactMap { metadata in
+                        guard let data = metadata.nativeMediaPayload,
+                              let media = PostboxDecoder(buffer: MemoryBuffer(data: data)).decodeRootObject() as? Media else { return nil }
+                        if !item.archivedMedia.isEmpty {
+                            return media
+                        } else if let image = media as? TelegramMediaImage,
+                                  let largest = image.representations.max(by: {
+                                      Int64($0.dimensions.width) * Int64($0.dimensions.height) < Int64($1.dimensions.width) * Int64($1.dimensions.height)
+                                  }), postbox.mediaBox.completedResourcePath(largest.resource) != nil {
+                            return image
+                        } else if let file = media as? TelegramMediaFile,
+                                  postbox.mediaBox.completedResourcePath(file.resource) != nil {
+                            return file
+                        } else {
+                            return nil
+                        }
+                    }
                     return item
                 })
                 subscriber.putCompletion()

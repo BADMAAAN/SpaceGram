@@ -2493,6 +2493,9 @@ private final class NotificationServiceHandler {
                             Logger.shared.log("NotificationService \(episode)", "Will delete messages \(ids)")
                             let mediaBox = stateManager.postbox.mediaBox
                             let _ = (stateManager.postbox.transaction { transaction -> Void in
+                                // MARK: NAGRAM — keep the NSE delete path aligned
+                                // with account replay before removing Postbox rows.
+                                spaceGramBeforeNotificationServerDelete(postbox: stateManager.postbox, transaction: transaction, ids: ids)
                                 _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: ids, deleteMedia: true)
                             }
                             |> deliverOn(strongSelf.queue)).start(completed: {

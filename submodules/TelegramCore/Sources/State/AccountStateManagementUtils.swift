@@ -4443,11 +4443,15 @@ func replayFinalState(
                 }
             case let .DeleteMessagesWithGlobalIds(ids):
                 // MARK: NAGRAM
-                spaceGramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: spaceGramServerDeleteIds(transaction: transaction, globalIds: ids), source: .updateDeleteMessages)
+                let spaceGramPinnedResourceIds = spaceGramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: spaceGramServerDeleteIds(transaction: transaction, globalIds: ids), source: .updateDeleteMessages)
                 var resourceIds: [MediaResourceId] = []
                 transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
                     addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
                 })
+                // MARK: NAGRAM — a successfully pinned inode remains eligible
+                // for ordinary cache eviction, but is not force-unlinked before
+                // its private archive copy is published.
+                resourceIds.removeAll(where: { spaceGramPinnedResourceIds.contains($0) })
                 if !resourceIds.isEmpty {
                     let _ = mediaBox.removeCachedResources(Array(Set(resourceIds)), force: true).start()
                 }

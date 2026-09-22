@@ -14,8 +14,11 @@ func spaceGramAfterMessagesStored(transaction: Transaction, messages: [StoreMess
               !message.media.contains(where: { $0 is TelegramMediaExpiredContent || $0 is TelegramMediaAction }) else { continue }
         let key = SpaceGramHistoryMessageKey(peerId: id.peerId.toInt64(), namespace: id.namespace, id: id.id)
         do {
+            let existing = SpaceGramMessageSnapshotStore.load(transaction: transaction, key: key)
             try SpaceGramMessageSnapshotStore.store(transaction: transaction,
-                value: SpaceGramReceivedMessageSnapshot(key: key, threadId: message.threadId, snapshot: spaceGramHistorySnapshot(message)))
+                value: SpaceGramReceivedMessageSnapshot(key: key, threadId: message.threadId, snapshot: spaceGramHistorySnapshot(message),
+                    receivedTimestamp: existing?.receivedTimestamp ?? Int64(Date().timeIntervalSince1970),
+                    diagnosticId: existing?.diagnosticId ?? String(UUID().uuidString.prefix(8))))
         } catch {
             NSLog("SpaceGramHistory: received snapshot write failed")
         }
@@ -69,6 +72,7 @@ enum SpaceGramHistoryServerDeleteSource: String {
     case updateDeleteMessages
     case updateDeleteChannelMessages
     case channelDifference
+    case notificationService
 }
 
 func spaceGramServerDeleteIds(transaction: Transaction, globalIds: [Int32]) -> [MessageId] {
@@ -88,10 +92,12 @@ func spaceGramServerDeleteIds(transaction: Transaction, globalIds: [Int32]) -> [
 
 // A server deletion confirms disappearance, not who initiated it.
 // Called in the live transaction immediately before Telegram's normal deletion.
-func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids: [MessageId], source: SpaceGramHistoryServerDeleteSource) {
+@discardableResult
+func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids: [MessageId], source: SpaceGramHistoryServerDeleteSource) -> Set<MediaResourceId> {
     guard SpaceGramSettings.shared.captureDeletedMessages else {
-        return
+        return []
     }
+    var pinnedResourceIds = Set<MediaResourceId>()
     var seen = Set<MessageId>()
     for id in ids {
         guard seen.insert(id).inserted,
@@ -103,6 +109,9 @@ func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids
         let old = transaction.getMessage(id)
         let received = SpaceGramMessageSnapshotStore.load(transaction: transaction, key: key)
         guard let snapshot = old.map(spaceGramHistorySnapshot) ?? received?.snapshot else { continue }
+        if let diagnosticId = received?.diagnosticId {
+            NSLog("SpaceGramMediaLifecycle id=%@ stage=deleteProcessed type=message bytes=0 reason=%@", diagnosticId, source.rawValue)
+        }
         // A server update confirms disappearance, including timed messages; its
         // cause is unknown. Never attribute it to a sender or infer expiration.
         guard old?.media.contains(where: { media in
@@ -127,6 +136,11 @@ func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids
             record.threadId = old?.threadId ?? received?.threadId
             record.revisions.append(SpaceGramHistoryRevision(number: number, observedTimestamp: observedTimestamp, snapshot: snapshot))
             let captures = old.map { spaceGramPinMessageMedia(postbox: postbox, message: $0) } ?? []
+            for capture in captures {
+                if let resourceId = capture.resourceId {
+                    pinnedResourceIds.insert(MediaResourceId(resourceId))
+                }
+            }
             var event = SpaceGramHistoryEvent(type: .delete, source: source.rawValue, reason: .serverDelete, observedTimestamp: observedTimestamp, revisionNumber: number)
             event.mediaCaptureId = captures.isEmpty ? nil : UUID().uuidString
             record.events.append(event)
@@ -140,6 +154,13 @@ func spaceGramBeforeServerDelete(postbox: Postbox, transaction: Transaction, ids
             NSLog("SpaceGramHistory: archive write failed; Telegram message deletion will continue")
         }
     }
+    return pinnedResourceIds
+}
+
+// NotificationService is a separate target, so expose one narrow entry point
+// instead of the replay-only source enum.
+public func spaceGramBeforeNotificationServerDelete(postbox: Postbox, transaction: Transaction, ids: [MessageId]) {
+    spaceGramBeforeServerDelete(postbox: postbox, transaction: transaction, ids: ids, source: .notificationService)
 }
 
 func spaceGramHistorySnapshot(_ message: Message) -> SpaceGramHistorySnapshot {
@@ -175,11 +196,17 @@ func spaceGramHistorySnapshot(_ message: Message) -> SpaceGramHistorySnapshot {
     for media in message.effectiveMedia {
         if let image = media as? TelegramMediaImage,
            let index = snapshot.media.firstIndex(where: { $0.type == "image" && $0.identifiers == spaceGramHistoryMediaId(image.imageId) }) {
+            let encoder = PostboxEncoder()
+            encoder.encodeRootObject(image)
+            snapshot.media[index].nativeMediaPayload = encoder.makeData()
             snapshot.media[index].resourceIds = image.representations.sorted {
                 Int64($0.dimensions.width) * Int64($0.dimensions.height) > Int64($1.dimensions.width) * Int64($1.dimensions.height)
             }.map { $0.resource.id.stringRepresentation }
         } else if let file = media as? TelegramMediaFile,
            let index = snapshot.media.firstIndex(where: { $0.type == "file" && $0.identifiers == spaceGramHistoryMediaId(file.fileId) }) {
+            let encoder = PostboxEncoder()
+            encoder.encodeRootObject(file)
+            snapshot.media[index].nativeMediaPayload = encoder.makeData()
             snapshot.media[index].resourceIds = [file.resource.id.stringRepresentation] + file.previewRepresentations.map { $0.resource.id.stringRepresentation }
             snapshot.media[index].filename = file.fileName
             snapshot.media[index].size = file.size

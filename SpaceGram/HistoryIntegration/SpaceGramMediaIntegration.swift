@@ -61,10 +61,11 @@ private func spaceGramPinMedia(mediaBox: MediaBox, media: [Media]) -> [SpaceGram
     return result
 }
 
-func spaceGramStoreMessageMedia(postbox: Postbox, key: SpaceGramHistoryMessageKey, captureId: String, captures: [SpaceGramMediaCapture]) {
+func spaceGramStoreMessageMedia(postbox: Postbox, key: SpaceGramHistoryMessageKey, captureId: String, captures: [SpaceGramMediaCapture], completion: @escaping (Bool) -> Void = { _ in }) {
     let root = SpaceGramMediaArchive.root(mediaBoxPath: postbox.mediaBox.basePath)
     SpaceGramMediaArchive.store(root: root, captures: captures) { assets in
         let ids = assets.map { $0.id }
+        var storedAll = false
         let _ = postbox.transaction { transaction -> Void in
             do {
                 // Never recreate an archive record removed while copying, nor
@@ -77,6 +78,7 @@ func spaceGramStoreMessageMedia(postbox: Postbox, key: SpaceGramHistoryMessageKe
                     return
                 }
                 record.events[index].mediaAssetIds = ids
+                storedAll = assets.count == captures.count
                 if assets.count != captures.count {
                     // An incomplete capture must be retryable on the next native completion.
                     record.events[index].mediaCaptureId = nil
@@ -88,7 +90,7 @@ func spaceGramStoreMessageMedia(postbox: Postbox, key: SpaceGramHistoryMessageKe
             } catch {
                 NSLog("SpaceGramMediaArchive: history link failed")
             }
-        }.start()
+        }.start(completed: { completion(storedAll) })
     }
 }
 
@@ -99,15 +101,21 @@ func spaceGramBeforeMediaExpiration(postbox: Postbox, transaction: Transaction, 
     spaceGramRecordMediaCapture(postbox: postbox, transaction: transaction, id: message.id, threadId: message.threadId, snapshot: spaceGramHistorySnapshot(message), source: source, captures: captures)
 }
 
-private func spaceGramRecordMediaCapture(postbox: Postbox, transaction: Transaction, id: MessageId, threadId: Int64?, snapshot: SpaceGramHistorySnapshot, source: String, captures: [SpaceGramMediaCapture]) {
-    guard !captures.isEmpty else { return }
+private func spaceGramRecordMediaCapture(postbox: Postbox, transaction: Transaction, id: MessageId, threadId: Int64?, snapshot: SpaceGramHistorySnapshot, source: String, captures: [SpaceGramMediaCapture], completion: @escaping (Bool) -> Void = { _ in }) {
+    guard !captures.isEmpty else {
+        completion(false)
+        return
+    }
     let key = SpaceGramHistoryMessageKey(peerId: id.peerId.toInt64(), namespace: id.namespace, id: id.id)
     do {
         var record = try SpaceGramHistoryStore.load(transaction: transaction, key: key) ?? SpaceGramHistoryRecord(key: key, threadId: threadId)
         let resourceIds = captures.compactMap(\.resourceId)
         if source == "completedDownload", record.events.contains(where: {
             Set($0.mediaResourceIds ?? []).isSuperset(of: resourceIds) && $0.mediaCaptureId != nil
-        }) { return }
+        }) {
+            completion(true)
+            return
+        }
         guard record.nextRevision < Int64.max else { throw SpaceGramHistoryStorageError.invalidRevisionSequence }
         let timestamp = Int64(Date().timeIntervalSince1970)
         let captureId = UUID().uuidString
@@ -119,9 +127,10 @@ private func spaceGramRecordMediaCapture(postbox: Postbox, transaction: Transact
         event.mediaResourceIds = resourceIds
         record.events.append(event)
         try SpaceGramHistoryStore.upsert(transaction: transaction, record: record)
-        spaceGramStoreMessageMedia(postbox: postbox, key: key, captureId: captureId, captures: captures)
+        spaceGramStoreMessageMedia(postbox: postbox, key: key, captureId: captureId, captures: captures, completion: completion)
     } catch {
         NSLog("SpaceGramMediaArchive: capture event failed; Telegram continues")
+        completion(false)
     }
 }
 
@@ -132,6 +141,7 @@ func spaceGramObserveReceivedMedia(postbox: Postbox) -> Disposable {
     final class Observation {
         var targets: [SpaceGramReceivedMessageSnapshot] = []
         var disposable: Disposable?
+        var attempts = 0
     }
     let queue = Queue(name: "SpaceGram.ReceivedMedia")
     var observations: [String: Observation] = [:]
@@ -173,10 +183,18 @@ func spaceGramObserveReceivedMedia(postbox: Postbox) -> Disposable {
                     let observation = Observation()
                     observation.targets = targetsByResourceId[resourceId] ?? []
                     observations[resourceId] = observation
-                    observation.disposable = (postbox.mediaBox.resourceData(id: MediaResourceId(resourceId))
+                    func begin() {
+                        observation.attempts += 1
+                        observation.disposable = (postbox.mediaBox.resourceData(id: MediaResourceId(resourceId))
                     |> filter { $0.complete && $0.size > 0 }
-                    |> take(1)).start(next: { [weak postbox, weak observation] data in
+                    |> take(1)
+                    |> deliverOn(queue)).start(next: { [weak postbox, weak observation] data in
                         guard let postbox, let observation, SpaceGramSettings.shared.captureMedia else { return }
+                        for target in observation.targets {
+                            if let diagnosticId = target.diagnosticId {
+                                NSLog("SpaceGramMediaLifecycle id=%@ stage=fetchCompleted type=%@ bytes=%lld reason=native", diagnosticId, kind, data.size)
+                            }
+                        }
                         // Pin one descriptor per message before hopping queues. A
                         // shared Telegram resource may belong to multiple snapshots,
                         // and a delete may unlink MediaBox while the transaction waits.
@@ -185,17 +203,57 @@ func spaceGramObserveReceivedMedia(postbox: Postbox) -> Disposable {
                             capture.resourceId = resourceId
                             return (received, capture)
                         }
-                        guard !targets.isEmpty else { return }
+                        guard !targets.isEmpty else {
+                            if observation.attempts < 3 {
+                                queue.after(2.0, begin)
+                            } else {
+                                observations.removeValue(forKey: resourceId)
+                            }
+                            return
+                        }
+                        for target in observation.targets {
+                            if let diagnosticId = target.diagnosticId {
+                                NSLog("SpaceGramMediaLifecycle id=%@ stage=pinned type=%@ bytes=%lld reason=completeInode", diagnosticId, kind, data.size)
+                            }
+                        }
                         let _ = postbox.transaction { transaction -> Void in
                             guard SpaceGramSettings.shared.captureMedia else { return }
+                            var pending = targets.count
+                            var allStored = true
                             for (received, capture) in targets {
-                                guard SpaceGramMessageSnapshotStore.load(transaction: transaction, key: received.key) != nil else { continue }
+                                guard SpaceGramMessageSnapshotStore.load(transaction: transaction, key: received.key) != nil else {
+                                    pending -= 1
+                                    continue
+                                }
                                 let id = MessageId(peerId: PeerId(received.key.peerId), namespace: received.key.namespace, id: received.key.id)
                                 spaceGramRecordMediaCapture(postbox: postbox, transaction: transaction, id: id, threadId: received.threadId,
-                                    snapshot: received.snapshot, source: "completedDownload", captures: [capture])
+                                    snapshot: received.snapshot, source: "completedDownload", captures: [capture], completion: { stored in
+                                        queue.async {
+                                            allStored = allStored && stored
+                                            pending -= 1
+                                            if pending == 0 {
+                                                for target in observation.targets {
+                                                    if let diagnosticId = target.diagnosticId {
+                                                        NSLog("SpaceGramMediaLifecycle id=%@ stage=%@ type=%@ bytes=%lld reason=%@", diagnosticId,
+                                                            allStored ? "stored" : "storeFailed", kind, data.size, allStored ? "archive" : "retryable")
+                                                    }
+                                                }
+                                                if allStored || observation.attempts >= 3 {
+                                                    observations.removeValue(forKey: resourceId)?.disposable?.dispose()
+                                                } else {
+                                                    queue.after(2.0, begin)
+                                                }
+                                            }
+                                        }
+                                    })
+                            }
+                            if pending == 0 {
+                                observations.removeValue(forKey: resourceId)?.disposable?.dispose()
                             }
                         }.start()
                     })
+                    }
+                    begin()
                 }
             }
         }
