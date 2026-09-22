@@ -123,7 +123,7 @@ private func spaceGramLanguagePickerController(context: AccountContext, titleKey
 
 public func spaceGramTranslatorController(context: AccountContext, initialText: String = "") -> ViewController {
     let updatePromise = ValuePromise<Int32>(0, ignoreRepeated: false)
-    let translationDisposable = MetaDisposable()
+    let requestLifecycle = SpaceGramTranslatorRequestLifecycle()
     var updateValue: Int32 = 0
     var input = initialText
     var sourceLanguage = SpaceGramTranslationLanguage.automatic
@@ -153,8 +153,10 @@ public func spaceGramTranslatorController(context: AccountContext, initialText: 
         isTranslating = true
         result = nil
         refresh()
-        translationDisposable.set((NagramTranslateService(context: context).translate(text: text, toLang: targetCode, fromLang: sourceLanguage.code)
-        |> deliverOnMainQueue).startStrict(next: { value in
+        let requestToken = requestLifecycle.begin()
+        let disposable = (NagramTranslateService(context: context).translate(text: text, toLang: targetCode, fromLang: sourceLanguage.code)
+        |> deliverOnMainQueue).startStrict(next: { [weak requestLifecycle] value in
+            guard requestLifecycle?.finish(requestToken) == true, controller != nil else { return }
             isTranslating = false
             if let translated = value?.0.trimmingCharacters(in: .whitespacesAndNewlines), !translated.isEmpty {
                 result = translated
@@ -162,11 +164,13 @@ public func spaceGramTranslatorController(context: AccountContext, initialText: 
                 showError(ngI18n("SpaceGram.Translator.Failed", lang))
             }
             refresh()
-        }, error: { _ in
+        }, error: { [weak requestLifecycle] _ in
+            guard requestLifecycle?.finish(requestToken) == true, controller != nil else { return }
             isTranslating = false
             showError(ngI18n("SpaceGram.Translator.Failed", lang))
             refresh()
-        }))
+        })
+        requestLifecycle.setDisposable(disposable, for: requestToken)
     })
     let signal = combineLatest(queue: .mainQueue(), context.sharedContext.presentationData, updatePromise.get(), spaceGramEnabledSignal())
     |> map { presentationData, _, enabled -> (ItemListControllerState, (ItemListNodeState, Any)) in
@@ -192,6 +196,19 @@ public func spaceGramTranslatorController(context: AccountContext, initialText: 
     let itemListController = ItemListController(context: context, state: signal)
     itemListController.navigationPresentation = .default
     controller = itemListController
+    itemListController.didDisappear = { [weak itemListController, weak requestLifecycle] _ in
+        guard let itemListController else {
+            requestLifecycle?.cancel()
+            return
+        }
+        if let navigationController = itemListController.navigationController as? NavigationController {
+            if !navigationController.viewControllers.contains(where: { $0 === itemListController }) {
+                requestLifecycle?.cancel()
+            }
+        } else if itemListController.presentingViewController == nil {
+            requestLifecycle?.cancel()
+        }
+    }
     push = { [weak itemListController] value in (itemListController?.navigationController as? NavigationController)?.pushViewController(value, animated: true) }
     return itemListController
 }

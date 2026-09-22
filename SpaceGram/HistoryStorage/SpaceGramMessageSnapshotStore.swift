@@ -18,6 +18,20 @@ public struct SpaceGramReceivedMessageSnapshot: Codable, Equatable {
 public enum SpaceGramMessageSnapshotStore {
     public static let collectionId: Int32 = 1010
 
+    public static func targetsByResourceId(_ snapshots: [SpaceGramReceivedMessageSnapshot]) -> [String: [SpaceGramReceivedMessageSnapshot]] {
+        var result: [String: [SpaceGramReceivedMessageSnapshot]] = [:]
+        for received in snapshots {
+            for metadata in received.snapshot.media {
+                for resourceId in (metadata.resourceIds ?? []).prefix(32) {
+                    if result[resourceId]?.contains(where: { $0.key == received.key }) != true {
+                        result[resourceId, default: []].append(received)
+                    }
+                }
+            }
+        }
+        return result
+    }
+
     public static func load(transaction: Transaction, key: SpaceGramHistoryMessageKey) -> SpaceGramReceivedMessageSnapshot? {
         guard let item = transaction.getOrderedItemListItem(collectionId: collectionId, itemId: MemoryBuffer(data: key.binaryKey)),
               let value = decode(item), value.key == key else { return nil }

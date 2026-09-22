@@ -129,8 +129,12 @@ private func spaceGramRecordMediaCapture(postbox: Postbox, transaction: Transact
 // downloaded it. This subscribes to data availability and never starts a fetch.
 // The bounded received-snapshot collection also restores associations on launch.
 func spaceGramObserveReceivedMedia(postbox: Postbox) -> Disposable {
+    final class Observation {
+        var targets: [SpaceGramReceivedMessageSnapshot] = []
+        var disposable: Disposable?
+    }
     let queue = Queue(name: "SpaceGram.ReceivedMedia")
-    var observations: [String: Disposable] = [:]
+    var observations: [String: Observation] = [:]
     let viewKey = PostboxViewKey.orderedItemList(id: SpaceGramMessageSnapshotStore.collectionId)
     let snapshots = combineLatest(postbox.combinedView(keys: [viewKey]), spaceGramSettingsChangesSignal())
     |> mapToSignal { _ -> Signal<[SpaceGramReceivedMessageSnapshot], NoError> in
@@ -140,12 +144,14 @@ func spaceGramObserveReceivedMedia(postbox: Postbox) -> Disposable {
     }
     |> deliverOn(queue)
     let subscription = snapshots.start(next: { snapshots in
-        var wanted = Set<String>()
+        let targetsByResourceId = SpaceGramMessageSnapshotStore.targetsByResourceId(snapshots)
         for received in snapshots {
             for metadata in received.snapshot.media {
                 for (index, resourceId) in (metadata.resourceIds ?? []).prefix(32).enumerated() {
-                    wanted.insert(resourceId)
-                    if observations[resourceId] != nil { continue }
+                    if let observation = observations[resourceId] {
+                        observation.targets = targetsByResourceId[resourceId] ?? []
+                        continue
+                    }
                     let isThumbnail = index != 0
                     let kind = isThumbnail ? "thumbnail" : (metadata.type == "image" ? "photo" : (metadata.isInstantVideo == true ? "videoMessage" : (metadata.isVoice == true ? "voice" : (metadata.isAnimated == true ? "animation" : (metadata.mimeType?.hasPrefix("video/") == true ? "video" : "file")))))
                     let ext: String
@@ -164,33 +170,43 @@ func spaceGramObserveReceivedMedia(postbox: Postbox) -> Disposable {
                         }
                     }
                     let name = isThumbnail ? "thumbnail.jpg" : (metadata.filename ?? (kind + "." + ext))
-                    observations[resourceId] = (postbox.mediaBox.resourceData(id: MediaResourceId(resourceId))
+                    let observation = Observation()
+                    observation.targets = targetsByResourceId[resourceId] ?? []
+                    observations[resourceId] = observation
+                    observation.disposable = (postbox.mediaBox.resourceData(id: MediaResourceId(resourceId))
                     |> filter { $0.complete && $0.size > 0 }
-                    |> take(1)).start(next: { [weak postbox] data in
-                        guard let postbox, SpaceGramSettings.shared.captureMedia,
-                              let capture = SpaceGramMediaArchive.pinCompletedFile(path: data.path, fileName: name, kind: kind, fileExtension: ext) else { return }
-                        capture.resourceId = resourceId
-                        // Pin before hopping queues: a delete may unlink MediaBox
-                        // while the following transaction waits to run.
+                    |> take(1)).start(next: { [weak postbox, weak observation] data in
+                        guard let postbox, let observation, SpaceGramSettings.shared.captureMedia else { return }
+                        // Pin one descriptor per message before hopping queues. A
+                        // shared Telegram resource may belong to multiple snapshots,
+                        // and a delete may unlink MediaBox while the transaction waits.
+                        let targets = observation.targets.prefix(32).compactMap { received -> (SpaceGramReceivedMessageSnapshot, SpaceGramMediaCapture)? in
+                            guard let capture = SpaceGramMediaArchive.pinCompletedFile(path: data.path, fileName: name, kind: kind, fileExtension: ext) else { return nil }
+                            capture.resourceId = resourceId
+                            return (received, capture)
+                        }
+                        guard !targets.isEmpty else { return }
                         let _ = postbox.transaction { transaction -> Void in
-                            guard SpaceGramSettings.shared.captureMedia,
-                                  SpaceGramMessageSnapshotStore.load(transaction: transaction, key: received.key) != nil else { return }
-                            let id = MessageId(peerId: PeerId(received.key.peerId), namespace: received.key.namespace, id: received.key.id)
-                            spaceGramRecordMediaCapture(postbox: postbox, transaction: transaction, id: id, threadId: received.threadId,
-                                snapshot: received.snapshot, source: "completedDownload", captures: [capture])
+                            guard SpaceGramSettings.shared.captureMedia else { return }
+                            for (received, capture) in targets {
+                                guard SpaceGramMessageSnapshotStore.load(transaction: transaction, key: received.key) != nil else { continue }
+                                let id = MessageId(peerId: PeerId(received.key.peerId), namespace: received.key.namespace, id: received.key.id)
+                                spaceGramRecordMediaCapture(postbox: postbox, transaction: transaction, id: id, threadId: received.threadId,
+                                    snapshot: received.snapshot, source: "completedDownload", captures: [capture])
+                            }
                         }.start()
                     })
                 }
             }
         }
-        for id in Array(observations.keys) where !wanted.contains(id) {
-            observations.removeValue(forKey: id)?.dispose()
+        for id in Array(observations.keys) where targetsByResourceId[id] == nil {
+            observations.removeValue(forKey: id)?.disposable?.dispose()
         }
     })
     return ActionDisposable {
         subscription.dispose()
         queue.async {
-            for disposable in observations.values { disposable.dispose() }
+            for observation in observations.values { observation.disposable?.dispose() }
             observations.removeAll()
         }
     }
