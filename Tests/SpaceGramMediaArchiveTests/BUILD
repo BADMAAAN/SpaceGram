@@ -19,6 +19,7 @@ swift_library(
         "//SpaceGram/Settings:SpaceGramSettings",
         "//SpaceGram/SettingsUI:SpaceGramSettingsUI",
         "//SpaceGram/SettingsSignal:SpaceGramSettingsSignal",
+        "//SpaceGram/Strings:SpaceGramStrings",
         "//submodules/Postbox:Postbox",
         "//submodules/Display:Display",
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
@@ -37,6 +38,7 @@ ios_unit_test(
     # Match the app deployment target; the runner still uses iOS 26.2.
     minimum_os_version = "15.0",
     runner = ":Runner",
+    strings = ["//SpaceGram/Strings:SpaceGramLocalizableStrings"],
     deps = [":SpaceGramMediaArchiveTestsLib"],
     visibility = ["//visibility:public"],
 )

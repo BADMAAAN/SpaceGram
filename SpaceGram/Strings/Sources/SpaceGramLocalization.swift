@@ -16,11 +16,32 @@ public final class SpaceGramLocalization {
         "zh-hant": "zh-hans"
     ]
 
-    private init() {
-        self.appBundle = getAppBundle()
+    private convenience init() {
+        self.init(appBundle: getAppBundle())
+    }
+
+    public init(appBundle: Bundle) {
+        self.appBundle = appBundle
         for locale in self.appBundle.localizations where locale != "Base" {
             self.localizations[locale] = self.loadDictionary(for: locale)
         }
+    }
+
+    public var bundleURL: URL {
+        return self.appBundle.bundleURL
+    }
+
+    public func localizedResourceURL(locale: String) -> URL? {
+        let locale = self.sanitize(locale)
+        guard let path = self.appBundle.path(
+            forResource: "SpaceGramLocalizable",
+            ofType: "strings",
+            inDirectory: nil,
+            forLocalization: locale
+        ) else {
+            return nil
+        }
+        return URL(fileURLWithPath: path)
     }
 
     public func localizedString(_ key: String, _ locale: String = spaceGramFallbackLocale, args: CVarArg...) -> String {
@@ -32,8 +53,8 @@ public final class SpaceGramLocalization {
     }
 
     private func loadDictionary(for locale: String) -> [String: String] {
-        guard let path = self.appBundle.path(forResource: "SpaceGramLocalizable", ofType: "strings", inDirectory: nil, forLocalization: locale),
-              let dictionary = NSDictionary(contentsOf: URL(fileURLWithPath: path)) as? [String: String]
+        guard let resourceURL = self.localizedResourceURL(locale: locale),
+              let dictionary = NSDictionary(contentsOf: resourceURL) as? [String: String]
         else {
             return [:]
         }

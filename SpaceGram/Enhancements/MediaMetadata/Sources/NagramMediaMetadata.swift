@@ -34,22 +34,25 @@ public enum NagramMediaMetadata {
         present(controller)
     }
 
-    public static func localizedLabels(locale: String) -> [String: String] {
+    public static func localizedLabels(
+        locale: String,
+        localization: SpaceGramLocalization = .shared
+    ) -> [String: String] {
         return [
-            "title": ngI18n("SpaceGram.MediaMetadata.Title", locale),
-            "resolution": ngI18n("SpaceGram.MediaMetadata.Resolution", locale),
-            "fileSize": ngI18n("SpaceGram.MediaMetadata.FileSize", locale),
-            "type": ngI18n("SpaceGram.MediaMetadata.Type", locale),
-            "image": ngI18n("SpaceGram.MediaMetadata.Image", locale),
-            "video": ngI18n("SpaceGram.MediaMetadata.Video", locale),
-            "audio": ngI18n("SpaceGram.MediaMetadata.Audio", locale),
-            "animation": ngI18n("SpaceGram.MediaMetadata.Animation", locale),
-            "file": ngI18n("SpaceGram.MediaMetadata.File", locale),
-            "duration": ngI18n("SpaceGram.MediaMetadata.Duration", locale),
-            "frameRate": ngI18n("SpaceGram.MediaMetadata.FrameRate", locale),
-            "bitrate": ngI18n("SpaceGram.MediaMetadata.Bitrate", locale),
-            "codec": ngI18n("SpaceGram.MediaMetadata.Codec", locale),
-            "unknown": ngI18n("SpaceGram.MediaMetadata.Unknown", locale),
+            "title": localization.localizedString("SpaceGram.MediaMetadata.Title", locale),
+            "resolution": localization.localizedString("SpaceGram.MediaMetadata.Resolution", locale),
+            "fileSize": localization.localizedString("SpaceGram.MediaMetadata.FileSize", locale),
+            "type": localization.localizedString("SpaceGram.MediaMetadata.Type", locale),
+            "image": localization.localizedString("SpaceGram.MediaMetadata.Image", locale),
+            "video": localization.localizedString("SpaceGram.MediaMetadata.Video", locale),
+            "audio": localization.localizedString("SpaceGram.MediaMetadata.Audio", locale),
+            "animation": localization.localizedString("SpaceGram.MediaMetadata.Animation", locale),
+            "file": localization.localizedString("SpaceGram.MediaMetadata.File", locale),
+            "duration": localization.localizedString("SpaceGram.MediaMetadata.Duration", locale),
+            "frameRate": localization.localizedString("SpaceGram.MediaMetadata.FrameRate", locale),
+            "bitrate": localization.localizedString("SpaceGram.MediaMetadata.Bitrate", locale),
+            "codec": localization.localizedString("SpaceGram.MediaMetadata.Codec", locale),
+            "unknown": localization.localizedString("SpaceGram.MediaMetadata.Unknown", locale),
         ]
     }
 
