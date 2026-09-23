@@ -24,6 +24,7 @@ import NewSessionInfoScreen
 import PresentationDataUtils
 import GlobalControlPanelsContext
 import NagramSettingsSignal // MARK: NAGRAM
+import SpaceGramSettingsSignal // MARK: NAGRAM — refresh local-read row badges.
 
 public enum ChatListNodeMode {
     case chatList(appendContacts: Bool)
@@ -2245,13 +2246,13 @@ public final class ChatListNode: ListViewImpl {
         
         let previousAccountIsPremium = Atomic<Bool?>(value: nil)
         
-        let accountIsPremium = context.engine.data.subscribe(
-            TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId)
+        let accountIsPremium = combineLatest(
+            context.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId)),
+            spaceGramSettingsChangesSignal()
         )
-        |> map { peer -> Bool in
+        |> map { peer, _ -> Bool in
             return peer?.isPremium ?? false
         }
-        |> distinctUntilChanged
         
         let archiveGroupItem: Signal<EngineChatList.GroupItem?, NoError>
         if case .chatList(.root) = location, case .chatList = mode {

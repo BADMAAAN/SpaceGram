@@ -28,13 +28,26 @@ class SpaceGramFeatureContracts(unittest.TestCase):
         camera = (ROOT / "submodules/TelegramUI/Components/VideoMessageCameraScreen/Sources/VideoMessageCameraScreen.swift").read_text(encoding="utf-8")
         self.assertIn("self.videoRecorderValue === videoController", recording)
         self.assertIn("self.audioRecorderValue === audioRecorderValue", recording)
-        self.assertIn("guard !self.audioSendInFlight", recording)
+        self.assertIn("guard self.audioSendOperationResourceId != audio.resource.id", recording)
+        self.assertIn("self.audioSendOperationResourceId = audio.resource.id", recording)
+        self.assertIn("self.audioSendOperationResourceId == audio.resource.id", recording)
         self.assertIn("current.resource.id == audio.resource.id", recording)
         self.assertIn("copyItem(atPath: source, toPath: tempPath)", recording)
         self.assertNotIn("messageTransitionNode.add(correlationId:", recording)
         self.assertIn("videoController.resetSendAfterEnqueueFailure()", recording)
         self.assertIn("sendResultDisposable.dispose()", camera)
         self.assertIn("sendThumbnailDisposable.dispose()", camera)
+
+    def test_local_ghost_read_progress_cannot_enqueue_network_reads(self):
+        store = (ROOT / "SpaceGram/Settings/SpaceGramLocalReadState.swift").read_text(encoding="utf-8")
+        history = (ROOT / "submodules/TelegramUI/Sources/ChatHistoryListNode.swift").read_text(encoding="utf-8")
+        local_branch = history.split("private func updateMaxVisibleReadIncomingMessageIndex", 1)[1].split("self.maxVisibleIncomingMessageIndex.set(index)", 1)[0]
+        self.assertNotIn("import TelegramCore", store)
+        self.assertNotIn("import Postbox", store)
+        self.assertIn("accountId: Int64", store)
+        self.assertIn("threadId: Int64?", store)
+        self.assertIn("SpaceGramLocalReadState.shared.advance", local_branch)
+        self.assertNotIn("applyMaxReadIndex", local_branch)
 
     def test_push_endpoint_and_device_extension_contract(self):
         workflow = (ROOT / ".github/workflows/spacegram-ios-test.yml").read_text(encoding="utf-8")

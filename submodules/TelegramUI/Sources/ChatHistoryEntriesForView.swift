@@ -14,6 +14,7 @@ import Display
 import TelegramStringFormatting
 import NagramSettings // MARK: NAGRAM
 import SpaceGramHistoryOverlay // MARK: NAGRAM
+import SpaceGramSettings // MARK: NAGRAM — local Ghost read boundary.
 import SpaceGramStrings // MARK: NAGRAM
 
 struct ChatHistoryEntriesForViewState {
@@ -145,12 +146,28 @@ func chatHistoryEntriesForView(
     }
     
     var count = 0
+    // MARK: NAGRAM — presentation-only read progress. This does not touch the
+    // Postbox read state or create a synchronization operation.
+    let spaceGramLocalReadBoundary = location.peerId.flatMap { peerId in
+        SpaceGramLocalReadState.shared.boundary(
+            accountId: context.account.peerId.toInt64(),
+            peerId: peerId.toInt64(),
+            threadId: location.threadId,
+            namespace: Namespaces.Message.Cloud
+        )
+    }
     let nagramRegexFilterPeerId = location.peerId?.toInt64() // MARK: NAGRAM
     let nagramIncomingRegexFilterMatcher = NagramSettings.shared.regexFilterMatcher(peerId: nagramRegexFilterPeerId, isOutgoing: false) // MARK: NAGRAM
     let nagramOutgoingRegexFilterMatcher = NagramSettings.shared.regexFilterMatcher(peerId: nagramRegexFilterPeerId, isOutgoing: true) // MARK: NAGRAM
     loop: for entry in view.entries {
         var message = entry.message
         var isRead = entry.isRead
+        if message.effectivelyIncoming(context.account.peerId),
+           let boundary = spaceGramLocalReadBoundary,
+           message.id.namespace == boundary.namespace,
+           (message.timestamp < boundary.timestamp || (message.timestamp == boundary.timestamp && message.id.id <= boundary.messageId)) {
+            isRead = true
+        }
         
         var pinToTop = false
         if message.stableId == pinToTopStableId {
@@ -473,7 +490,17 @@ func chatHistoryEntriesForView(
         }
     }
         
-    if let maxReadIndex = view.maxReadIndex, includeUnreadEntry {
+    var effectiveMaxReadIndex = view.maxReadIndex
+    if let boundary = spaceGramLocalReadBoundary, let peerId = location.peerId {
+        let localIndex = MessageIndex(
+            id: MessageId(peerId: peerId, namespace: boundary.namespace, id: boundary.messageId),
+            timestamp: boundary.timestamp
+        )
+        if effectiveMaxReadIndex == nil || effectiveMaxReadIndex! < localIndex {
+            effectiveMaxReadIndex = localIndex
+        }
+    }
+    if let maxReadIndex = effectiveMaxReadIndex, includeUnreadEntry {
         let hasVisibleUnreadMessages = entries.contains { entry -> Bool in
             switch entry {
             case let .MessageEntry(message, _, _, _, _, _):

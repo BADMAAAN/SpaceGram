@@ -26,6 +26,11 @@ private final class SpaceGramOverlayTestCallbackValue<Value> {
 final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
     private let peerId = PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(42))
 
+    override class func setUp() {
+        super.setUp()
+        initializeAccountManagement()
+    }
+
     private func waitForCallback<Value>(_ description: String, _ operation: (@escaping (Value) -> Void) -> Void) throws -> Value {
         let value = SpaceGramOverlayTestCallbackValue<Value>()
         let completed = DispatchSemaphore(value: 0)

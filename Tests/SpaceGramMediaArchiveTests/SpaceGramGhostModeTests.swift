@@ -73,4 +73,32 @@ final class SpaceGramGhostModeTests: XCTestCase {
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: Int64(Int32.max), ghost: full, enabled: true, mediaBytes: nil))
         XCTAssertNil(SpaceGramDelayedSendPolicy.timestamp(now: -1, ghost: full, enabled: true, mediaBytes: nil))
     }
+
+    func testLocalReadBoundaryTurnsFifteenIntoZeroThenCountsTwoNewMessages() throws {
+        let suite = "SpaceGramGhostModeTests." + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let state = SpaceGramLocalReadState(defaults: defaults)
+
+        state.advance(accountId: 1, peerId: 2, threadId: nil, namespace: 0, messageId: 115, timestamp: 1_000, serverUnreadCount: 15)
+        XCTAssertEqual(state.derivedUnreadCount(accountId: 1, peerId: 2, threadId: nil, namespace: 0, serverUnreadCount: 15), 0)
+        XCTAssertEqual(state.derivedUnreadCount(accountId: 1, peerId: 2, threadId: nil, namespace: 0, serverUnreadCount: 17), 2)
+        XCTAssertEqual(state.derivedUnreadCount(accountId: 1, peerId: 2, threadId: nil, namespace: 0, serverUnreadCount: 2, serverMaxIncomingMessageId: 115), 2)
+
+        let restoredState = SpaceGramLocalReadState(defaults: defaults)
+        XCTAssertEqual(restoredState.boundary(accountId: 1, peerId: 2, threadId: nil, namespace: 0)?.messageId, 115)
+    }
+
+    func testLocalReadBoundaryIsMonotonicAndIsolatedByAccountAndThread() throws {
+        let suite = "SpaceGramGhostModeTests." + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let state = SpaceGramLocalReadState(defaults: defaults)
+
+        state.advance(accountId: 1, peerId: 2, threadId: 10, namespace: 0, messageId: 20, timestamp: 200, serverUnreadCount: 4)
+        state.advance(accountId: 1, peerId: 2, threadId: 10, namespace: 0, messageId: 19, timestamp: 199, serverUnreadCount: 3)
+        XCTAssertEqual(state.boundary(accountId: 1, peerId: 2, threadId: 10, namespace: 0)?.messageId, 20)
+        XCTAssertNil(state.boundary(accountId: 1, peerId: 2, threadId: 11, namespace: 0))
+        XCTAssertNil(state.boundary(accountId: 2, peerId: 2, threadId: 10, namespace: 0))
+    }
 }

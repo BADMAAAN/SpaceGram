@@ -81,6 +81,8 @@ import TextNodeWithEntities
 // MARK: NAGRAM
 import NagramSettings
 import NagramSettingsSignal
+import SpaceGramSettings // MARK: NAGRAM — local Ghost read progress.
+import SpaceGramSettingsSignal // MARK: NAGRAM
 import EntityKeyboard
 import ChatTitleView
 import EmojiStatusComponent
@@ -5107,7 +5109,19 @@ extension ChatControllerImpl {
             let peerId = self.chatLocation.peerId
             if let subject = self.subject, case .scheduledMessages = subject {
             } else {
-                let throttledUnreadCountSignal = self.context.chatLocationUnreadCount(for: self.chatLocation, contextHolder: self.chatLocationContextHolder)
+                let rawUnreadCountSignal = self.context.chatLocationUnreadCount(for: self.chatLocation, contextHolder: self.chatLocationContextHolder)
+                let localReadAdjustedUnreadCountSignal = combineLatest(rawUnreadCountSignal, spaceGramSettingsChangesSignal())
+                |> map { [accountId = self.context.account.peerId.toInt64(), location = self.chatLocation] count, _ -> Int in
+                    guard let peerId = location.peerId else { return count }
+                    return Int(SpaceGramLocalReadState.shared.derivedUnreadCount(
+                        accountId: accountId,
+                        peerId: peerId.toInt64(),
+                        threadId: location.threadId,
+                        namespace: Namespaces.Message.Cloud,
+                        serverUnreadCount: Int32(clamping: count)
+                    ))
+                }
+                let throttledUnreadCountSignal = localReadAdjustedUnreadCountSignal
                 |> mapToThrottled { value -> Signal<Int, NoError> in
                     return .single(value) |> then(.complete() |> delay(0.2, queue: Queue.mainQueue()))
                 }

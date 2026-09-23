@@ -286,7 +286,7 @@ extension ChatControllerImpl {
                         next: { [weak self] data in
                             // MARK: NAGRAM — ignore a cancelled or replaced recorder.
                             if let strongSelf = self, strongSelf.audioRecorderValue === audioRecorderValue, let data = data {
-                                if data.duration < 0.5 {
+                                if !data.duration.isFinite || data.duration < 0.5 || data.compressedData.isEmpty {
                                     strongSelf.recorderFeedback?.error()
                                     strongSelf.recorderFeedback = nil
                                     strongSelf.audioRecorder.set(.single(nil))
@@ -299,7 +299,8 @@ extension ChatControllerImpl {
                                 } else if let waveform = data.waveform {
                                     if resource == nil {
                                         resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max), size: Int64(data.compressedData.count))
-                                        strongSelf.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource!.id), data: data.compressedData)
+                                        // MARK: NAGRAM — preview can be sent immediately after this callback.
+                                        strongSelf.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource!.id), data: data.compressedData, synchronous: true)
                                     }
                                     
                                     let audioWaveform: AudioWaveform
@@ -337,18 +338,26 @@ extension ChatControllerImpl {
                 )
             case let .send(viewOnce):
                 // MARK: NAGRAM — retain a retryable draft until enqueue succeeds.
+                let operationId = UUID().uuidString
+                self.audioSendOperationDiagnosticId = operationId
+                Logger.shared.log("SpaceGramVoiceSend", "stage=voiceStop operation=\(operationId)")
                 self.recorderDataDisposable.set((audioRecorderValue.takenRecordedData()
                 |> take(1)
                 |> deliverOnMainQueue).startStrict(next: { [weak self] data in
                     guard let self, self.audioRecorderValue === audioRecorderValue, let data else { return }
-                    guard data.duration >= 0.5, !data.compressedData.isEmpty else {
+                    guard data.duration.isFinite, data.duration >= 0.5, !data.compressedData.isEmpty else {
                         self.recorderFeedback?.error()
                         self.audioRecorder.set(.single(nil))
                         self.recorderDataDisposable.set(nil)
                         return
                     }
+                    Logger.shared.log("SpaceGramVoiceSend", "stage=voiceDataReady operation=\(operationId) bytes=\(data.compressedData.count)")
                     let resource = LocalFileMediaResource(fileId: Int64.random(in: Int64.min ... Int64.max), size: Int64(data.compressedData.count))
-                    self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data.compressedData)
+                    // MARK: NAGRAM — enqueue must not race MediaBox persistence.
+                    // Lifecycle invariant adapted from Novagram
+                    // 268aa3be43a4f286d942162765d6e1f5740d3347, this
+                    // file's dismissMediaRecorder/sendMediaRecording symbols.
+                    self.context.engine.resources.storeResourceData(id: EngineMediaResource.Id(resource.id), data: data.compressedData, synchronous: true)
                     let waveform = AudioWaveform(bitstream: data.waveform ?? Data(), bitsPerSample: 5)
                     self.updateChatPresentationInterfaceState(animated: true, interactive: true, {
                         $0.updatedInterfaceState {
@@ -359,6 +368,7 @@ extension ChatControllerImpl {
                         }.updatedInputTextPanelState { $0.withUpdatedMediaRecordingState(nil) }
                     })
                     self.recorderDataDisposable.set(nil)
+                    Logger.shared.log("SpaceGramVoiceSend", "stage=voiceDraftReady operation=\(operationId)")
                     self.sendMediaRecording(viewOnce: viewOnce)
                 }))
             }
@@ -515,6 +525,11 @@ extension ChatControllerImpl {
     }
     
     func deleteMediaRecording() {
+        if let operationId = self.audioSendOperationDiagnosticId {
+            Logger.shared.log("SpaceGramVoiceSend", "stage=cancelled operation=\(operationId)")
+        }
+        self.audioSendOperationResourceId = nil
+        self.audioSendOperationDiagnosticId = nil
         if let _ = self.audioRecorderValue {
             self.audioRecorder.set(.single(nil))
         } else if let _ = self.videoRecorderValue {
@@ -660,7 +675,11 @@ extension ChatControllerImpl {
         switch recordedMediaPreview {
         case let .audio(audio):
             // MARK: NAGRAM — repeated taps must not enqueue the same draft twice.
-            guard !self.audioSendInFlight, self.chatLocation.peerId != nil else { return }
+            guard self.audioSendOperationResourceId != audio.resource.id, self.chatLocation.peerId != nil else { return }
+            guard audio.duration.isFinite, audio.duration >= 0.5, audio.fileSize > 0 else {
+                self.recorderFeedback?.error()
+                return
+            }
             self.audioRecorder.set(.single(nil))
             
             var isScheduledMessages = false
@@ -685,8 +704,14 @@ extension ChatControllerImpl {
             
             let resource: TelegramMediaResource
             var waveform = audio.waveform
-            var finalDuration: Int = Int(audio.duration)
+            var finalDuration: Int = max(1, Int(audio.duration.rounded(.down)))
             if let trimRange = audio.trimRange, trimRange.lowerBound > 0.0 || trimRange.upperBound < Double(audio.duration)  {
+                guard trimRange.lowerBound.isFinite, trimRange.upperBound.isFinite,
+                      trimRange.lowerBound >= 0.0, trimRange.upperBound <= audio.duration,
+                      trimRange.lowerBound < trimRange.upperBound else {
+                    self.recorderFeedback?.error()
+                    return
+                }
                 let randomId = Int64.random(in: Int64.min ... Int64.max)
                 let tempPath = NSTemporaryDirectory() + "\(Int64.random(in: 0 ..< .max)).ogg"
                 resource = LocalFileAudioMediaResource(randomId: randomId, path: tempPath, trimRange: trimRange)
@@ -701,8 +726,8 @@ extension ChatControllerImpl {
                     self.recorderFeedback?.error()
                     return
                 }
-                waveform = waveform.subwaveform(from: trimRange.lowerBound / Double(audio.duration), to: trimRange.upperBound / Double(audio.duration))
-                finalDuration = Int(trimRange.upperBound - trimRange.lowerBound)
+                waveform = waveform.subwaveform(from: trimRange.lowerBound / audio.duration, to: trimRange.upperBound / audio.duration)
+                finalDuration = max(1, Int((trimRange.upperBound - trimRange.lowerBound).rounded(.down)))
             } else {
                 resource = audio.resource
             }
@@ -715,16 +740,21 @@ extension ChatControllerImpl {
             let transformedMessages = self.transformEnqueueMessages(messages, silentPosting: effectiveSilentPosting, scheduleTime: scheduleTime, repeatPeriod: repeatPeriod, postpone: postpone)
             
             // MARK: NAGRAM — use the existing send policy and acknowledge its result.
-            self.audioSendInFlight = true
+            let operationId = self.audioSendOperationDiagnosticId ?? UUID().uuidString
+            self.audioSendOperationDiagnosticId = operationId
+            self.audioSendOperationResourceId = audio.resource.id
+            Logger.shared.log("SpaceGramVoiceSend", "stage=enqueueBegin operation=\(operationId) scheduled=\(scheduleTime != nil)")
             self.sendMessages(transformedMessages, media: true, postpone: postpone, commit: scheduleTime != nil, enqueueIsValid: { [weak self] in
                 guard let self, case let .audio(current)? = self.presentationInterfaceState.interfaceState.mediaDraftState else { return false }
-                return current.resource.id == audio.resource.id
+                return current.resource.id == audio.resource.id && self.audioSendOperationResourceId == audio.resource.id
             }, enqueueCompletion: { [weak self] accepted in
                 guard let self else { return }
-                self.audioSendInFlight = false
+                Logger.shared.log("SpaceGramVoiceSend", "stage=\(accepted ? "enqueueAccepted" : "enqueueRejected") operation=\(operationId)")
                 if !accepted, let trimmed = resource as? LocalFileAudioMediaResource {
                     try? FileManager.default.removeItem(atPath: trimmed.path)
                 }
+                guard self.audioSendOperationResourceId == audio.resource.id else { return }
+                self.audioSendOperationResourceId = nil
                 // A late acknowledgement cannot clear a newer recording/draft.
                 guard case let .audio(current)? = self.presentationInterfaceState.interfaceState.mediaDraftState,
                       current.resource.id == audio.resource.id else { return }
@@ -739,6 +769,10 @@ extension ChatControllerImpl {
                 self.recorderFeedback?.tap()
                 self.recorderFeedback = nil
                 self.updateDownButtonVisibility()
+                if self.audioSendOperationDiagnosticId == operationId {
+                    self.audioSendOperationDiagnosticId = nil
+                }
+                Logger.shared.log("SpaceGramVoiceSend", "stage=draftReleased operation=\(operationId)")
             })
         case .video:
             guard let videoRecorderValue = self.videoRecorderValue else {

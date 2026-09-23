@@ -399,8 +399,10 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var videoRecorderDisposable: Disposable?
     
     var recorderDataDisposable = MetaDisposable()
-    // MARK: NAGRAM — one enqueue per voice draft, including asynchronous routing.
-    var audioSendInFlight = false
+    // MARK: NAGRAM — the resource identity owns the asynchronous voice enqueue.
+    // A late callback for an older draft must not release or clear a newer one.
+    var audioSendOperationResourceId: MediaResourceId?
+    var audioSendOperationDiagnosticId: String?
     
     var chatUnreadCountDisposable: Disposable?
     var buttonUnreadCountDisposable: Disposable?

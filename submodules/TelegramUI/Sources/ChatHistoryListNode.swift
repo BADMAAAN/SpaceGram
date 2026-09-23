@@ -532,6 +532,9 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
     
     private let maxVisibleIncomingMessageIndex = ValuePromise<MessageIndex>(ignoreRepeated: true)
     let canReadHistory = Promise<Bool>()
+    // MARK: NAGRAM — raw visibility/focus is separate from network-read policy.
+    private var canObserveHistoryValue: Bool = false
+    private var canObserveHistoryDisposable: Disposable?
     private var canReadHistoryValue: Bool = false
     private var canReadHistoryDisposable: Disposable?
     
@@ -1177,6 +1180,12 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
                         if matches {
                             var maxItemIndex: MessageIndex?
                             for (message, _) in item.content {
+                                // MARK: NAGRAM — an outgoing or scheduled item is
+                                // never a local incoming-history boundary.
+                                guard message.effectivelyIncoming(strongSelf.context.account.peerId),
+                                      message.id.namespace == Namespaces.Message.Cloud else {
+                                    continue
+                                }
                                 if let maxItemIndexValue = maxItemIndex {
                                     if maxItemIndexValue < message.index {
                                         maxItemIndex = message.index
@@ -1299,6 +1308,7 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
         self.readHistoryDisposable.dispose()
         self.interactiveReadActionDisposable?.dispose()
         self.interactiveReadReactionsDisposable?.dispose()
+        self.canObserveHistoryDisposable?.dispose()
         self.canReadHistoryDisposable?.dispose()
         self.loadedMessagesFromCachedDataDisposable?.dispose()
         self.preloadAdPeerDisposable.dispose()
@@ -2570,6 +2580,11 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
 
     private func beginReadHistoryManagement() {
         let previousMaxIncomingMessageIndexByNamespace = Atomic<[MessageId.Namespace: MessageIndex]>(value: [:])
+        self.canObserveHistoryDisposable?.dispose()
+        self.canObserveHistoryDisposable = (self.canReadHistory.get()
+        |> deliverOnMainQueue).startStrict(next: { [weak self] value in
+            self?.canObserveHistoryValue = value
+        }).strict()
         // MARK: NAGRAM — prevent read work from being queued, without marking local
         // state as synchronized. Explicit mark-as-read actions keep their native path.
         let effectiveCanReadHistory = combineLatest(self.canReadHistory.get(), spaceGramSuppressAutomaticReadsSignal())
@@ -3882,6 +3897,39 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
     }
     
     private func updateMaxVisibleReadIncomingMessageIndex(_ index: MessageIndex) {
+        if SpaceGramGhostPolicy.suppressAutomaticReads,
+           !SpaceGramGhostPolicy.shouldReadOnInteraction,
+           self.canObserveHistoryValue,
+           index.id.namespace == Namespaces.Message.Cloud,
+           let peerId = self.chatLocation.peerId {
+            let serverUnreadCount: Int32
+            switch self.chatLocation {
+            case .peer:
+                if let fixedReadStates = self.historyView?.originalView.fixedReadStates,
+                   case let .peer(readStates) = fixedReadStates,
+                   let readState = readStates[peerId] {
+                    serverUnreadCount = readState.count
+                } else {
+                    serverUnreadCount = 0
+                }
+            case let .replyThread(data):
+                serverUnreadCount = Int32(clamping: data.unreadCount)
+            case .customChatContents:
+                return
+            }
+            // MARK: NAGRAM — presentation-only progress. No Telegram read state
+            // or synchronization operation is written here.
+            SpaceGramLocalReadState.shared.advance(
+                accountId: self.context.account.peerId.toInt64(),
+                peerId: peerId.toInt64(),
+                threadId: self.chatLocation.threadId,
+                namespace: index.id.namespace,
+                messageId: index.id.id,
+                timestamp: index.timestamp,
+                serverUnreadCount: serverUnreadCount
+            )
+            return
+        }
         self.maxVisibleIncomingMessageIndex.set(index)
     }
     
@@ -4379,24 +4427,22 @@ public final class ChatHistoryListNodeImpl: ASDisplayNode, ChatHistoryNode, Chat
                     if let visible = visibleRange.visibleRange {
                         let visibleFirstIndex = visible.firstIndex
                         if visibleFirstIndex <= visible.lastIndex {
-                            let (incomingIndex, overallIndex) = maxMessageIndexForEntries(transition.historyView, indexRange: (transition.historyView.filteredEntries.count - 1 - visible.lastIndex, transition.historyView.filteredEntries.count - 1 - visibleFirstIndex))
-                            
-                            let messageIndex: MessageIndex?
-                            switch strongSelf.chatLocation {
-                            case .peer:
-                                messageIndex = incomingIndex
-                            case .replyThread, .customChatContents:
-                                messageIndex = overallIndex
-                            }
-                            
-                            if let messageIndex = messageIndex {
-                                let _ = messageIndex
+                            let (incomingIndex, _) = maxMessageIndexForEntries(transition.historyView, indexRange: (transition.historyView.filteredEntries.count - 1 - visible.lastIndex, transition.historyView.filteredEntries.count - 1 - visibleFirstIndex))
+
+                            if let messageIndex = incomingIndex {
+                                strongSelf.updateMaxVisibleReadIncomingMessageIndex(messageIndex)
                             }
                         }
                     }
-                } else if case .empty(.joined) = loadState, let entry = transition.historyView.originalView.entries.first {
+                } else if case .empty(.joined) = loadState,
+                          let entry = transition.historyView.originalView.entries.first,
+                          entry.message.effectivelyIncoming(strongSelf.context.account.peerId),
+                          entry.message.id.namespace == Namespaces.Message.Cloud {
                     strongSelf.updateMaxVisibleReadIncomingMessageIndex(entry.message.index)
-                } else if case .empty(.topic) = loadState, let entry = transition.historyView.originalView.entries.first {
+                } else if case .empty(.topic) = loadState,
+                          let entry = transition.historyView.originalView.entries.first,
+                          entry.message.effectivelyIncoming(strongSelf.context.account.peerId),
+                          entry.message.id.namespace == Namespaces.Message.Cloud {
                     strongSelf.updateMaxVisibleReadIncomingMessageIndex(entry.message.index)
                 }
                 

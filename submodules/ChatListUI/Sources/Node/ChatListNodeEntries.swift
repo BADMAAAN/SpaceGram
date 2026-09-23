@@ -5,6 +5,7 @@ import TelegramPresentationData
 import MergeLists
 import AccountContext
 import NagramSettings
+import SpaceGramSettings // MARK: NAGRAM — local Ghost unread projection.
 // MARK: NAGRAM - shared SpaceGram localization.
 import SpaceGramStrings // MARK: NAGRAM
 
@@ -702,6 +703,71 @@ private func nagramShouldIgnoreRegexFilteredUnreadBadge(messages: [EngineMessage
     return hiddenUnreadCount > 0 && hiddenUnreadCount >= readState.count
 }
 
+// MARK: NAGRAM — derive the row badge from the local Ghost boundary while
+// preserving Telegram's explicit marked-unread reminder and outgoing state.
+private func spaceGramLocalReadCounters(
+    _ counters: EnginePeerReadCounters?,
+    accountPeerId: EnginePeer.Id,
+    peerId: EnginePeer.Id?,
+    threadId: Int64?
+) -> EnginePeerReadCounters? {
+    guard let counters, let peerId, let combined = counters._asReadCounters(),
+          let boundary = SpaceGramLocalReadState.shared.boundary(
+            accountId: accountPeerId.toInt64(),
+            peerId: peerId.toInt64(),
+            threadId: threadId,
+            namespace: Namespaces.Message.Cloud
+          ) else {
+        return counters
+    }
+
+    var states: [(MessageId.Namespace, PeerReadState)] = []
+    for (namespace, state) in combined.states {
+        guard namespace == boundary.namespace else {
+            states.append((namespace, state))
+            continue
+        }
+        switch state {
+        case let .idBased(maxIncomingReadId, maxOutgoingReadId, maxKnownId, count, markedUnread):
+            let localCount = SpaceGramLocalReadState.shared.derivedUnreadCount(
+                accountId: accountPeerId.toInt64(),
+                peerId: peerId.toInt64(),
+                threadId: threadId,
+                namespace: namespace,
+                serverUnreadCount: count,
+                serverMaxIncomingMessageId: maxIncomingReadId
+            )
+            states.append((namespace, .idBased(
+                maxIncomingReadId: max(maxIncomingReadId, boundary.messageId),
+                maxOutgoingReadId: maxOutgoingReadId,
+                maxKnownId: maxKnownId,
+                count: localCount,
+                markedUnread: markedUnread
+            )))
+        case let .indexBased(maxIncomingReadIndex, maxOutgoingReadIndex, count, markedUnread):
+            let localIndex = MessageIndex(
+                id: MessageId(peerId: peerId, namespace: namespace, id: boundary.messageId),
+                timestamp: boundary.timestamp
+            )
+            let localCount = SpaceGramLocalReadState.shared.derivedUnreadCount(
+                accountId: accountPeerId.toInt64(),
+                peerId: peerId.toInt64(),
+                threadId: threadId,
+                namespace: namespace,
+                serverUnreadCount: count,
+                serverMaxIncomingMessageId: maxIncomingReadIndex.id.id
+            )
+            states.append((namespace, .indexBased(
+                maxIncomingReadIndex: max(maxIncomingReadIndex, localIndex),
+                maxOutgoingReadIndex: maxOutgoingReadIndex,
+                count: localCount,
+                markedUnread: markedUnread
+            )))
+        }
+    }
+    return EnginePeerReadCounters(state: CombinedPeerReadState(states: states), isMuted: counters.isMuted)
+}
+
 func chatListNodeEntriesForView(view: EngineChatList, state: ChatListNodeState, savedMessagesPeer: EnginePeer?, foundPeers: [(EnginePeer, EnginePeer?)], hideArchivedFolderByDefault: Bool, displayArchiveIntro: Bool, archiveGroupItem: EngineChatList.GroupItem?, mode: ChatListNodeMode, chatListLocation: ChatListControllerLocation, contacts: [ChatListContactPeer], accountPeerId: EnginePeer.Id, isMainTab: Bool, showArchiveInFolders: Bool) -> (entries: [ChatListNodeEntry], loading: Bool) {
     var groupItems = view.groupItems
     let hasArchiveGroup = { () -> Bool in
@@ -799,6 +865,7 @@ func chatListNodeEntriesForView(view: EngineChatList, state: ChatListNodeState, 
             updatedMessages = []
             updatedCombinedReadState = nil
         }
+        updatedCombinedReadState = spaceGramLocalReadCounters(updatedCombinedReadState, accountPeerId: accountPeerId, peerId: peerId, threadId: threadId)
         let nagramMessagePeerId: EnginePeer.Id?
         if let peer = entry.renderedPeer.peer, case .community = peer {
             nagramMessagePeerId = updatedMessages.last?.id.peerId ?? peerId
@@ -997,9 +1064,6 @@ func chatListNodeEntriesForView(view: EngineChatList, state: ChatListNodeState, 
                     
                     let peerId = index.messageIndex.id.peerId
                     let isSelected = state.selectedPeerIds.contains(peerId)
-                    let nagramIgnoreUnreadBadge = nagramShouldIgnoreRegexFilteredUnreadBadge(messages: item.item.messages, readState: item.item.readCounters, peerId: peerId, accountPeerId: accountPeerId)
-                    let nagramFilteredMessages = nagramFilteredChatListMessages(item.item.messages, peerId: peerId, accountPeerId: accountPeerId, presentationData: state.presentationData) // MARK: NAGRAM
-                    
                     var threadId: Int64 = 0
                     switch item.item.index {
                     case let .forum(_, _, threadIdValue, _, _):
@@ -1007,11 +1071,15 @@ func chatListNodeEntriesForView(view: EngineChatList, state: ChatListNodeState, 
                     default:
                         break
                     }
+                    let spaceGramReadCounters = spaceGramLocalReadCounters(item.item.readCounters, accountPeerId: accountPeerId, peerId: peerId, threadId: threadId == 0 ? nil : threadId)
+                    let nagramIgnoreUnreadBadge = nagramShouldIgnoreRegexFilteredUnreadBadge(messages: item.item.messages, readState: spaceGramReadCounters, peerId: peerId, accountPeerId: accountPeerId)
+                    let nagramFilteredMessages = nagramFilteredChatListMessages(item.item.messages, peerId: peerId, accountPeerId: accountPeerId, presentationData: state.presentationData) // MARK: NAGRAM
+
                     result.append(.PeerEntry(ChatListNodeEntry.PeerEntryData(
                         index: .chatList(EngineChatList.Item.Index.ChatList(pinningIndex: pinningIndex, messageIndex: index.messageIndex)),
                         presentationData: state.presentationData,
                         messages: nagramFilteredMessages,
-                        readState: item.item.readCounters,
+                        readState: spaceGramReadCounters,
                         nagramIgnoreUnreadBadge: nagramIgnoreUnreadBadge,
                         nagramSuppressActivateInput: !item.item.messages.isEmpty && nagramFilteredMessages.isEmpty, // MARK: NAGRAM
                         isRemovedFromTotalUnreadCount: item.item.isMuted,

@@ -188,9 +188,25 @@ func chatHistoryViewForLocation(
                         let storedHistoryScrollState = effectiveIsAddedToChatList && tag == nil
                             ? (initialData?.storedInterfaceState).flatMap(_internal_decodeStoredChatInterfaceState).flatMap(ChatInterfaceState.parse)?.historyScrollState
                             : nil
+                        var effectiveMaxReadIndex = view.maxReadIndex
+                        if let peerId = chatLocation.peerId,
+                           let boundary = SpaceGramLocalReadState.shared.boundary(
+                            accountId: context.account.peerId.toInt64(),
+                            peerId: peerId.toInt64(),
+                            threadId: chatLocation.threadId,
+                            namespace: Namespaces.Message.Cloud
+                           ) {
+                            let localIndex = MessageIndex(
+                                id: MessageId(peerId: peerId, namespace: boundary.namespace, id: boundary.messageId),
+                                timestamp: boundary.timestamp
+                            )
+                            if effectiveMaxReadIndex == nil || effectiveMaxReadIndex! < localIndex {
+                                effectiveMaxReadIndex = localIndex
+                            }
+                        }
                         if let historyScrollState = storedHistoryScrollState {
                             scrollPosition = .positionRestoration(index: historyScrollState.messageIndex, relativeOffset: CGFloat(historyScrollState.relativeOffset))
-                        } else if let maxReadIndex = view.maxReadIndex, tag == nil, canScrollToRead {
+                        } else if let maxReadIndex = effectiveMaxReadIndex, tag == nil, canScrollToRead {
                             let aroundIndex = maxReadIndex
                             scrollPosition = .unread(index: maxReadIndex)
                             
