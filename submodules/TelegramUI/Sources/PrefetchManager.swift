@@ -1,4 +1,5 @@
 import Foundation
+import Postbox // MARK: NAGRAM — received-media archive prefetch types.
 import SwiftSignalKit
 import TelegramCore
 import TelegramUIPreferences
