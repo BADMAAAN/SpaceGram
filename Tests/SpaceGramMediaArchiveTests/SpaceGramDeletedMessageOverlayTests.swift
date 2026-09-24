@@ -160,17 +160,35 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
             alternativeRepresentations: [])
         let encoder = PostboxEncoder()
         encoder.encodeRootObject(original)
+        let originalPayload = encoder.makeData()
+        XCTAssertFalse(originalPayload.isEmpty)
         var metadata = SpaceGramHistoryMediaMetadata(type: "file")
         metadata.identifiers = ["namespace": String(fileId.namespace), "id": String(fileId.id)]
         metadata.resourceIds = [resource.id.stringRepresentation]
-        metadata.nativeMediaPayload = encoder.makeData()
+        metadata.nativeMediaPayload = originalPayload
         var snapshot = SpaceGramHistorySnapshot(text: "", originalMessageTimestamp: 150)
         snapshot.media = [metadata]
 
+        let directlyDecoded = try XCTUnwrap(PostboxDecoder(buffer: MemoryBuffer(data: originalPayload)).decodeRootObject() as? TelegramMediaFile)
+        XCTAssertEqual(directlyDecoded.fileId, fileId)
+        XCTAssertTrue(directlyDecoded.isInstantVideo)
+        XCTAssertEqual(directlyDecoded.mimeType, "video/mp4")
+        let directlyDecodedResource = try XCTUnwrap(directlyDecoded.resource as? LocalFileReferenceMediaResource)
+        XCTAssertEqual(directlyDecodedResource.id, resource.id)
+        XCTAssertEqual(directlyDecodedResource.localFilePath, source.path)
+        XCTAssertEqual(directlyDecodedResource.size, 4)
+
         snapshot = try JSONDecoder().decode(SpaceGramHistorySnapshot.self, from: JSONEncoder().encode(snapshot))
-        let decoded = try XCTUnwrap(PostboxDecoder(buffer: MemoryBuffer(data: try XCTUnwrap(snapshot.media.first?.nativeMediaPayload))).decodeRootObject() as? TelegramMediaFile)
+        let roundTrippedPayload = try XCTUnwrap(snapshot.media.first?.nativeMediaPayload)
+        XCTAssertEqual(roundTrippedPayload, originalPayload)
+        let decoded = try XCTUnwrap(PostboxDecoder(buffer: MemoryBuffer(data: roundTrippedPayload)).decodeRootObject() as? TelegramMediaFile)
+        XCTAssertEqual(decoded.fileId, fileId)
         XCTAssertTrue(decoded.isInstantVideo)
         XCTAssertEqual(decoded.mimeType, "video/mp4")
+        let decodedResource = try XCTUnwrap(decoded.resource as? LocalFileReferenceMediaResource)
+        XCTAssertEqual(decodedResource.id, resource.id)
+        XCTAssertEqual(decodedResource.localFilePath, source.path)
+        XCTAssertEqual(decodedResource.size, 4)
 
         var item = SpaceGramDeletedMessageOverlayItem(
             originalMessageId: MessageId(peerId: self.peerId, namespace: Namespaces.Message.Cloud, id: 9),
@@ -178,9 +196,15 @@ final class SpaceGramDeletedMessageOverlayTests: XCTestCase {
         item.nativeMedia = [decoded]
         let message = item.makeMessage(accountPeerId: self.peerId, deletedLabel: "Deleted", archivedMediaLabel: "Archived", missingMediaLabel: "Media unavailable")
         let rendered = try XCTUnwrap(message.media.first as? TelegramMediaFile)
+        XCTAssertEqual(rendered.fileId, fileId)
         XCTAssertTrue(rendered.isInstantVideo)
+        XCTAssertEqual(rendered.mimeType, "video/mp4")
         XCTAssertFalse(rendered.fileName?.contains("Media unavailable") == true)
-        XCTAssertEqual((rendered.resource as? LocalFileReferenceMediaResource)?.localFilePath, source.path)
+        XCTAssertFalse(rendered.resource is EmptyMediaResource)
+        let renderedResource = try XCTUnwrap(rendered.resource as? LocalFileReferenceMediaResource)
+        XCTAssertEqual(renderedResource.id, resource.id)
+        XCTAssertEqual(renderedResource.localFilePath, source.path)
+        XCTAssertEqual(renderedResource.size, 4)
     }
 }
 
